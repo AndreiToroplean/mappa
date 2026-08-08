@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fifty — a US states drill</title>
+<style>
+  :root{
+    --ink:#0A0E17; --panel:#111823; --line:#1F2A3A;
+    --land:#26344A; --landhi:#374A66;
+    --found:#1D5348; --foundline:#4FCBA4;
+    --amber:#FFC24B; --red:#E5484D;
+    --text:#E9EEF6; --muted:#7D8CA3;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--ink);color:var(--text);font-family:var(--sans)}
+  body{display:flex;flex-direction:column}
+
+  header{
+    display:flex;align-items:center;gap:20px;
+    padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:4px;
+  }
+  .prompt{flex:1;min-width:200px}
+  .target{font-size:30px;font-weight:700;letter-spacing:-0.02em;line-height:1.05}
+  .caret{display:inline-block;width:9px;height:26px;background:var(--amber);
+    margin-left:8px;vertical-align:-4px;animation:blink 1.1s steps(1,end) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  .stat{text-align:right}
+  .stat .val{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+  .lives{display:flex;gap:7px;justify-content:flex-end;height:22px;align-items:center}
+  .pip{width:11px;height:11px;background:var(--amber);transform:rotate(45deg);
+    transition:background .25s, transform .25s}
+  .pip.gone{background:transparent;box-shadow:inset 0 0 0 1px var(--line);transform:rotate(45deg) scale(.8)}
+
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;min-height:0}
+  svg{width:100%;height:100%;max-height:100%;display:block}
+  path.state{fill:var(--land);stroke:var(--ink);stroke-width:1;cursor:pointer;
+    transition:fill .15s}
+  path.state:hover{fill:var(--landhi)}
+  path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
+  path.state.miss{fill:var(--red)}
+  path.state.reveal{fill:var(--amber)}
+  circle.hit{fill:transparent;cursor:pointer}
+  text.abbr{font-family:var(--mono);font-size:11px;fill:var(--foundline);
+    text-anchor:middle;pointer-events:none;opacity:.85}
+
+  footer{
+    font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);
+    padding:11px 22px;border-top:1px solid var(--line);min-height:40px;background:var(--panel);
+  }
+  footer b{color:var(--text);font-weight:400}
+  footer .ok{color:var(--foundline)}
+  footer .no{color:var(--red)}
+
+  .overlay{position:fixed;inset:0;background:rgba(10,14,23,.92);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+  .overlay[hidden]{display:none}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:32px;width:100%;max-width:400px}
+  .card h2{margin:0;font-size:26px;letter-spacing:-0.02em}
+  .card .sub{font-family:var(--mono);font-size:12px;color:var(--muted);
+    letter-spacing:.1em;text-transform:uppercase;margin:6px 0 24px}
+  .board{border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
+  .board h3{font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:400}
+  .row{display:flex;justify-content:space-between;font-family:var(--mono);
+    font-size:13px;padding:5px 0;font-variant-numeric:tabular-nums}
+  .row.you{color:var(--amber)}
+  .row span:first-child{color:var(--muted)}
+  .row.you span{color:var(--amber)}
+  .empty{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  button{margin-top:22px;width:100%;background:var(--amber);color:#0A0E17;border:0;
+    padding:13px;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;
+    font-family:var(--sans)}
+  button:hover{filter:brightness(1.08)}
+  button:focus-visible{outline:2px solid var(--foundline);outline-offset:3px}
+
+  @media (max-width:600px){
+    .target{font-size:22px}
+    header{gap:12px;padding:12px 14px}
+    .stat .val{font-size:18px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="prompt">
+    <div class="eyebrow">Find this state</div>
+    <div class="target" id="target">—<span class="caret"></span></div>
+  </div>
+  <div class="stat">
+    <div class="eyebrow">Lives</div>
+    <div class="lives" id="lives"></div>
+  </div>
+  <div class="stat">
+    <div class="eyebrow">Found</div>
+    <div class="val" id="progress">0/50</div>
+  </div>
+  <div class="stat">
+    <div class="eyebrow">Time</div>
+    <div class="val" id="clock">0:00.0</div>
+  </div>
+</header>
+
+<main>
+  <svg id="map" viewBox="-60 10 1020 600" preserveAspectRatio="xMidYMid meet"></svg>
+</main>
+
+<footer id="ticker">Click the state named above. Three misses ends the run.</footer>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="card">
+    <h2 id="ovTitle">Run over</h2>
+    <div class="sub" id="ovSub"></div>
+    <div class="board">
+      <h3>Fastest complete runs</h3>
+      <div id="boardList"></div>
+    </div>
+    <button id="again">Play again</button>
+  </div>
+</div>
+
+<script>
+const STATES = __DATA__;
+const ABBR = __ABBR__;
+const SMALL = ["Rhode Island","Connecticut","Delaware","New Jersey","Vermont","Massachusetts","New Hampshire"];
+
+const svg = document.getElementById('map');
+const NS = 'http://www.w3.org/2000/svg';
+const nodes = {};
+
+// draw states
+STATES.forEach(s => {
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', s.d);
+  p.setAttribute('class', 'state');
+  p.dataset.name = s.n;
+  svg.appendChild(p);
+  nodes[s.n] = p;
+});
+// abbreviation labels appear once a state is found (large states only)
+const labels = {};
+STATES.filter(s => s.s > 92).forEach(s => {
+  const t = document.createElementNS(NS, 'text');
+  t.setAttribute('class', 'abbr');
+  t.setAttribute('x', s.c[0]); t.setAttribute('y', s.c[1] + 4);
+  t.textContent = ABBR[s.n];
+  t.style.display = 'none';
+  svg.appendChild(t);
+  labels[s.n] = t;
+});
+// generous hit targets for the small northeastern states, smallest on top
+SMALL.slice().reverse().forEach(n => {
+  const s = STATES.find(x => x.n === n);
+  const c = document.createElementNS(NS, 'circle');
+  c.setAttribute('class', 'hit');
+  c.setAttribute('cx', s.c[0]); c.setAttribute('cy', s.c[1]);
+  c.setAttribute('r', n === 'Rhode Island' ? 9 : 7.5);
+  c.dataset.name = n;
+  svg.appendChild(c);
+});
+
+// game state
+let queue, current, lives, found, t0, raf, running;
+const clock = document.getElementById('clock');
+const ticker = document.getElementById('ticker');
+const overlay = document.getElementById('overlay');
+
+const fmt = ms => {
+  const s = ms / 1000;
+  return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0')
+    + '.' + Math.floor((s * 10) % 10);
+};
+
+function drawLives() {
+  document.getElementById('lives').innerHTML =
+    [0,1,2].map(i => `<div class="pip${i < lives ? '' : ' gone'}"></div>`).join('');
+}
+
+function start() {
+  queue = STATES.map(s => s.n);
+  for (let i = queue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue[i], queue[j]] = [queue[j], queue[i]];
+  }
+  lives = 3; found = 0; running = true;
+  Object.values(nodes).forEach(p => p.setAttribute('class', 'state'));
+  Object.values(labels).forEach(t => t.style.display = 'none');
+  drawLives();
+  document.getElementById('progress').textContent = '0/50';
+  ticker.textContent = 'Click the state named above. Three misses ends the run.';
+  overlay.hidden = true;
+  t0 = Date.now();
+  tick();
+  next();
+}
+
+function tick() {
+  clock.textContent = fmt(Date.now() - t0);
+  if (running) raf = requestAnimationFrame(tick);
+}
+
+function next() {
+  current = queue.pop();
+  document.getElementById('target').innerHTML = current + '<span class="caret"></span>';
+}
+
+svg.addEventListener('click', e => {
+  if (!running) return;
+  const name = e.target.dataset && e.target.dataset.name;
+  if (!name) return;
+
+  if (name === current) {
+    const p = nodes[name];
+    p.setAttribute('class', 'state found');
+    if (labels[name]) labels[name].style.display = '';
+    found++;
+    document.getElementById('progress').textContent = found + '/50';
+    ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
+    if (queue.length === 0) return finish(true);
+    next();
+  } else {
+    lives--;
+    drawLives();
+    const p = nodes[name];
+    p.classList.add('miss');
+    setTimeout(() => p.classList.remove('miss'), 420);
+    ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
+    if (lives === 0) finish(false);
+  }
+});
+
+// leaderboard
+const KEY = 'fifty:board';
+let memBoard = [];
+async function loadBoard() {
+  try { const r = await window.storage.get(KEY); return r ? JSON.parse(r.value) : []; }
+  catch (e) { return memBoard; }
+}
+async function saveBoard(b) {
+  memBoard = b;
+  try { await window.storage.set(KEY, JSON.stringify(b)); } catch (e) {}
+}
+
+async function finish(won) {
+  running = false;
+  cancelAnimationFrame(raf);
+  const ms = Date.now() - t0;
+
+  if (!won) {
+    nodes[current].setAttribute('class', 'state reveal');
+    ticker.innerHTML = `Out of lives. The answer was <b>${current}</b>.`;
+  }
+
+  document.getElementById('ovTitle').textContent = won ? 'All fifty.' : 'Out of lives.';
+  document.getElementById('ovSub').textContent =
+    won ? `Complete in ${fmt(ms)}` : `${found} of 50 found · ${fmt(ms)}`;
+
+  let board = await loadBoard();
+  if (won) board.push({ t: ms, d: Date.now() });
+  board.sort((a, b) => a.t - b.t);
+  board = board.slice(0, 5);
+  if (won) await saveBoard(board);
+
+  const list = document.getElementById('boardList');
+  list.innerHTML = board.length
+    ? board.map((r, i) =>
+        `<div class="row${won && r.t === ms ? ' you' : ''}">
+           <span>${String(i + 1).padStart(2, '0')}</span><span>${fmt(r.t)}</span>
+         </div>`).join('')
+    : '<div class="empty">No complete run yet. Finish all fifty to post a time.</div>';
+
+  overlay.hidden = false;
+}
+
+document.getElementById('again').addEventListener('click', start);
+start();
+</script>
+</body>
+</html>

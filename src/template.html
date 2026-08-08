@@ -18,7 +18,7 @@
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
     -webkit-touch-callout:none;                /* long-press context menu */
     -webkit-user-select:none;user-select:none} /* stray text selection on labels */
-  svg,path.state,circle.hit{touch-action:manipulation}
+  svg,path.state,circle.hit{touch-action:none}
   path.state:focus,circle.hit:focus{outline:none}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--sans)}
   body{display:flex;flex-direction:column}
@@ -29,6 +29,7 @@
     border-bottom:1px solid var(--line);background:var(--panel);
   }
   .prompt{flex:1;min-width:0}
+  .stats{display:flex;align-items:center;gap:18px;flex:none}
   .stat{text-align:right;flex:none}
   .target{font-size:30px;font-weight:700;letter-spacing:-0.02em;line-height:1.05;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -110,6 +111,35 @@
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 22px}
   .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
 
+  /* Press-and-hold magnifier. Never in hit testing itself — aiming is done
+     against the real map underneath, so the disc can float over the finger
+     without ever intercepting what it is pointing at. */
+  .lens{position:fixed;z-index:15;pointer-events:none}
+  .lens[hidden]{display:none}
+  .lens .disc{position:relative;width:184px;height:184px;border-radius:50%;
+    overflow:hidden;background:var(--ink);
+    border:2px solid var(--line);box-shadow:0 12px 32px rgba(0,0,0,.6)}
+  .lens .disc svg{width:100%;height:100%;display:block}
+  .lens .cross{position:absolute;left:50%;top:50%;width:20px;height:20px;
+    margin:-10px 0 0 -10px;border-radius:50%;
+    border:1.5px solid var(--amber);box-shadow:0 0 0 1px rgba(10,14,23,.7)}
+  .lens .cross::before,.lens .cross::after{content:"";position:absolute;
+    left:50%;width:1px;margin-left:-.5px;height:6px;background:var(--amber)}
+  .lens .cross::before{top:-8px}
+  .lens .cross::after{bottom:-8px}
+  .lens .cap{margin-top:9px;max-width:184px;text-align:center;
+    font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--ink);
+    background:var(--amber);border-radius:7px;padding:5px 8px;font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lens .cap.none{background:var(--panel);border:1px solid var(--line);
+    color:var(--muted);font-weight:400}
+  .lens path{fill:var(--land);stroke:var(--ink);stroke-width:1;
+    vector-effect:non-scaling-stroke}
+  .lens path.found{fill:var(--found);stroke:var(--foundline)}
+  .lens path.miss{fill:var(--red);stroke:#FF9296}
+  .lens path.aim{fill:var(--landhi);stroke:var(--amber);stroke-width:2.5}
+  .lens path.found.aim{fill:#2C7A68;stroke:var(--amber)}
+
   .countdown{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
     pointer-events:none;z-index:20;background:rgba(10,14,23,.55)}
   .countdown[hidden]{display:none}
@@ -124,13 +154,31 @@
   button:focus-visible{outline:2px solid var(--foundline);outline-offset:3px}
 
   @media (max-width:600px){
-    .target{font-size:21px}
-    header{gap:12px;padding:0 14px;height:66px}
+    /* Two pinned rows. The name gets a full-width line to itself instead of
+       competing with three stat columns for a single 360px row, which is what
+       was truncating the longer names. Height is still fixed, so the map can't
+       resize mid-run. */
+    header{flex-direction:column;align-items:stretch;justify-content:center;
+      gap:9px;padding:0 14px;height:94px}
+    .prompt{flex:none}
+    .stats{justify-content:space-between;gap:12px}
+    .stat{flex:none;text-align:left}
+    .stat:last-child{text-align:right}
+    .lives{justify-content:flex-start;height:18px;min-width:0}
+    .target{font-size:25px}
+    .caret{height:22px;width:8px;vertical-align:-3px}
+    .eyebrow{margin-bottom:3px}
     .stat .val{font-size:17px}
     #progress{min-width:58px}
     #clock{min-width:78px}
     footer{font-size:11px;padding:0 14px;height:52px}
     .countdown span{font-size:78px}
+  }
+  /* Narrow phones. 'North Carolina' and 'New Hampshire' are the widest
+     names; step the type down rather than let them clip. */
+  @media (max-width:400px){
+    .target{font-size:22px}
+    .caret{height:19px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -142,17 +190,19 @@
     <div class="eyebrow" id="promptLabel">Find this state</div>
     <div class="target" id="target">—<span class="caret"></span></div>
   </div>
-  <div class="stat">
-    <div class="eyebrow">Lives</div>
-    <div class="lives" id="lives"></div>
-  </div>
-  <div class="stat">
-    <div class="eyebrow">Found</div>
-    <div class="val" id="progress">0/50</div>
-  </div>
-  <div class="stat">
-    <div class="eyebrow">Time</div>
-    <div class="val" id="clock">0:00.0</div>
+  <div class="stats">
+    <div class="stat">
+      <div class="eyebrow">Lives</div>
+      <div class="lives" id="lives"></div>
+    </div>
+    <div class="stat">
+      <div class="eyebrow">Found</div>
+      <div class="val" id="progress">0/50</div>
+    </div>
+    <div class="stat">
+      <div class="eyebrow">Time</div>
+      <div class="val" id="clock">0:00.0</div>
+    </div>
   </div>
 </header>
 
@@ -160,7 +210,15 @@
   <svg id="map" viewBox="-60 10 1020 600" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
-<footer><span id="ticker">Click the state named above. Three misses ends the run.</span></footer>
+<footer><span id="ticker">Click the state named above, or press and hold to zoom. Three misses ends the run.</span></footer>
+
+<div class="lens" id="lens" hidden>
+  <div class="disc">
+    <svg id="lensMap" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="cross"></div>
+  </div>
+  <div class="cap" id="lensCap">—</div>
+</div>
 
 <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
 
@@ -169,6 +227,8 @@
     <h2>Fifty</h2>
     <div class="sub">A United States drill</div>
     <p class="rules">You'll be named a state. Click it on the map.<br>
+      For the small ones, press and hold to open a magnifier — drag to aim,
+      lift to pick.<br>
       Three misses ends the run. Your time is the score.</p>
     <div class="board">
       <h3>Best runs</h3>
@@ -284,7 +344,7 @@ function resetRun() {
   document.getElementById('progress').textContent = '0/50';
   document.getElementById('target').textContent = 'Get ready';
   clock.textContent = '0:00.0';
-  ticker.textContent = 'Click the state named above. Three misses ends the run.';
+  ticker.textContent = 'Click the state named above, or press and hold to zoom. Three misses ends the run.';
   overlay.hidden = true;
   document.getElementById('intro').hidden = true;
 }
@@ -325,10 +385,8 @@ function next() {
   document.getElementById('target').innerHTML = current + '<span class="caret"></span>';
 }
 
-svg.addEventListener('click', e => {
-  if (!running) return;
-  const name = e.target.dataset && e.target.dataset.name;
-  if (!name) return;
+function guess(name) {
+  if (!running || !name) return;
   // the oversized hit circles still fire over solved states — ignore those
   if (nodes[name].classList.contains('found')) return;
 
@@ -359,6 +417,174 @@ svg.addEventListener('click', e => {
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
     if (lives === 0) finish(false, name);
   }
+}
+
+/* ---- press-and-hold magnifier -------------------------------------------
+   Enlarged tap targets make the small states reachable but not *aimable*: a
+   thumb covers the target, and a tap is committed the instant it lands, so
+   the first feedback you get is a lost life. Holding opens a zoomed disc
+   offset from the finger. Drag to move the crosshair, and the state under it
+   lights up and is named — so what a release will select is always visible
+   before the release happens. Lift over open water to cancel.             */
+const HOLD_MS  = 250;   // press this long, without sliding, to open the disc
+const ZOOM     = 4;     // magnification inside the disc
+const DISC_R   = 92;    // disc radius in CSS px — must match .lens .disc
+const GUARD_MS = 180;   // trailing window discarded: the twitch on lift-off
+const DWELL_MS = 120;   // rest this long on a state for it to read as intent
+const SLOP     = 10;    // px of drift still counted as holding still
+
+const lensBox = document.getElementById('lens');
+const lensMap = document.getElementById('lensMap');
+const lensCap = document.getElementById('lensCap');
+
+// one throwaway path per state, built once; only the classes change per open
+const lensPaths = {};
+STATES.forEach(s => {
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', s.d);
+  lensMap.appendChild(p);
+  lensPaths[s.n] = p;
+});
+
+let holdTimer = null, lensOn = false, swallowClick = false;
+let downX = 0, downY = 0, aim = null, trail = [], moveRaf = 0, lastPt = null;
+
+const CAN_HIT = typeof Object.values(nodes)[0].isPointInFill === 'function';
+
+function userPoint(x, y) {
+  const m = svg.getScreenCTM();
+  if (!m) return null;
+  const inv = m.inverse();
+  return { x: inv.a * x + inv.c * y + inv.e, y: inv.b * x + inv.d * y + inv.f };
+}
+
+// Geometry hit test rather than elementFromPoint: inside the disc we want the
+// true shape under the crosshair, never one of the oversized tap circles.
+function stateAt(x, y) {
+  const u = userPoint(x, y);
+  if (u && CAN_HIT) {
+    for (let i = 0; i < STATES.length; i++) {
+      const nm = STATES[i].n;
+      if (nodes[nm].isPointInFill(u)) return nm;
+    }
+    return null;
+  }
+  const el = document.elementFromPoint(x, y);   // lens is pointer-events:none
+  return (el && el.dataset && el.dataset.name) || null;
+}
+
+function openLens(x, y) {
+  lensOn = true;
+  for (const nm in lensPaths) {
+    const c = nodes[nm].classList;
+    lensPaths[nm].setAttribute('class',
+      c.contains('found') ? 'found' : c.contains('miss') ? 'miss' : '');
+  }
+  trail = [];
+  aim = undefined;          // force the first update to register a segment
+  lensBox.hidden = false;
+  moveLens(x, y);
+}
+
+function moveLens(x, y) {
+  const m = svg.getScreenCTM(), u = userPoint(x, y);
+  if (!m || !u) return;
+  const half = DISC_R / (Math.abs(m.a) * ZOOM);   // user units shown each side
+  lensMap.setAttribute('viewBox',
+    (u.x - half) + ' ' + (u.y - half) + ' ' + (half * 2) + ' ' + (half * 2));
+
+  // float the disc clear of the finger, flipping below it near the top edge
+  const vw = innerWidth, vh = innerHeight, D = DISC_R * 2;
+  lensBox.style.left = Math.min(Math.max(x - DISC_R, 8), Math.max(8, vw - D - 8)) + 'px';
+  let top = y - D - 40;
+  if (top < 8) top = Math.min(y + 40, Math.max(8, vh - D - 46));
+  lensBox.style.top = top + 'px';
+
+  const name = stateAt(x, y);
+  if (name !== aim) {
+    const now = Date.now();
+    if (trail.length) trail[trail.length - 1].t1 = now;
+    if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
+    aim = name;
+    if (name) lensPaths[name].classList.add('aim');
+    trail.push({ name: name, t0: now, t1: now });
+    lensCap.textContent = name || 'lift to cancel';
+    lensCap.classList.toggle('none', !name);
+  }
+}
+
+/* What did they actually mean? Everything inside the last GUARD_MS is thrown
+   away, because the finger almost always slides a little as it leaves the
+   glass. Walking back from there, the first state rested on for DWELL_MS is
+   the answer; if nothing was rested on, fall back to the last state touched
+   before the guard window. */
+function settle() {
+  const now = Date.now();
+  if (trail.length) trail[trail.length - 1].t1 = now;
+  const cutoff = now - GUARD_MS;
+  let fallback;
+  for (let i = trail.length - 1; i >= 0; i--) {
+    const s = trail[i];
+    if (s.t0 >= cutoff) continue;                       // wholly inside the guard
+    if (Math.min(s.t1, cutoff) - s.t0 >= DWELL_MS) return s.name;
+    if (fallback === undefined) fallback = s.name;
+  }
+  if (fallback !== undefined) return fallback;
+  return trail.length ? trail[trail.length - 1].name : null;
+}
+
+function closeLens(commit) {
+  clearTimeout(holdTimer);
+  holdTimer = null;
+  if (!lensOn) return false;
+  const pick = commit ? settle() : null;
+  if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
+  lensOn = false;
+  lensBox.hidden = true;
+  aim = null;
+  trail = [];
+  if (pick) guess(pick);
+  return true;
+}
+
+svg.addEventListener('pointerdown', e => {
+  swallowClick = false;
+  if (!running) return;
+  downX = e.clientX;
+  downY = e.clientY;
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => openLens(downX, downY), HOLD_MS);
+});
+
+svg.addEventListener('pointermove', e => {
+  if (!lensOn) {
+    // slid off the press point before the disc opened — that was a drag, not a hold
+    if (holdTimer &&
+        Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > SLOP) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    return;
+  }
+  lastPt = { x: e.clientX, y: e.clientY };     // one hit test per frame, no more
+  if (moveRaf) return;
+  moveRaf = requestAnimationFrame(() => {
+    moveRaf = 0;
+    if (lensOn && lastPt) moveLens(lastPt.x, lastPt.y);
+  });
+});
+
+svg.addEventListener('pointerup', e => {
+  if (closeLens(true)) swallowClick = true;   // don't also fire the plain tap
+});
+svg.addEventListener('pointercancel', () => { closeLens(false); });
+svg.addEventListener('contextmenu', e => e.preventDefault());
+
+svg.addEventListener('click', e => {
+  if (swallowClick) return;          // this press was consumed by the magnifier
+  const name = e.target.dataset && e.target.dataset.name;
+  guess(name);
 });
 
 // leaderboard: one best time per states-found tally, but many entries at a full 50
@@ -409,6 +635,7 @@ function renderBoard(el, board, mine) {
 
 async function finish(won, lastClick) {
   running = false;
+  closeLens(false);
   cancelAnimationFrame(raf);
   const ms = Date.now() - t0;
 

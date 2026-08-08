@@ -110,24 +110,43 @@ narrow to hold one, so it could never be consistent. Two letters fit inside all
 fifty. Colour carries the meaning — teal found, red miss, amber answer — and the
 footer ticker gives the full name on every click.
 
-**Taps snap to the nearest state; the magnifier does not.** Thin coastal
-states have more water than land within thumb range, so a tap on water now
-resolves to the nearest state by distance to its *border* — not its label
-anchor, which would hand a Delmarva near miss to Virginia. Capped at 20 map
-units so ocean and foreign soil still select nothing.
+**One resolver for taps and the magnifier.** Both go through `resolve()`.
+Two independent code paths had already drifted into a real bug (below), so
+there is deliberately only one.
+
+Only *selectable* states can be resolved to: not already found, not already
+missed this turn. Both are no-ops in `guess()`, so resolving to one means a
+deliberate action quietly does nothing.
+
+Containment wins outright; otherwise nearest selectable border within 40 map
+units. Measured to the border, not the label anchor — anchors would hand a
+Delmarva near miss to Virginia.
 
 The cap is in map units, not screen pixels, and that was not the first attempt.
 Screen pixels are the natural unit for thumb error, but a phone compresses the
-map so hard that 28 screen px is ~76 map units: the first version snapped
-central Canada onto Minnesota and the deep Gulf onto Florida. Map units keep
-the rule geographic at every scale. Near misses measure under 8 units, Canada
-25, open ocean 60-115, so 20 separates them cleanly.
+map so hard that 28 screen px is ~76 map units: that version snapped central
+Canada onto Minnesota and the deep Gulf onto Florida. Map units keep the rule
+geographic at every scale.
 
-Explicitly *not* applied to the magnifier: the disc shows precisely which shape
-is aimed, and snapping to something else on release would contradict it.
+`snapFromDead` is the single asymmetry. Inside an unselectable state the
+magnifier snaps to a neighbour and the tap does not, because the magnifier
+shows the result before committing and a tap cannot. Water snaps either way.
 
-Cost is a full scan of all ~9000 boundary points, but only on taps that hit no
-state — 0.1ms, measured.
+**The bug this replaced.** The magnifier highlighted whatever the crosshair
+contained, including solved states, while `settle()` discarded the trailing
+180ms as lift-twitch. Rest on Georgia for 200ms, slide onto already-found
+Florida for 100ms, lift: Florida is highlighted, Florida's segment falls
+inside the guard window and is dropped, and Georgia is selected. Highlighting
+only the resolved selectable target means the trail can no longer contain a
+state that cannot be picked.
+
+Note the invariant is "what a release picks", not "whatever is lit at the
+instant of release" — the guard window still discards a final sub-120ms
+segment, which is the whole point of it.
+
+`resolve()` is checked against an independent Python implementation over 120
+randomised points and dead-sets; cost is ~0.1ms and only when not inside a
+selectable state.
 
 **Leaderboard reset.** Needed because Chrome treats every `file://` page as one
 origin, so all downloaded copies share a single `localStorage` bucket; renaming

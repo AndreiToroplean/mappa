@@ -1,6 +1,6 @@
 import json, math, heapq
 
-d = json.load(open('package/states-albers-10m.json'))
+d = json.load(open(__import__('pathlib').Path(__file__).resolve().parent.parent / 'package' / 'states-albers-10m.json'))
 sc, tr = d['transform']['scale'], d['transform']['translate']
 
 arcs = []
@@ -120,7 +120,7 @@ for g in d['objects']['states']['geometries']:
     })
 
 states.sort(key=lambda s: s['n'])
-json.dump(states, open('states3.json', 'w'), separators=(',', ':'))
+json.dump(states, open(__import__('pathlib').Path(__file__).resolve().parent.parent / 'data' / 'states.json', 'w'), separators=(',', ':'))
 
 print(f'{len(states)} states')
 print('\ntightest interiors (these need enlarged tap targets):')

@@ -110,6 +110,22 @@
   .row.you .rank,.row.you .time{color:var(--amber)}
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 22px}
   .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
+  .bhead{display:flex;align-items:center;justify-content:space-between;
+    gap:10px;margin:0 0 10px}
+  .bhead h3{margin:0}
+  .iconbtn{margin:0;width:auto;flex:none;background:transparent;
+    border:1px solid var(--line);color:var(--muted);padding:5px 7px;
+    border-radius:7px;line-height:0;cursor:pointer}
+  .iconbtn:hover{filter:none;color:var(--text);border-color:var(--muted)}
+  .iconbtn svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .btnrow{display:flex;gap:10px;margin-top:22px}
+  .btnrow button{margin-top:0;flex:1}
+  button.ghost{background:transparent;color:var(--text);
+    box-shadow:inset 0 0 0 1px var(--line)}
+  button.ghost:hover{filter:none;background:rgba(255,255,255,.06)}
+  button.danger{background:var(--red);color:#fff}
+  .card.narrow{max-width:340px}
   .storenote{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
     color:var(--muted);margin-top:12px;line-height:1.45}
   .storenote.warn{color:var(--amber)}
@@ -143,6 +159,7 @@
   .lens path.aim{fill:var(--landhi);stroke:var(--amber);stroke-width:2.5}
   .lens path.found.aim{fill:#2C7A68;stroke:var(--amber)}
 
+  #confirm{z-index:30}
   .countdown{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
     pointer-events:none;z-index:20;background:rgba(10,14,23,.55)}
   .countdown[hidden]{display:none}
@@ -223,6 +240,18 @@
   <div class="cap" id="lensCap">—</div>
 </div>
 
+<div class="overlay" id="confirm" hidden>
+  <div class="card narrow">
+    <h2>Clear the board?</h2>
+    <div class="sub">This cannot be undone</div>
+    <p class="rules">Every saved run will be deleted, including any full fifty.</p>
+    <div class="btnrow">
+      <button class="ghost" id="clearNo">Cancel</button>
+      <button class="danger" id="clearYes">Clear</button>
+    </div>
+  </div>
+</div>
+
 <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
 
 <div class="overlay" id="intro">
@@ -234,7 +263,15 @@
       lift to pick.<br>
       Three misses ends the run. Your time is the score.</p>
     <div class="board">
-      <h3>Best runs</h3>
+      <div class="bhead">
+        <h3>Best runs</h3>
+        <button class="iconbtn clearBtn" aria-label="Clear the leaderboard"
+                title="Clear the leaderboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M10 4h4M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L18.5 7M10 11v5M14 11v5"/>
+          </svg>
+        </button>
+      </div>
       <div id="introBoard"></div>
       <div class="storenote"></div>
     </div>
@@ -247,7 +284,15 @@
     <h2 id="ovTitle">Run over</h2>
     <div class="sub" id="ovSub"></div>
     <div class="board">
-      <h3>Best runs</h3>
+      <div class="bhead">
+        <h3>Best runs</h3>
+        <button class="iconbtn clearBtn" aria-label="Clear the leaderboard"
+                title="Clear the leaderboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M10 4h4M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L18.5 7M10 11v5M14 11v5"/>
+          </svg>
+        </button>
+      </div>
       <div id="boardList"></div>
       <div class="storenote"></div>
     </div>
@@ -451,6 +496,68 @@ STATES.forEach(s => {
   lensPaths[s.n] = p;
 });
 
+/* Boundary points, parsed once out of the same path data the map draws from.
+   Used to answer "which state did they mean" when a tap lands on open water —
+   Maryland and Michigan in particular have so much water inside their reach
+   that a near miss is more likely than a hit. */
+const outline = {};
+STATES.forEach(s => {
+  outline[s.n] = s.d.split('M').filter(Boolean).map(ring => {
+    const pairs = ring.replace(/Z$/, '').split('L');
+    const a = new Float64Array(pairs.length * 2);
+    for (let i = 0; i < pairs.length; i++) {
+      const c = pairs[i].split(',');
+      a[i * 2] = +c[0];
+      a[i * 2 + 1] = +c[1];
+    }
+    return a;
+  });
+});
+
+function segDist2(px, py, ax, ay, bx, by) {
+  let dx = bx - ax, dy = by - ay;
+  if (dx || dy) {
+    const t = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy);
+    if (t > 1) { ax = bx; ay = by; }
+    else if (t > 0) { ax += dx * t; ay += dy * t; }
+  }
+  dx = px - ax; dy = py - ay;
+  return dx * dx + dy * dy;
+}
+
+/* How far a tap may miss and still count. Measured in map units, deliberately,
+   even though thumb error is really a screen-pixel quantity: on a phone the
+   map is compressed enough that a thumb's width spans about 76 map units, so a
+   screen-pixel threshold snapped clicks in central Canada onto Minnesota and
+   clicks in the deep Gulf onto Florida. Staying in map units keeps the rule
+   geographic — the reach is always a real distance on the map, whatever the
+   screen. 20 units clears every measured near miss (the Chesapeake, Delaware
+   Bay and Long Island Sound all sit under 8 units from their state) and still
+   falls short of Canada at 25 and open ocean at 60-115. Past it, a tap selects
+   nothing at all, exactly as before. */
+const SNAP_UNITS = 20;
+
+/* Nearest by distance to the closest point on the border, not to the label
+   anchor or the centroid: clicking just off the Delmarva coast should give
+   Maryland, which is metres away, not Virginia, whose centre is closer. */
+function nearestState(clientX, clientY) {
+  const u = userPoint(clientX, clientY);
+  if (!u) return null;
+  const maxD2 = SNAP_UNITS * SNAP_UNITS;
+  let best = null, bestD = Infinity;
+  for (let s = 0; s < STATES.length; s++) {
+    const nm = STATES[s].n, rs = outline[nm];
+    for (let r = 0; r < rs.length; r++) {
+      const a = rs[r], len = a.length;
+      for (let i = 0; i + 3 < len; i += 2) {
+        const d = segDist2(u.x, u.y, a[i], a[i + 1], a[i + 2], a[i + 3]);
+        if (d < bestD) { bestD = d; best = nm; }
+      }
+    }
+  }
+  return bestD <= maxD2 ? best : null;
+}
+
 let holdTimer = null, lensOn = false, swallowClick = false;
 let downX = 0, downY = 0, aim = null, trail = [], moveRaf = 0, lastPt = null;
 
@@ -591,7 +698,11 @@ svg.addEventListener('contextmenu', e => e.preventDefault());
 
 svg.addEventListener('click', e => {
   if (swallowClick) return;          // this press was consumed by the magnifier
-  const name = e.target.dataset && e.target.dataset.name;
+  // A tap that lands on water resolves to the nearest state. Deliberately not
+  // done for the magnifier: there the crosshair shows exactly what is aimed,
+  // and silently snapping would contradict what the disc is displaying.
+  const name = (e.target.dataset && e.target.dataset.name)
+            || nearestState(e.clientX, e.clientY);
   guess(name);
 });
 
@@ -739,6 +850,33 @@ async function finish(won, lastClick) {
   const remaining = Math.max(0, pause - (Date.now() - endedAt));
   setTimeout(() => { overlay.hidden = false; }, remaining);
 }
+
+/* Clearing matters more than it looks: every downloaded copy of the game
+   shares one localStorage bucket, because Chrome treats all file:// pages as a
+   single origin. Renaming or moving the file does not give you a fresh board,
+   so this is the only way to get one. */
+async function clearBoard() {
+  memBoard = [];
+  try { if (window.storage && window.storage.set) await window.storage.set(KEY, '[]'); }
+  catch (e) {}
+  try { window.localStorage.removeItem(KEY); } catch (e) {}
+  renderBoard(document.getElementById('introBoard'), [], null);
+  renderBoard(document.getElementById('boardList'), [], null);
+  showNote();
+}
+
+const confirmBox = document.getElementById('confirm');
+document.querySelectorAll('.clearBtn').forEach(b =>
+  b.addEventListener('click', () => { confirmBox.hidden = false; }));
+document.getElementById('clearNo').addEventListener('click',
+  () => { confirmBox.hidden = true; });
+document.getElementById('clearYes').addEventListener('click', async () => {
+  await clearBoard();
+  confirmBox.hidden = true;
+});
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !confirmBox.hidden) confirmBox.hidden = true;
+});
 
 document.getElementById('again').addEventListener('click', beginRun);
 document.getElementById('startBtn').addEventListener('click', beginRun);

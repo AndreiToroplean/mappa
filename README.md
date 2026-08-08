@@ -87,6 +87,24 @@ full-width line, the three stats beneath it — because one 360px row could not
 hold a long name and three stat columns at once, and the name was the thing
 being truncated. The stacked header is a fixed 94px, so it is still pinned.
 
+## Forgiving taps
+
+A plain tap that lands on water resolves to the nearest state, measured to the
+closest point on its border rather than to its label anchor or centroid — a tap
+just off the Delmarva coast should give Maryland, which is metres away, not
+Virginia, whose centre is nearer. This exists because thin coastal states are
+surrounded by more water than land within thumb range.
+
+The reach is capped at 20 map units, so a tap in open ocean or over another
+country still selects nothing. The cap is in map units rather than screen
+pixels on purpose: a phone compresses the map enough that a thumb's width spans
+~76 map units, and a screen-pixel threshold snapped central Canada onto
+Minnesota. Measured near misses are all under 8 units; Canada is 25 and open
+ocean 60-115.
+
+Snapping applies to taps only, never to the magnifier — there the crosshair
+shows exactly what is aimed, and snapping would contradict the display.
+
 ## Magnifier
 
 Press and hold the map for 250ms to open a zoomed disc, drag to aim, lift to
@@ -114,7 +132,8 @@ Three storage backends, tried in order:
 | `localStorage` | opened as a downloaded file | yes | yes |
 | memory | storage blocked or unavailable | no | no |
 
-The intro and game-over cards state which one is in use. A board that silently
+The intro and game-over cards state which one is in use, and carry a reset
+button (with a confirmation step) beside the board. A board that silently
 forgets is worse than one that says up front that it will.
 
 Ranked by states found first, time second — a slow 50 always beats a fast 40.

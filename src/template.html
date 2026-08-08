@@ -33,6 +33,13 @@
     margin-left:8px;vertical-align:-4px;animation:blink 1.1s steps(1,end) infinite}
   @keyframes blink{50%{opacity:0}}
 
+  header.lost{border-bottom-color:var(--red);animation:lossflash .7s ease-out}
+  @keyframes lossflash{from{background:#2C1114}to{background:var(--panel)}}
+  .target.lost{color:var(--red)}
+  .val.lost{color:var(--red)}
+  .pip.lastgone{animation:pipout .5s ease-out}
+  @keyframes pipout{0%{background:var(--red);transform:rotate(45deg) scale(1.6)}}
+
   .stat{text-align:right}
   .stat .val{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
   .lives{display:flex;gap:7px;justify-content:flex-end;height:22px;align-items:center}
@@ -97,9 +104,9 @@
 </head>
 <body>
 
-<header>
+<header id="bar">
   <div class="prompt">
-    <div class="eyebrow">Find this state</div>
+    <div class="eyebrow" id="promptLabel">Find this state</div>
     <div class="target" id="target">—<span class="caret"></span></div>
   </div>
   <div class="stat">
@@ -198,6 +205,7 @@ const fmt = ms => {
 function drawLives() {
   document.getElementById('lives').innerHTML =
     [0,1,2].map(i => `<div class="pip${i < lives ? '' : ' gone'}"></div>`).join('');
+  if (lives === 0) document.querySelector('.pip').classList.add('lastgone');
 }
 
 function start() {
@@ -211,6 +219,10 @@ function start() {
   Object.values(nodes).forEach(p => p.setAttribute('class', 'state'));
   Object.values(labels).forEach(t => t.style.display = 'none');
   drawLives();
+  document.getElementById('bar').classList.remove('lost');
+  document.getElementById('target').classList.remove('lost');
+  clock.classList.remove('lost');
+  document.getElementById('promptLabel').textContent = 'Find this state';
   document.getElementById('progress').textContent = '0/50';
   ticker.textContent = 'Click the state named above. Three misses ends the run.';
   overlay.hidden = true;
@@ -280,6 +292,12 @@ async function finish(won, lastClick) {
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's all fifty.`;
     pause = 1200;   // let the last state fill in and the map read as complete
   } else {
+    document.getElementById('bar').classList.add('lost');
+    document.getElementById('promptLabel').textContent = 'Run over';
+    const tgt = document.getElementById('target');
+    tgt.textContent = 'Out of lives';
+    tgt.classList.add('lost');
+    clock.classList.add('lost');
     nodes[current].setAttribute('class', 'state reveal');
     setLabel(current, 'answer');
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +

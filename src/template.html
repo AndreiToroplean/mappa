@@ -14,7 +14,12 @@
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
+    -webkit-touch-callout:none;                /* long-press context menu */
+    -webkit-user-select:none;user-select:none} /* stray text selection on labels */
+  svg,path.state,circle.hit{touch-action:manipulation}
+  path.state:focus,circle.hit:focus{outline:none}
   html,body{margin:0;height:100%;background:var(--ink);color:var(--text);font-family:var(--sans)}
   body{display:flex;flex-direction:column}
 

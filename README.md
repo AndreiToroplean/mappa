@@ -90,7 +90,7 @@ being truncated. The stacked header is a fixed 94px, so it is still pinned.
 ## Magnifier
 
 Press and hold the map for 250ms to open a zoomed disc, drag to aim, lift to
-select. The state under the crosshair is highlighted and named in the disc, so
+select. The state under the crosshair is highlighted in the disc, so
 the selection is visible before it is committed. Lifting over open water
 cancels without cost. Plain tapping still works and is unchanged.
 
@@ -106,8 +106,16 @@ window. Failing that, it is the state under the finger at the cutoff moment.
 
 ## Leaderboard
 
-Stored via the artifact `window.storage` API, with an in-memory fallback if it's
-unavailable.
+Three storage backends, tried in order:
+
+| backend | when | survives refresh | survives rebuild |
+|---|---|---|---|
+| `window.storage` | inside the artifact runtime | yes | no — scoped per instance |
+| `localStorage` | opened as a downloaded file | yes | yes |
+| memory | storage blocked or unavailable | no | no |
+
+The intro and game-over cards state which one is in use. A board that silently
+forgets is worse than one that says up front that it will.
 
 Ranked by states found first, time second — a slow 50 always beats a fast 40.
 Sub-50 runs keep one entry per tally, so your best 31-state run replaces your

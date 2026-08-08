@@ -81,6 +81,12 @@ committed. Lifting over water cancels for free. Tapping is untouched.
 
 Three things here are not obvious:
 
+- The magnifier shows shape and status, never names or abbreviations. Naming
+  the state under the crosshair answers the only question the game asks, which
+  makes the feature a cheat sheet. The amber fill alone says *which shape* is
+  aimed, which is the entire promise the disc needs to keep; the caption says
+  "lift to pick" / "lift to cancel" and nothing more. The label layer is never
+  cloned into the disc for the same reason.
 - Aiming uses `isPointInFill` against the real paths, not `elementFromPoint`.
   The tap circles are up to 10px wide and would answer for their neighbours,
   which is exactly the ambiguity the magnifier exists to remove.
@@ -117,7 +123,7 @@ footer ticker gives the full name on every click.
 - Leaderboard: ranked by states found, then time. One entry per sub-50 tally
   (your best 31-state run replaces your previous 31-state run, never competes
   with your 12-state one). Up to five full runs coexist, ranked on time.
-  Zero-state runs don't post. Stored via `window.storage`, in-memory fallback.
+  Zero-state runs don't post.
 
 ## If uploading to a Claude Project
 
@@ -128,6 +134,15 @@ Do **not** upload `data/states.json`. It's ~107KB of coordinates on a single
 line, it tells a reader nothing, and it would consume context in every
 conversation. It can be regenerated with `npm pack us-atlas@3` +
 `python3 src/build.py`.
+
+**Leaderboard storage, three backends.** `window.storage` inside the artifact
+runtime; `localStorage` when the file is downloaded and opened directly; memory
+as the last resort. The original code only tried `window.storage` and fell
+silently into a memory array otherwise, which meant a downloaded copy lost its
+board on every refresh and gave no hint why. Note that `window.storage` is
+scoped per artifact instance, so scores do *not* carry across a rebuild — that
+is the runtime's boundary, not a bug, and the cards now say so rather than
+leaving it to be discovered.
 
 ## Possible next steps
 

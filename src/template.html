@@ -110,6 +110,9 @@
   .row.you .rank,.row.you .time{color:var(--amber)}
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 22px}
   .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
+  .storenote{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+    color:var(--muted);margin-top:12px;line-height:1.45}
+  .storenote.warn{color:var(--amber)}
 
   /* Press-and-hold magnifier. Never in hit testing itself — aiming is done
      against the real map underneath, so the disc can float over the finger
@@ -233,6 +236,7 @@
     <div class="board">
       <h3>Best runs</h3>
       <div id="introBoard"></div>
+      <div class="storenote"></div>
     </div>
     <button id="startBtn">Start</button>
   </div>
@@ -245,6 +249,7 @@
     <div class="board">
       <h3>Best runs</h3>
       <div id="boardList"></div>
+      <div class="storenote"></div>
     </div>
     <button id="again">Play again</button>
   </div>
@@ -508,7 +513,10 @@ function moveLens(x, y) {
     aim = name;
     if (name) lensPaths[name].classList.add('aim');
     trail.push({ name: name, t0: now, t1: now });
-    lensCap.textContent = name || 'lift to cancel';
+    // Deliberately never the state's name. Naming what you are hovering would
+    // answer the only question the game asks. The amber fill already says
+    // *which shape* is aimed, which is all the magnifier needs to promise.
+    lensCap.textContent = name ? 'lift to pick' : 'lift to cancel';
     lensCap.classList.toggle('none', !name);
   }
 }
@@ -590,13 +598,72 @@ svg.addEventListener('click', e => {
 // leaderboard: one best time per states-found tally, but many entries at a full 50
 const KEY = 'fifty:board2';
 let memBoard = [];
-async function loadBoard() {
-  try { const r = await window.storage.get(KEY); return r ? JSON.parse(r.value) : []; }
-  catch (e) { return memBoard; }
+
+/* Three backends, tried in order, because the file gets run two very different
+   ways. Inside the artifact runtime `window.storage` exists and is scoped per
+   artifact instance — scores persist across refreshes but not across a rebuild,
+   since a new build is a new instance. Downloaded and opened straight from
+   Chrome there is no `window.storage` at all, and that case used to fall
+   silently into a memory array that died on every refresh. localStorage covers
+   it properly. Memory is the last resort (private mode, storage disabled), and
+   it is now *reported* rather than hidden — a leaderboard that quietly forgets
+   is worse than one that says it will. */
+let store = 'memory';
+
+function localOK() {
+  try {
+    window.localStorage.setItem(KEY + ':probe', '1');
+    window.localStorage.removeItem(KEY + ':probe');
+    return true;
+  } catch (e) { return false; }
 }
+
+const parse = s => { try { return JSON.parse(s) || []; } catch (e) { return []; } };
+
+async function loadBoard() {
+  if (window.storage && window.storage.get) {
+    try {
+      const r = await window.storage.get(KEY);
+      store = 'artifact';
+      return r ? parse(r.value) : [];
+    } catch (e) {
+      // An unset key throws here, which is not the same as a broken backend.
+      // Settle it with a write: if that lands, the backend is fine and empty.
+      try { await window.storage.set(KEY, '[]'); store = 'artifact'; return []; }
+      catch (e2) {}
+    }
+  }
+  if (localOK()) {
+    store = 'local';
+    return parse(window.localStorage.getItem(KEY));
+  }
+  store = 'memory';
+  return memBoard;
+}
+
 async function saveBoard(b) {
   memBoard = b;
-  try { await window.storage.set(KEY, JSON.stringify(b)); } catch (e) {}
+  const json = JSON.stringify(b);
+  if (store === 'artifact') {
+    try { await window.storage.set(KEY, json); return; }
+    catch (e) { store = localOK() ? 'local' : 'memory'; }
+  }
+  if (store === 'local') {
+    try { window.localStorage.setItem(KEY, json); return; }
+    catch (e) { store = 'memory'; }          // quota, or permission revoked
+  }
+}
+
+const STORE_NOTE = {
+  artifact: 'Saved to this copy of the game. A new build starts a fresh board.',
+  local:    'Saved in this browser.',
+  memory:   "This session only \u2014 these scores won't survive a refresh.",
+};
+function showNote() {
+  document.querySelectorAll('.storenote').forEach(el => {
+    el.textContent = STORE_NOTE[store];
+    el.classList.toggle('warn', store === 'memory');
+  });
 }
 
 const rankBoard = b => b.sort((a, c) => c.f - a.f || a.t - c.t);
@@ -667,6 +734,7 @@ async function finish(won, lastClick) {
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);
   renderBoard(document.getElementById('boardList'), res.board, res.kept ? entry.d : null);
+  showNote();
 
   const remaining = Math.max(0, pause - (Date.now() - endedAt));
   setTimeout(() => { overlay.hidden = false; }, remaining);
@@ -676,7 +744,10 @@ document.getElementById('again').addEventListener('click', beginRun);
 document.getElementById('startBtn').addEventListener('click', beginRun);
 
 // show any existing best runs on the intro screen
-loadBoard().then(b => renderBoard(document.getElementById('introBoard'), b, null));
+loadBoard().then(b => {
+  renderBoard(document.getElementById('introBoard'), b, null);
+  showNote();
+});
 </script>
 </body>
 </html>

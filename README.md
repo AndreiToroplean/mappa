@@ -82,6 +82,28 @@ Layout is pinned: header and footer have fixed heights, stat columns have
 reserved widths, and the prompt ellipsises rather than wraps. Any of these
 flexing would resize the map mid-run.
 
+Under 600px the header stacks into two rows — the state name on its own
+full-width line, the three stats beneath it — because one 360px row could not
+hold a long name and three stat columns at once, and the name was the thing
+being truncated. The stacked header is a fixed 94px, so it is still pinned.
+
+## Magnifier
+
+Press and hold the map for 250ms to open a zoomed disc, drag to aim, lift to
+select. The state under the crosshair is highlighted and named in the disc, so
+the selection is visible before it is committed. Lifting over open water
+cancels without cost. Plain tapping still works and is unchanged.
+
+Aiming hit-tests the real map with `isPointInFill`, not the disc and not
+`elementFromPoint` — the disc must reflect true geometry, and the oversized tap
+circles would otherwise answer for their neighbours. The disc is
+`pointer-events:none` so it can float over the finger without intercepting it.
+
+The release is deliberately not "whatever was under the finger at lift-off": a
+thumb slides as it leaves the glass. The last 180ms are discarded, and the
+selection is the most recent state rested on for at least 120ms before that
+window. Failing that, it is the state under the finger at the cutoff moment.
+
 ## Leaderboard
 
 Stored via the artifact `window.storage` API, with an in-memory fallback if it's

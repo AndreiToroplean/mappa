@@ -65,6 +65,35 @@ reserved widths, the prompt ellipsises rather than wraps, and the body doesn't
 scroll. Previously a long state name could wrap the header to two rows and a long
 ticker message could wrap the footer, either of which resized the map mid-run.
 
+**Stacked header on phones.** The name was being ellipsised on Android: a
+360px row cannot fit "North Carolina" plus lives, found and time. Shrinking the
+type further would have made the prompt the smallest thing on screen, so under
+600px the header becomes two rows instead — name on its own full-width line,
+stats beneath. Fixed 94px, so the pinning guarantee holds. Measured worst case
+is ~196px of name in ~372px of usable width.
+
+**Press-and-hold magnifier.** Enlarged tap targets made the small states
+*reachable* but not *aimable* — the thumb covers the target and a tap commits
+instantly, so the first feedback is a lost life. Hold 250ms to open a 4x disc
+offset from the finger, drag to aim, lift to select; the aimed state is
+highlighted and named in the disc, so the choice is visible before it is
+committed. Lifting over water cancels for free. Tapping is untouched.
+
+Three things here are not obvious:
+
+- Aiming uses `isPointInFill` against the real paths, not `elementFromPoint`.
+  The tap circles are up to 10px wide and would answer for their neighbours,
+  which is exactly the ambiguity the magnifier exists to remove.
+- The disc is `pointer-events:none` and sits above the map, so it can float
+  over the finger without ever intercepting what it points at.
+- Lift-off resolution discards the last 180ms, because a thumb drifts as it
+  leaves the glass. The pick is the most recent state rested on for >=120ms
+  before that window, else the state under the finger at the cutoff. Segment
+  timings are tracked in `trail`; `settle()` walks them backwards.
+
+`touch-action` moved from `manipulation` to `none` on the map: a drag gesture
+needs the browser to keep its hands off the touch stream entirely.
+
 **Android touch.** `-webkit-tap-highlight-color: transparent` kills the grey
 rectangle Chrome paints over the tapped element's bounding box. Also
 `-webkit-touch-callout`, `user-select: none`, and `touch-action: manipulation`

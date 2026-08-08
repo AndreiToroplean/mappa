@@ -20,20 +20,26 @@
     -webkit-user-select:none;user-select:none} /* stray text selection on labels */
   svg,path.state,circle.hit{touch-action:manipulation}
   path.state:focus,circle.hit:focus{outline:none}
-  html,body{margin:0;height:100%;background:var(--ink);color:var(--text);font-family:var(--sans)}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--sans)}
   body{display:flex;flex-direction:column}
 
   header{
-    display:flex;align-items:center;gap:20px;
-    padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);
-    flex-wrap:wrap;
+    display:flex;align-items:center;gap:18px;flex-wrap:nowrap;
+    height:76px;flex:none;padding:0 22px;
+    border-bottom:1px solid var(--line);background:var(--panel);
   }
+  .prompt{flex:1;min-width:0}
+  .stat{text-align:right;flex:none}
+  .target{font-size:30px;font-weight:700;letter-spacing:-0.02em;line-height:1.05;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lives{display:flex;gap:7px;justify-content:flex-end;height:22px;align-items:center;
+    min-width:51px}
+  #progress{min-width:72px}
+  #clock{min-width:94px}
   .eyebrow{
     font-family:var(--mono);font-size:10px;letter-spacing:.22em;
     text-transform:uppercase;color:var(--muted);margin-bottom:4px;
   }
-  .prompt{flex:1;min-width:200px}
-  .target{font-size:30px;font-weight:700;letter-spacing:-0.02em;line-height:1.05}
   .caret{display:inline-block;width:9px;height:26px;background:var(--amber);
     margin-left:8px;vertical-align:-4px;animation:blink 1.1s steps(1,end) infinite}
   @keyframes blink{50%{opacity:0}}
@@ -45,16 +51,13 @@
   .pip.lastgone{animation:pipout .5s ease-out}
   @keyframes pipout{0%{background:var(--red);transform:rotate(45deg) scale(1.6)}}
 
-  .stat{text-align:right}
   .stat .val{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
-  .lives{display:flex;gap:7px;justify-content:flex-end;height:22px;align-items:center}
   .pip{width:11px;height:11px;background:var(--amber);transform:rotate(45deg);
     transition:background .25s, transform .25s}
   .pip.gone{background:transparent;box-shadow:inset 0 0 0 1px var(--line);transform:rotate(45deg) scale(.8)}
 
   main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;min-height:0}
-  svg{width:100%;height:100%;max-height:100%;display:block}
-  path.state{fill:var(--land);stroke:var(--ink);stroke-width:1;cursor:pointer;
+  svg{width:100%;height:100%;max-height:100%;display:block}  path.state{fill:var(--land);stroke:var(--ink);stroke-width:1;cursor:pointer;
     transition:fill .15s}
   path.state:hover{fill:var(--landhi)}
   path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
@@ -70,8 +73,11 @@
 
   footer{
     font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);
-    padding:11px 22px;border-top:1px solid var(--line);min-height:40px;background:var(--panel);
+    padding:0 22px;border-top:1px solid var(--line);background:var(--panel);
+    height:48px;flex:none;display:flex;align-items:center;overflow:hidden;
   }
+  #ticker{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;line-height:1.35}
   footer b{color:var(--text);font-weight:400}
   footer .ok{color:var(--foundline)}
   footer .no{color:var(--red)}
@@ -118,9 +124,13 @@
   button:focus-visible{outline:2px solid var(--foundline);outline-offset:3px}
 
   @media (max-width:600px){
-    .target{font-size:22px}
-    header{gap:12px;padding:12px 14px}
-    .stat .val{font-size:18px}
+    .target{font-size:21px}
+    header{gap:12px;padding:0 14px;height:66px}
+    .stat .val{font-size:17px}
+    #progress{min-width:58px}
+    #clock{min-width:78px}
+    footer{font-size:11px;padding:0 14px;height:52px}
+    .countdown span{font-size:78px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -150,7 +160,7 @@
   <svg id="map" viewBox="-60 10 1020 600" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
-<footer id="ticker">Click the state named above. Three misses ends the run.</footer>
+<footer><span id="ticker">Click the state named above. Three misses ends the run.</span></footer>
 
 <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
 
@@ -183,7 +193,6 @@
 <script>
 const STATES = __DATA__;
 const ABBR = __ABBR__;
-const SMALL = ["Rhode Island","Connecticut","Delaware","New Jersey","Vermont","Massachusetts","New Hampshire"];
 
 const svg = document.getElementById('map');
 const NS = 'http://www.w3.org/2000/svg';
@@ -209,7 +218,7 @@ const labels = {};
 STATES.forEach(s => {
   const t = document.createElementNS(NS, 'text');
   t.setAttribute('class', 'label');
-  t.setAttribute('x', s.c[0]); t.setAttribute('y', s.c[1] + 4);
+  t.setAttribute('x', s.l[0]); t.setAttribute('y', s.l[1] + 4);
   t.textContent = ABBR[s.n];
   t.style.display = 'none';
   L_LABEL.appendChild(t);
@@ -223,14 +232,15 @@ function setLabel(name, kind) {
   t.style.display = '';
   L_LABEL.appendChild(t);   // newest label wins any overlap
 }
-// generous hit targets for the small northeastern states, smallest on top
-SMALL.slice().reverse().forEach(n => {
-  const s = STATES.find(x => x.n === n);
+// Any state whose widest inscribed circle is under ~12px is hard to hit with a
+// thumb, so it gets an invisible tap target at its pole of inaccessibility.
+// Tightest states go last so they sit on top of their roomier neighbours.
+STATES.filter(s => s.r < 12).sort((a, b) => b.r - a.r).forEach(s => {
   const c = document.createElementNS(NS, 'circle');
   c.setAttribute('class', 'hit');
-  c.setAttribute('cx', s.c[0]); c.setAttribute('cy', s.c[1]);
-  c.setAttribute('r', n === 'Rhode Island' ? 9 : 7.5);
-  c.dataset.name = n;
+  c.setAttribute('cx', s.l[0]); c.setAttribute('cy', s.l[1]);
+  c.setAttribute('r', Math.max(10, s.r));
+  c.dataset.name = s.n;
   L_HIT.appendChild(c);
 });
 

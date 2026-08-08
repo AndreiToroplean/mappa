@@ -87,29 +87,39 @@ full-width line, the three stats beneath it — because one 360px row could not
 hold a long name and three stat columns at once, and the name was the thing
 being truncated. The stacked header is a fixed 94px, so it is still pinned.
 
-## Forgiving taps
+## Resolving a position to a state
 
-A plain tap that lands on water resolves to the nearest state, measured to the
-closest point on its border rather than to its label anchor or centroid — a tap
-just off the Delmarva coast should give Maryland, which is metres away, not
-Virginia, whose centre is nearer. This exists because thin coastal states are
-surrounded by more water than land within thumb range.
+Taps and the magnifier share one resolver, so the two can never disagree about
+what a position means.
 
-The reach is capped at 20 map units, so a tap in open ocean or over another
-country still selects nothing. The cap is in map units rather than screen
-pixels on purpose: a phone compresses the map enough that a thumb's width spans
-~76 map units, and a screen-pixel threshold snapped central Canada onto
-Minnesota. Measured near misses are all under 8 units; Canada is 25 and open
-ocean 60-115.
+A state is *selectable* only if picking it would do something — already-found
+states, and states already missed this turn, are no-ops in `guess()` and are
+excluded. Resolving to one would mean a deliberate action silently doing
+nothing, which is what used to make the magnifier feel broken.
 
-Snapping applies to taps only, never to the magnifier — there the crosshair
-shows exactly what is aimed, and snapping would contradict the display.
+Containment wins outright. Otherwise the nearest selectable state within 40 map
+units wins, measured to the closest point on its border rather than to its
+label anchor or centroid — a position just off the Delmarva coast should give
+Maryland, which is metres away, not Virginia, whose centre is nearer. Past the
+reach, nothing is selected.
+
+The reach is in map units rather than screen pixels on purpose: a phone
+compresses the map enough that a thumb's width spans ~76 map units, and an
+earlier screen-pixel version snapped central Canada onto Minnesota. Map units
+keep the rule geographic at any screen size.
+
+The one asymmetry is what happens *inside* an unselectable state. The magnifier
+snaps to a neighbour, because it draws the result under the crosshair before
+anything is committed. A tap does not, because it has no preview, and turning a
+tap on a solved state into a life lost on the state next door would be
+indefensible. Open water snaps either way.
 
 ## Magnifier
 
 Press and hold the map for 250ms to open a zoomed disc, drag to aim, lift to
-select. The state under the crosshair is highlighted in the disc, so
-the selection is visible before it is committed. Lifting over open water
+select. The state a release would select is highlighted in the disc — which
+is not always the one under the crosshair, since the crosshair may be over
+water or over a state already solved. Lifting over open water
 cancels without cost. Plain tapping still works and is unchanged.
 
 Aiming hit-tests the real map with `isPointInFill`, not the disc and not

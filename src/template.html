@@ -157,7 +157,6 @@
   .lens path.found{fill:var(--found);stroke:var(--foundline)}
   .lens path.miss{fill:var(--red);stroke:#FF9296}
   .lens path.aim{fill:var(--landhi);stroke:var(--amber);stroke-width:2.5}
-  .lens path.found.aim{fill:#2C7A68;stroke:var(--amber)}
 
   #confirm{z-index:30}
   .countdown{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
@@ -496,10 +495,25 @@ STATES.forEach(s => {
   lensPaths[s.n] = p;
 });
 
-/* Boundary points, parsed once out of the same path data the map draws from.
-   Used to answer "which state did they mean" when a tap lands on open water —
-   Maryland and Michigan in particular have so much water inside their reach
-   that a near miss is more likely than a hit. */
+/* ---- resolving a pointer position to a state --------------------------
+   One resolver, shared by taps and the magnifier, so the two can never
+   disagree about what a position means.
+
+   A state counts as *selectable* only if picking it would actually do
+   something. Already-found states, and states already missed this turn, are
+   no-ops inside guess(); resolving to one means a deliberate action quietly
+   does nothing. They are excluded here instead, so what gets resolved is
+   always something worth resolving to.
+
+   Containment wins outright — being inside a selectable state is distance
+   zero. Otherwise the nearest selectable state within SNAP_UNITS wins,
+   measured to the closest point on its border rather than to its label
+   anchor or centroid: a position just off the Delmarva coast should give
+   Maryland, which is metres away, not Virginia, whose centre is nearer. */
+
+const SNAP_UNITS = 40;   // reach in map units — see CONTEXT.md for why not px
+
+// boundary points, parsed once out of the same path data the map draws from
 const outline = {};
 STATES.forEach(s => {
   outline[s.n] = s.d.split('M').filter(Boolean).map(ring => {
@@ -514,6 +528,12 @@ STATES.forEach(s => {
   });
 });
 
+function selectable(name) {
+  return !!name && !!nodes[name]
+    && !nodes[name].classList.contains('found')
+    && !missed.has(name);
+}
+
 function segDist2(px, py, ax, ay, bx, by) {
   let dx = bx - ax, dy = by - ay;
   if (dx || dy) {
@@ -525,28 +545,25 @@ function segDist2(px, py, ax, ay, bx, by) {
   return dx * dx + dy * dy;
 }
 
-/* How far a tap may miss and still count. Measured in map units, deliberately,
-   even though thumb error is really a screen-pixel quantity: on a phone the
-   map is compressed enough that a thumb's width spans about 76 map units, so a
-   screen-pixel threshold snapped clicks in central Canada onto Minnesota and
-   clicks in the deep Gulf onto Florida. Staying in map units keeps the rule
-   geographic — the reach is always a real distance on the map, whatever the
-   screen. 20 units clears every measured near miss (the Chesapeake, Delaware
-   Bay and Long Island Sound all sit under 8 units from their state) and still
-   falls short of Canada at 25 and open ocean at 60-115. Past it, a tap selects
-   nothing at all, exactly as before. */
-const SNAP_UNITS = 20;
+// which state's fill contains this point, selectable or not
+function stateUnder(u, clientX, clientY) {
+  if (CAN_HIT) {
+    for (let i = 0; i < STATES.length; i++) {
+      const nm = STATES[i].n;
+      if (nodes[nm].isPointInFill(u)) return nm;
+    }
+    return null;
+  }
+  const el = document.elementFromPoint(clientX, clientY);  // lens ignores pointers
+  return (el && el.dataset && el.dataset.name) || null;
+}
 
-/* Nearest by distance to the closest point on the border, not to the label
-   anchor or the centroid: clicking just off the Delmarva coast should give
-   Maryland, which is metres away, not Virginia, whose centre is closer. */
-function nearestState(clientX, clientY) {
-  const u = userPoint(clientX, clientY);
-  if (!u) return null;
-  const maxD2 = SNAP_UNITS * SNAP_UNITS;
-  let best = null, bestD = Infinity;
+function nearestSelectable(u) {
+  let best = null, bestD = SNAP_UNITS * SNAP_UNITS;   // seeded at the cap
   for (let s = 0; s < STATES.length; s++) {
-    const nm = STATES[s].n, rs = outline[nm];
+    const nm = STATES[s].n;
+    if (!selectable(nm)) continue;
+    const rs = outline[nm];
     for (let r = 0; r < rs.length; r++) {
       const a = rs[r], len = a.length;
       for (let i = 0; i + 3 < len; i += 2) {
@@ -555,7 +572,22 @@ function nearestState(clientX, clientY) {
       }
     }
   }
-  return bestD <= maxD2 ? best : null;
+  return best;
+}
+
+/* snapFromDead decides what happens *inside* an unselectable state. The
+   magnifier passes true: it draws the result under the crosshair before
+   anything is committed, so sliding over a solved state and being offered its
+   neighbour is visible and can be corrected. A tap passes false, because it
+   has no preview — silently turning a tap on a state you already solved into
+   a life lost on the state next door would be indefensible. Open water snaps
+   either way. */
+function resolve(clientX, clientY, snapFromDead) {
+  const u = userPoint(clientX, clientY);
+  if (!u) return null;
+  const under = stateUnder(u, clientX, clientY);
+  if (under) return selectable(under) ? under : (snapFromDead ? nearestSelectable(u) : null);
+  return nearestSelectable(u);
 }
 
 let holdTimer = null, lensOn = false, swallowClick = false;
@@ -572,19 +604,6 @@ function userPoint(x, y) {
 
 // Geometry hit test rather than elementFromPoint: inside the disc we want the
 // true shape under the crosshair, never one of the oversized tap circles.
-function stateAt(x, y) {
-  const u = userPoint(x, y);
-  if (u && CAN_HIT) {
-    for (let i = 0; i < STATES.length; i++) {
-      const nm = STATES[i].n;
-      if (nodes[nm].isPointInFill(u)) return nm;
-    }
-    return null;
-  }
-  const el = document.elementFromPoint(x, y);   // lens is pointer-events:none
-  return (el && el.dataset && el.dataset.name) || null;
-}
-
 function openLens(x, y) {
   lensOn = true;
   for (const nm in lensPaths) {
@@ -612,7 +631,7 @@ function moveLens(x, y) {
   if (top < 8) top = Math.min(y + 40, Math.max(8, vh - D - 46));
   lensBox.style.top = top + 'px';
 
-  const name = stateAt(x, y);
+  const name = resolve(x, y, true);   // exactly what a release would pick
   if (name !== aim) {
     const now = Date.now();
     if (trail.length) trail[trail.length - 1].t1 = now;
@@ -698,12 +717,10 @@ svg.addEventListener('contextmenu', e => e.preventDefault());
 
 svg.addEventListener('click', e => {
   if (swallowClick) return;          // this press was consumed by the magnifier
-  // A tap that lands on water resolves to the nearest state. Deliberately not
-  // done for the magnifier: there the crosshair shows exactly what is aimed,
-  // and silently snapping would contradict what the disc is displaying.
-  const name = (e.target.dataset && e.target.dataset.name)
-            || nearestState(e.clientX, e.clientY);
-  guess(name);
+  // An enlarged hit circle still counts, but only for a state worth picking;
+  // anything else goes through the shared resolver.
+  const tapped = e.target.dataset && e.target.dataset.name;
+  guess(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY, false));
 });
 
 // leaderboard: one best time per states-found tally, but many entries at a full 50

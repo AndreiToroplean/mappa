@@ -1,0 +1,99 @@
+# Fifty
+
+A US states drill. You're named a state, you click it on the map. Three misses
+ends the run; your time is the score.
+
+Built as a single self-contained HTML file — no CDN, no network calls, no
+dependencies at runtime. Open `dist/fifty.html` in any browser and it works,
+including offline.
+
+## Layout
+
+```
+src/template.html   the game: markup, CSS, and logic, with __DATA__ / __ABBR__ placeholders
+src/build.py        decodes the map data and computes label anchors
+src/make.py         injects data into the template and writes dist/fifty.html
+data/states.json    generated: path geometry, label anchor, inscribed radius per state
+dist/fifty.html     generated (gitignored): the playable file
+```
+
+Rebuild:
+
+```
+python3 src/build.py      # needs package/states-albers-10m.json (see below)
+python3 src/make.py
+```
+
+`src/build.py` is only needed if you want to regenerate the geometry.
+`data/states.json` is committed, so `make.py` alone rebuilds the game.
+
+## Map data
+
+[us-atlas](https://github.com/topojson/us-atlas) v3.0.1 (ISC licence), which
+packages US Census Bureau cartographic boundary files as TopoJSON. Installed via
+`npm pack us-atlas@3`, which drops a `package/` directory.
+
+We use `states-albers-10m.json` — already projected in Albers USA, with Alaska
+and Hawaii in their conventional insets, so no projection maths is needed at
+build time. The build step:
+
+1. Delta-decodes the quantised arcs into absolute coordinates.
+2. Stitches arcs into rings (negative arc index means traverse in reverse).
+3. Drops islands under 1.2 sq px and thins points closer than 0.45px.
+4. Computes a label anchor per state (below).
+
+DC and the territories are excluded; 50 states exactly.
+
+## Label placement
+
+Labels sit at each state's **pole of inaccessibility** — the interior point
+furthest from any edge — not the centroid or bounding-box centre. This is
+Mapbox's `polylabel` algorithm, reimplemented in `build.py`: cover the polygon in
+square cells, score each by signed distance to the nearest edge, and repeatedly
+subdivide the most promising cell while pruning any whose upper bound can't beat
+the current best.
+
+This matters because states aren't convex. A bounding-box centre puts Michigan's
+label in Lake Michigan, Louisiana's in the Gulf of Mexico, and Alaska's and
+Hawaii's in open ocean. For multi-part states the algorithm runs per landmass and
+the roomiest one wins, which is what keeps Michigan's label in the lower
+peninsula.
+
+The algorithm also returns the inscribed radius, which is reused: any state whose
+widest inscribed circle is under 12px gets an invisible circular tap target at
+the same point, because it can't reliably be hit with a thumb. That currently
+covers CT, DE, HI, MD, MA, NH, NJ, RI and VT. Maryland qualifies despite its
+size — it's long but never more than 8px thick.
+
+## Rendering notes
+
+SVG has no `z-index`; it paints in document order. Resolved states therefore
+*move* between six `<g>` layers as their status changes:
+
+```
+base  <  found  <  missed  <  answer  <  labels  <  hit targets
+```
+
+Without this, a neighbouring unsolved state drawn later clips the outline of one
+you've already solved. Hit targets stay topmost so clicks still land, which means
+the handler has to explicitly ignore clicks on already-found states.
+
+Layout is pinned: header and footer have fixed heights, stat columns have
+reserved widths, and the prompt ellipsises rather than wraps. Any of these
+flexing would resize the map mid-run.
+
+## Leaderboard
+
+Stored via the artifact `window.storage` API, with an in-memory fallback if it's
+unavailable.
+
+Ranked by states found first, time second — a slow 50 always beats a fast 40.
+Sub-50 runs keep one entry per tally, so your best 31-state run replaces your
+previous 31-state run but never competes with your 12-state one. Full runs are
+the exception: up to five coexist, ranked purely on time. Zero-state runs don't
+post.
+
+## Licence
+
+Map data is us-atlas, ISC licence, derived from US Census Bureau public domain
+boundary files. See `data/LICENSE-us-atlas`.

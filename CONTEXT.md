@@ -110,6 +110,31 @@ narrow to hold one, so it could never be consistent. Two letters fit inside all
 fifty. Colour carries the meaning — teal found, red miss, amber answer — and the
 footer ticker gives the full name on every click.
 
+**Taps snap to the nearest state; the magnifier does not.** Thin coastal
+states have more water than land within thumb range, so a tap on water now
+resolves to the nearest state by distance to its *border* — not its label
+anchor, which would hand a Delmarva near miss to Virginia. Capped at 20 map
+units so ocean and foreign soil still select nothing.
+
+The cap is in map units, not screen pixels, and that was not the first attempt.
+Screen pixels are the natural unit for thumb error, but a phone compresses the
+map so hard that 28 screen px is ~76 map units: the first version snapped
+central Canada onto Minnesota and the deep Gulf onto Florida. Map units keep
+the rule geographic at every scale. Near misses measure under 8 units, Canada
+25, open ocean 60-115, so 20 separates them cleanly.
+
+Explicitly *not* applied to the magnifier: the disc shows precisely which shape
+is aimed, and snapping to something else on release would contradict it.
+
+Cost is a full scan of all ~9000 boundary points, but only on taps that hit no
+state — 0.1ms, measured.
+
+**Leaderboard reset.** Needed because Chrome treats every `file://` page as one
+origin, so all downloaded copies share a single `localStorage` bucket; renaming
+or moving the file does not give a fresh board. The button sits by the board
+heading in both cards and routes through a confirm dialog, since it destroys
+full-fifty runs that took real effort.
+
 ## Game rules as implemented
 
 - Start screen, then a centred 3-2-1. The clock does not start until it clears.

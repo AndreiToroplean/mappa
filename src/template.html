@@ -46,11 +46,15 @@
     transition:fill .15s}
   path.state:hover{fill:var(--landhi)}
   path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
-  path.state.miss{fill:var(--red)}
+  path.state.miss{fill:var(--red);cursor:default}
   path.state.reveal{fill:var(--amber)}
   circle.hit{fill:transparent;cursor:pointer}
-  text.abbr{font-family:var(--mono);font-size:11px;fill:var(--foundline);
+  text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
     text-anchor:middle;pointer-events:none;opacity:.85}
+  text.label.wrong{fill:#FFE4E5;opacity:1;font-weight:600;
+    stroke:#4A0D10;stroke-width:3px;paint-order:stroke}
+  text.label.answer{fill:#3A2600;opacity:1;font-weight:600;
+    stroke:#FFE3AE;stroke-width:3px;paint-order:stroke}
 
   footer{
     font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);
@@ -148,17 +152,35 @@ STATES.forEach(s => {
   svg.appendChild(p);
   nodes[s.n] = p;
 });
-// abbreviation labels appear once a state is found (large states only)
+// every state gets one reusable label node, hidden until it's needed
 const labels = {};
-STATES.filter(s => s.s > 92).forEach(s => {
+STATES.forEach(s => {
   const t = document.createElementNS(NS, 'text');
-  t.setAttribute('class', 'abbr');
+  t.setAttribute('class', 'label');
   t.setAttribute('x', s.c[0]); t.setAttribute('y', s.c[1] + 4);
-  t.textContent = ABBR[s.n];
   t.style.display = 'none';
   svg.appendChild(t);
   labels[s.n] = t;
 });
+
+// full name where it fits inside the state, abbreviation where it doesn't
+const fits = s => s.n.length * 6.8 < s.s;
+const SIZE = {};
+STATES.forEach(s => SIZE[s.n] = s);
+
+function setLabel(name, kind) {
+  const t = labels[name], s = SIZE[name];
+  if (kind === null) { t.style.display = 'none'; return; }
+  if (kind === 'found') {
+    if (s.s <= 92) { t.style.display = 'none'; return; }   // keep the map uncluttered
+    t.textContent = ABBR[name];
+  } else {
+    t.textContent = fits(s) ? name : ABBR[name];
+  }
+  t.setAttribute('class', 'label' + (kind === 'found' ? '' : ' ' + kind));
+  t.style.display = '';
+  svg.appendChild(t);   // move to front
+}
 // generous hit targets for the small northeastern states, smallest on top
 SMALL.slice().reverse().forEach(n => {
   const s = STATES.find(x => x.n === n);
@@ -172,6 +194,7 @@ SMALL.slice().reverse().forEach(n => {
 
 // game state
 let queue, current, lives, found, t0, raf, running;
+let missed = new Set();   // wrong guesses in the current turn only
 const clock = document.getElementById('clock');
 const ticker = document.getElementById('ticker');
 const overlay = document.getElementById('overlay');
@@ -194,6 +217,7 @@ function start() {
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
   lives = 3; found = 0; running = true;
+  missed.clear();
   Object.values(nodes).forEach(p => p.setAttribute('class', 'state'));
   Object.values(labels).forEach(t => t.style.display = 'none');
   drawLives();
@@ -221,22 +245,25 @@ svg.addEventListener('click', e => {
   if (!name) return;
 
   if (name === current) {
-    const p = nodes[name];
-    p.setAttribute('class', 'state found');
-    if (labels[name]) labels[name].style.display = '';
+    nodes[name].setAttribute('class', 'state found');
+    setLabel(name, 'found');
+    // the turn is over: clear this turn's misses, they count again next time
+    missed.forEach(m => { nodes[m].classList.remove('miss'); setLabel(m, null); });
+    missed.clear();
     found++;
     document.getElementById('progress').textContent = found + '/50';
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
-    if (queue.length === 0) return finish(true);
+    if (queue.length === 0) return finish(true, name);
     next();
   } else {
+    if (missed.has(name)) return;   // already wrong this turn, no double penalty
+    missed.add(name);
+    nodes[name].classList.add('miss');
+    setLabel(name, 'wrong');
     lives--;
     drawLives();
-    const p = nodes[name];
-    p.classList.add('miss');
-    setTimeout(() => p.classList.remove('miss'), 420);
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
-    if (lives === 0) finish(false);
+    if (lives === 0) finish(false, name);
   }
 });
 
@@ -252,14 +279,22 @@ async function saveBoard(b) {
   try { await window.storage.set(KEY, JSON.stringify(b)); } catch (e) {}
 }
 
-async function finish(won) {
+async function finish(won, lastClick) {
   running = false;
   cancelAnimationFrame(raf);
   const ms = Date.now() - t0;
 
-  if (!won) {
+  const endedAt = Date.now();
+  let pause;
+  if (won) {
+    ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's all fifty.`;
+    pause = 1200;   // let the last state fill in and the map read as complete
+  } else {
     nodes[current].setAttribute('class', 'state reveal');
-    ticker.innerHTML = `Out of lives. The answer was <b>${current}</b>.`;
+    setLabel(current, 'answer');
+    ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +
+                       `Out of lives; you were looking for <b>${current}</b>.`;
+    pause = 2600;   // time to read the miss and see the real answer
   }
 
   document.getElementById('ovTitle').textContent = won ? 'All fifty.' : 'Out of lives.';
@@ -280,7 +315,8 @@ async function finish(won) {
          </div>`).join('')
     : '<div class="empty">No complete run yet. Finish all fifty to post a time.</div>';
 
-  overlay.hidden = false;
+  const remaining = Math.max(0, pause - (Date.now() - endedAt));
+  setTimeout(() => { overlay.hidden = false; }, remaining);
 }
 
 document.getElementById('again').addEventListener('click', start);

@@ -82,12 +82,30 @@
   .board{border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
   .board h3{font-family:var(--mono);font-size:10px;letter-spacing:.22em;
     text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:400}
-  .row{display:flex;justify-content:space-between;font-family:var(--mono);
-    font-size:13px;padding:5px 0;font-variant-numeric:tabular-nums}
-  .row.you{color:var(--amber)}
-  .row span:first-child{color:var(--muted)}
-  .row.you span{color:var(--amber)}
-  .empty{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    font-family:var(--mono);font-size:13px;padding:6px 0;font-variant-numeric:tabular-nums;
+    border-bottom:1px solid rgba(255,255,255,.04)}
+  .row:last-child{border-bottom:0}
+  .row .rank{color:var(--muted);width:22px;flex:none}
+  .row .tally{flex:1}
+  .row .time{color:var(--text)}
+  .row.full .tally{color:var(--foundline)}
+  .row.full .tally::before{content:"◆ ";font-size:9px;vertical-align:2px}
+  .row.partial .tally{color:var(--muted)}
+  .row.partial .tally::before{content:"◇ ";font-size:9px;vertical-align:2px}
+  .row.you{background:rgba(255,194,75,.09);box-shadow:inset 2px 0 0 var(--amber);
+    padding-left:8px;margin-left:-8px}
+  .row.you .rank,.row.you .time{color:var(--amber)}
+  .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 22px}
+  .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
+
+  .countdown{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    pointer-events:none;z-index:20;background:rgba(10,14,23,.55)}
+  .countdown[hidden]{display:none}
+  .countdown span{font-family:var(--mono);font-size:104px;font-weight:700;color:var(--amber);
+    font-variant-numeric:tabular-nums;animation:tickin .68s ease-out}
+  @keyframes tickin{0%{transform:scale(1.5);opacity:0}30%{transform:scale(1);opacity:1}
+    100%{transform:scale(.94);opacity:.55}}
   button{margin-top:22px;width:100%;background:var(--amber);color:#0A0E17;border:0;
     padding:13px;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;
     font-family:var(--sans)}
@@ -129,12 +147,28 @@
 
 <footer id="ticker">Click the state named above. Three misses ends the run.</footer>
 
+<div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
+
+<div class="overlay" id="intro">
+  <div class="card">
+    <h2>Fifty</h2>
+    <div class="sub">A United States drill</div>
+    <p class="rules">You'll be named a state. Click it on the map.<br>
+      Three misses ends the run. Your time is the score.</p>
+    <div class="board">
+      <h3>Best runs</h3>
+      <div id="introBoard"></div>
+    </div>
+    <button id="startBtn">Start</button>
+  </div>
+</div>
+
 <div class="overlay" id="overlay" hidden>
   <div class="card">
     <h2 id="ovTitle">Run over</h2>
     <div class="sub" id="ovSub"></div>
     <div class="board">
-      <h3>Fastest complete runs</h3>
+      <h3>Best runs</h3>
       <div id="boardList"></div>
     </div>
     <button id="again">Play again</button>
@@ -208,13 +242,13 @@ function drawLives() {
   if (lives === 0) document.querySelector('.pip').classList.add('lastgone');
 }
 
-function start() {
+function resetRun() {
   queue = STATES.map(s => s.n);
   for (let i = queue.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
-  lives = 3; found = 0; running = true;
+  lives = 3; found = 0; running = false;
   missed.clear();
   Object.values(nodes).forEach(p => p.setAttribute('class', 'state'));
   Object.values(labels).forEach(t => t.style.display = 'none');
@@ -224,11 +258,37 @@ function start() {
   clock.classList.remove('lost');
   document.getElementById('promptLabel').textContent = 'Find this state';
   document.getElementById('progress').textContent = '0/50';
+  document.getElementById('target').textContent = 'Get ready';
+  clock.textContent = '0:00.0';
   ticker.textContent = 'Click the state named above. Three misses ends the run.';
   overlay.hidden = true;
-  t0 = Date.now();
-  tick();
-  next();
+  document.getElementById('intro').hidden = true;
+}
+
+function countdown(done) {
+  const box = document.getElementById('countdown');
+  const num = document.getElementById('countNum');
+  let n = 3;
+  box.hidden = false;
+  const show = () => {
+    num.textContent = n;
+    num.style.animation = 'none';
+    void num.offsetWidth;
+    num.style.animation = '';
+    if (n-- > 1) setTimeout(show, 700);
+    else setTimeout(() => { box.hidden = true; done(); }, 700);
+  };
+  show();
+}
+
+function beginRun() {
+  resetRun();
+  countdown(() => {
+    running = true;
+    t0 = Date.now();
+    tick();
+    next();
+  });
 }
 
 function tick() {
@@ -269,8 +329,8 @@ svg.addEventListener('click', e => {
   }
 });
 
-// leaderboard
-const KEY = 'fifty:board';
+// leaderboard: one best time per states-found tally, but many entries at a full 50
+const KEY = 'fifty:board2';
 let memBoard = [];
 async function loadBoard() {
   try { const r = await window.storage.get(KEY); return r ? JSON.parse(r.value) : []; }
@@ -279,6 +339,40 @@ async function loadBoard() {
 async function saveBoard(b) {
   memBoard = b;
   try { await window.storage.set(KEY, JSON.stringify(b)); } catch (e) {}
+}
+
+const rankBoard = b => b.sort((a, c) => c.f - a.f || a.t - c.t);
+
+function addEntry(board, entry) {
+  if (entry.f === 0) return { board, kept: false };
+  if (entry.f === 50) {
+    board.push(entry);
+    const full = board.filter(r => r.f === 50).sort((a, c) => a.t - c.t).slice(0, 5);
+    board = full.concat(board.filter(r => r.f < 50));
+    return { board, kept: full.includes(entry) };
+  }
+  const prev = board.find(r => r.f === entry.f);
+  if (!prev) { board.push(entry); return { board, kept: true }; }
+  if (entry.t < prev.t) {
+    board[board.indexOf(prev)] = entry;
+    return { board, kept: true };
+  }
+  return { board, kept: false };
+}
+
+function renderBoard(el, board, mine) {
+  const rows = rankBoard(board.slice()).slice(0, 6);
+  el.innerHTML = rows.length
+    ? rows.map((r, i) => {
+        const tier = r.f === 50 ? 'full' : 'partial';
+        const you = mine && r.d === mine ? ' you' : '';
+        return `<div class="row ${tier}${you}">
+            <span class="rank">${String(i + 1).padStart(2, '0')}</span>
+            <span class="tally">${r.f === 50 ? 'All fifty' : r.f + ' states'}</span>
+            <span class="time">${fmt(r.t)}</span>
+          </div>`;
+      }).join('')
+    : '<div class="empty">No runs yet. Every run posts a time for however many states you reach.</div>';
 }
 
 async function finish(won, lastClick) {
@@ -309,26 +403,20 @@ async function finish(won, lastClick) {
   document.getElementById('ovSub').textContent =
     won ? `Complete in ${fmt(ms)}` : `${found} of 50 found · ${fmt(ms)}`;
 
-  let board = await loadBoard();
-  if (won) board.push({ t: ms, d: Date.now() });
-  board.sort((a, b) => a.t - b.t);
-  board = board.slice(0, 5);
-  if (won) await saveBoard(board);
-
-  const list = document.getElementById('boardList');
-  list.innerHTML = board.length
-    ? board.map((r, i) =>
-        `<div class="row${won && r.t === ms ? ' you' : ''}">
-           <span>${String(i + 1).padStart(2, '0')}</span><span>${fmt(r.t)}</span>
-         </div>`).join('')
-    : '<div class="empty">No complete run yet. Finish all fifty to post a time.</div>';
+  const entry = { f: found, t: ms, d: Date.now() };
+  const res = addEntry(await loadBoard(), entry);
+  if (res.kept) await saveBoard(res.board);
+  renderBoard(document.getElementById('boardList'), res.board, res.kept ? entry.d : null);
 
   const remaining = Math.max(0, pause - (Date.now() - endedAt));
   setTimeout(() => { overlay.hidden = false; }, remaining);
 }
 
-document.getElementById('again').addEventListener('click', start);
-start();
+document.getElementById('again').addEventListener('click', beginRun);
+document.getElementById('startBtn').addEventListener('click', beginRun);
+
+// show any existing best runs on the intro screen
+loadBoard().then(b => renderBoard(document.getElementById('introBoard'), b, null));
 </script>
 </body>
 </html>

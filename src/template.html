@@ -158,25 +158,15 @@ STATES.forEach(s => {
   const t = document.createElementNS(NS, 'text');
   t.setAttribute('class', 'label');
   t.setAttribute('x', s.c[0]); t.setAttribute('y', s.c[1] + 4);
+  t.textContent = ABBR[s.n];
   t.style.display = 'none';
   svg.appendChild(t);
   labels[s.n] = t;
 });
 
-// full name where it fits inside the state, abbreviation where it doesn't
-const fits = s => s.n.length * 6.8 < s.s;
-const SIZE = {};
-STATES.forEach(s => SIZE[s.n] = s);
-
 function setLabel(name, kind) {
-  const t = labels[name], s = SIZE[name];
+  const t = labels[name];
   if (kind === null) { t.style.display = 'none'; return; }
-  if (kind === 'found') {
-    if (s.s <= 92) { t.style.display = 'none'; return; }   // keep the map uncluttered
-    t.textContent = ABBR[name];
-  } else {
-    t.textContent = fits(s) ? name : ABBR[name];
-  }
   t.setAttribute('class', 'label' + (kind === 'found' ? '' : ' ' + kind));
   t.style.display = '';
   svg.appendChild(t);   // move to front

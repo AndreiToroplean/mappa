@@ -53,8 +53,8 @@
     transition:fill .15s}
   path.state:hover{fill:var(--landhi)}
   path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
-  path.state.miss{fill:var(--red);cursor:default}
-  path.state.reveal{fill:var(--amber)}
+  path.state.miss{fill:var(--red);stroke:#FF9296;stroke-width:1;cursor:default}
+  path.state.reveal{fill:var(--amber);stroke:#FFDFA6;stroke-width:1}
   circle.hit{fill:transparent;cursor:pointer}
   text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
     text-anchor:middle;pointer-events:none;opacity:.85}
@@ -184,13 +184,19 @@ const svg = document.getElementById('map');
 const NS = 'http://www.w3.org/2000/svg';
 const nodes = {};
 
+// SVG paints in document order, so resolved states must physically move up the
+// stack or neighbours drawn later will clip their outlines.
+const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
+const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
+      L_ANSWER = layer(), L_LABEL = layer(), L_HIT = layer();
+
 // draw states
 STATES.forEach(s => {
   const p = document.createElementNS(NS, 'path');
   p.setAttribute('d', s.d);
   p.setAttribute('class', 'state');
   p.dataset.name = s.n;
-  svg.appendChild(p);
+  L_BASE.appendChild(p);
   nodes[s.n] = p;
 });
 // every state gets one reusable label node, hidden until it's needed
@@ -201,7 +207,7 @@ STATES.forEach(s => {
   t.setAttribute('x', s.c[0]); t.setAttribute('y', s.c[1] + 4);
   t.textContent = ABBR[s.n];
   t.style.display = 'none';
-  svg.appendChild(t);
+  L_LABEL.appendChild(t);
   labels[s.n] = t;
 });
 
@@ -210,7 +216,7 @@ function setLabel(name, kind) {
   if (kind === null) { t.style.display = 'none'; return; }
   t.setAttribute('class', 'label' + (kind === 'found' ? '' : ' ' + kind));
   t.style.display = '';
-  svg.appendChild(t);   // move to front
+  L_LABEL.appendChild(t);   // newest label wins any overlap
 }
 // generous hit targets for the small northeastern states, smallest on top
 SMALL.slice().reverse().forEach(n => {
@@ -220,7 +226,7 @@ SMALL.slice().reverse().forEach(n => {
   c.setAttribute('cx', s.c[0]); c.setAttribute('cy', s.c[1]);
   c.setAttribute('r', n === 'Rhode Island' ? 9 : 7.5);
   c.dataset.name = n;
-  svg.appendChild(c);
+  L_HIT.appendChild(c);
 });
 
 // game state
@@ -250,7 +256,10 @@ function resetRun() {
   }
   lives = 3; found = 0; running = false;
   missed.clear();
-  Object.values(nodes).forEach(p => p.setAttribute('class', 'state'));
+  Object.values(nodes).forEach(p => {
+    p.setAttribute('class', 'state');
+    L_BASE.appendChild(p);
+  });
   Object.values(labels).forEach(t => t.style.display = 'none');
   drawLives();
   document.getElementById('bar').classList.remove('lost');
@@ -305,12 +314,19 @@ svg.addEventListener('click', e => {
   if (!running) return;
   const name = e.target.dataset && e.target.dataset.name;
   if (!name) return;
+  // the oversized hit circles still fire over solved states — ignore those
+  if (nodes[name].classList.contains('found')) return;
 
   if (name === current) {
     nodes[name].setAttribute('class', 'state found');
+    L_FOUND.appendChild(nodes[name]);
     setLabel(name, 'found');
     // the turn is over: clear this turn's misses, they count again next time
-    missed.forEach(m => { nodes[m].classList.remove('miss'); setLabel(m, null); });
+    missed.forEach(m => {
+      nodes[m].classList.remove('miss');
+      L_BASE.appendChild(nodes[m]);
+      setLabel(m, null);
+    });
     missed.clear();
     found++;
     document.getElementById('progress').textContent = found + '/50';
@@ -321,6 +337,7 @@ svg.addEventListener('click', e => {
     if (missed.has(name)) return;   // already wrong this turn, no double penalty
     missed.add(name);
     nodes[name].classList.add('miss');
+    L_MISS.appendChild(nodes[name]);
     setLabel(name, 'wrong');
     lives--;
     drawLives();
@@ -393,6 +410,7 @@ async function finish(won, lastClick) {
     tgt.classList.add('lost');
     clock.classList.add('lost');
     nodes[current].setAttribute('class', 'state reveal');
+    L_ANSWER.appendChild(nodes[current]);
     setLabel(current, 'answer');
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +
                        `Out of lives; you were looking for <b>${current}</b>.`;

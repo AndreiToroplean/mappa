@@ -144,6 +144,20 @@ thumb slides as it leaves the glass. The last 180ms are discarded, and the
 selection is the most recent state rested on for at least 120ms before that
 window. Failing that, it is the state under the finger at the cutoff moment.
 
+## Winning
+
+Completing the set switches the header to a win state, fires a two-wave
+confetti burst from the bottom corners, and flashes a banner — "Perfect run" if
+you never missed, otherwise "All fifty" — before the leaderboard appears.
+
+The cannons tilt further off vertical on wider screens. A fixed angle that
+looks right on a laptop fires straight out of the sides of a phone and empties
+the screen in under a second.
+
+`celebrate()` returns how long `finish()` should hold the map, so the pause and
+the animation can never disagree. Under `prefers-reduced-motion` there is no
+confetti and no animation, and the pause returns to what it was before.
+
 ## Leaderboard
 
 Three storage backends, tried in order:

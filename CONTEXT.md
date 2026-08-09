@@ -159,6 +159,22 @@ count is not recoverable and is left blank rather than invented — displayed as
 a dash, and ranked by `errorsOf()` as the worst a completed run could be, one
 short of the lives, so it can never outrank a run known to be cleaner.
 
+**Winning looks like winning.** A completed run used to be nearly
+indistinguishable from a failed one: the map stopped responding and a card slid
+up. Now the header turns green and says Complete, confetti fires from both
+bottom corners in two waves, and a banner reads "Perfect run" or "All fifty".
+
+`celebrate()` returns the pause `finish()` should hold, so the timing lives
+with the animation rather than being a second number to keep in sync. All of it
+is decoration: no canvas, or reduced motion requested, and it is skipped with
+the pause shortened to match, so nobody waits on an animation that is not
+playing.
+
+The cannon tilt scales with viewport width. This was found by simulating the
+trajectories rather than by looking — the first version had a sign error that
+fired both cannons out of the screen, and the second emptied a phone in under a
+second while looking fine on a laptop.
+
 **Leaderboard reset.** Needed because Chrome treats every `file://` page as one
 origin, so all downloaded copies share a single `localStorage` bucket; renaming
 or moving the file does not give a fresh board. The button sits by the board
@@ -180,6 +196,9 @@ full-fifty runs that took real effort.
   with your 12-state one). Up to five full runs coexist, ranked on time.
   Zero-state runs don't post.
 - Errors are counted per run and rank ahead of time: cleaner beats quicker.
+  Shown on the board in words — "Perfect", "1 miss", "2 misses" — because a
+  bare count next to a symbol reads as nothing at all unless you already know
+  what the column is.
   Only full runs really contend on it, since anything short of the full set
   ended by running out of lives and therefore has exactly that many errors.
 

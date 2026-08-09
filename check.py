@@ -153,4 +153,42 @@ process.exitCode = (fail || sfail || dfail) ? 1 : 0;
 
 r = subprocess.run(['node', '/tmp/fifty-check.js'], capture_output=True, text=True)
 print(r.stdout.rstrip() or r.stderr)
-sys.exit(r.returncode)
+rc = r.returncode
+
+# ------------------------------------------------- mode / leaderboard rules
+d = (JS / '01-data.js').read_text()
+b = (JS / '06-board.js').read_text()
+pathlib.Path('/tmp/fifty-modes.js').write_text(
+    "const TOTAL = 50;\nconst RULES = {noun:'state'};\n"
+    + d[d.index('const MODES = {'):d.index('/* Shared by both policies')]
+    + d[d.index('function replaceBy'):] + "\n"
+    + b[b.index('const errorsOf'):b.index('const addEntry')] + """
+const addEntry = (board, entry) => MODE.insert(board, entry);
+let fail = 0;
+const eq = (l, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want);
+  if (!ok) { fail++; console.log('  FAIL ' + l + '  got ' + JSON.stringify(got) + ' want ' + JSON.stringify(want)); } };
+
+MODE = MODES.practice;
+let pb = [];
+[[7,300],[3,400],[7,250],[0,900],[3,500],[12,100]].forEach(([e,t],i) => {
+  pb = addEntry(pb, {f:50,e:e,t:t*1000,d:i}).board; });
+eq('practice: one entry per miss count', rankBoard(pb.slice()).map(r=>[r.e,r.t/1000]),
+   [[0,900],[3,400],[7,250],[12,100]]);
+eq('practice: quicker replaces same count', pb.find(r=>r.e===7).t/1000, 250);
+eq('practice: misses may exceed the region count', addEntry([], {f:50,e:73,t:1,d:1}).board[0].e, 73);
+eq('practice: lives are unbounded', Number.isFinite(MODES.practice.lives), false);
+
+MODE = MODES.classic;
+let cb = [];
+[[50,2,100],[50,0,500],[31,3,200],[50,1,300],[31,3,150],[0,3,9]].forEach(([f,e,t],i) => {
+  cb = addEntry(cb, {f:f,e:e,t:t*1000,d:i}).board; });
+eq('classic: one entry per partial tally', cb.filter(r=>r.f===31).map(r=>r.t/1000), [150]);
+eq('classic: full runs by misses then time', rankBoard(cb.slice()).filter(r=>r.f===50).map(r=>r.e), [0,1,2]);
+eq('classic: zero-region run does not post', cb.some(r=>r.f===0), false);
+eq('boards are stored apart', MODES.classic.key === MODES.practice.key, false);
+console.log('  modes:   ' + (fail ? fail + ' FAILED' : '8/8 pass'));
+process.exitCode = fail ? 1 : 0;
+""")
+r2 = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)
+print(r2.stdout.rstrip() or r2.stderr)
+sys.exit(rc or r2.returncode)

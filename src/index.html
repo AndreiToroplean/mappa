@@ -15,7 +15,7 @@ __CSS__</style>
     <div class="target" id="target">—<span class="caret"></span></div>
   </div>
   <div class="stats">
-    <div class="stat">
+    <div class="stat" id="livesStat">
       <div class="eyebrow">Lives</div>
       <div class="lives" id="lives"></div>
     </div>
@@ -48,7 +48,8 @@ __CSS__</style>
   <div class="card narrow">
     <h2>Clear the board?</h2>
     <div class="sub">This cannot be undone</div>
-    <p class="rules">Every saved run will be deleted, including any full fifty.</p>
+    <p class="rules">Every saved run in <b class="clearLabel">Classic</b> will be
+      deleted. The other mode's board is untouched.</p>
     <div class="btnrow">
       <button class="ghost" id="clearNo">Cancel</button>
       <button class="danger" id="clearYes">Clear</button>
@@ -65,10 +66,14 @@ __CSS__</style>
   <div class="card">
     <h2>Fifty</h2>
     <div class="sub">A United States drill</div>
+      <div class="modes">
+        <button class="modeBtn" data-mode="classic">Classic</button>
+        <button class="modeBtn" data-mode="practice">Practice</button>
+      </div>
     <p class="rules">You'll be named a state. Click it on the map.<br>
       For the small ones, press and hold to open a magnifier — drag to aim,
       lift to pick.<br>
-      Three misses ends the run. Your time is the score.</p>
+      <span class="modeRule"></span></p>
     <div class="board">
       <div class="bhead">
         <h3>Best runs</h3>
@@ -90,6 +95,10 @@ __CSS__</style>
   <div class="card">
     <h2 id="ovTitle">Run over</h2>
     <div class="sub" id="ovSub"></div>
+      <div class="modes">
+        <button class="modeBtn" data-mode="classic">Classic</button>
+        <button class="modeBtn" data-mode="practice">Practice</button>
+      </div>
     <div class="board">
       <div class="bhead">
         <h3>Best runs</h3>

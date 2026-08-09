@@ -106,6 +106,16 @@
     padding-left:8px;margin-left:-8px}
   .row.you .rank,.row.you .time{color:var(--amber)}
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 22px}
+  .modes{display:flex;gap:8px;margin:0 0 20px}
+  .modes button{margin:0;flex:1;padding:9px;font-size:13px;font-weight:500;
+    border-radius:8px;background:transparent;color:var(--muted);
+    box-shadow:inset 0 0 0 1px var(--line)}
+  .modes button:hover{filter:none;color:var(--text)}
+  .modes button.on{background:var(--amber);color:var(--ink);
+    box-shadow:none;font-weight:600}
+  .modes button.on:hover{color:var(--ink)}
+  /* practice has no lives to spend, so the pips would only ever show three */
+  body.practice #livesStat{display:none}
   .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
   .bhead{display:flex;align-items:center;justify-content:space-between;
     gap:10px;margin:0 0 10px}

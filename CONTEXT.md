@@ -159,6 +159,24 @@ count is not recoverable and is left blank rather than invented — displayed as
 a dash, and ranked by `errorsOf()` as the worst a completed run could be, one
 short of the lives, so it can never outrank a run known to be cleaner.
 
+**Modes are a data structure, not a branch.** `MODES` holds lives, storage
+key, copy and a board-insertion policy; `MODE` points at the live one. What
+did *not* need to change is telling: `better()` serves both unchanged, because
+every practice run is a completed set, so its first term always ties and the
+ordering falls through to misses, then time — which is exactly what practice
+wants. `RULES` stayed behind as geography vocabulary, which is the right seam:
+mode and geography vary independently.
+
+Practice keeps one entry per miss count, classic keeps one per tally plus five
+full runs, and `replaceBy()` is the shared half. Boards live under separate
+keys: a practice run cannot fail, so ranking it against runs that could is
+meaningless, and merging them would bury every classic run under completed
+practice ones.
+
+`Infinity` lives is load-bearing in one place — `drawLives()` would try to
+build an infinite array, so it returns early when lives are not finite, which
+also happens to be exactly when the indicator should be hidden.
+
 **Winning looks like winning.** A completed run used to be nearly
 indistinguishable from a failed one: the map stopped responding and a card slid
 up. Now the header turns green and says Complete, confetti fires from both
@@ -268,10 +286,7 @@ moving things out of the DOM.
 Three directions, sketched by Andrei. Nothing here is committed to; they are
 written down so refactoring leaves the right seams rather than to be built now.
 
-**Practice mode.** Unlimited lives. Separate leaderboard, ranked by error count
-first and time second, with one entry per error count — the same
-"one entry per tally" rule the classic board uses for sub-50 runs, but keyed on
-errors instead of states found.
+**Practice mode.** Built. See below.
 
 **Other geographies.** The same game over a different region set — countries of
 Europe was the example. Implies the data format, the prompt wording and the

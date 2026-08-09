@@ -4,7 +4,7 @@ let queue, current, errors, found, t0, raf, running;
 /* Errors are the thing that is counted; lives are a rule about them. Tracking
    lives directly would leave practice mode — unlimited lives, ranked on errors
    — with nothing to count. */
-const livesLeft = () => RULES.lives - errors;
+const livesLeft = () => MODE.lives - errors;
 /* Every element the game touches, looked up once. These were a mix of cached
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
@@ -22,7 +22,8 @@ const fmt = ms => {
 };
 
 function drawLives() {
-  el.lives.innerHTML = Array.from({ length: RULES.lives }, (_, i) =>
+  if (!Number.isFinite(MODE.lives)) { el.lives.innerHTML = ''; return; }
+  el.lives.innerHTML = Array.from({ length: MODE.lives }, (_, i) =>
     `<div class="pip${i < livesLeft() ? '' : ' gone'}"></div>`).join('');
   if (livesLeft() === 0) document.querySelector('.pip').classList.add('lastgone');
 }
@@ -34,6 +35,7 @@ function resetRun() {
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
   errors = 0; found = 0; running = false;
+  document.body.classList.toggle('practice', MODE.id === 'practice');
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawLives();
   document.body.classList.remove('won');
@@ -44,7 +46,7 @@ function resetRun() {
   el.progress.textContent = '0/' + TOTAL;
   el.target.textContent = 'Get ready';
   clock.textContent = '0:00.0';
-  ticker.textContent = 'Click the state named above, or press and hold to zoom. Three misses ends the run.';
+  ticker.textContent = MODE.hint;
   overlay.hidden = true;
   el.intro.hidden = true;
 }

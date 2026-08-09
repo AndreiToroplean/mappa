@@ -158,6 +158,28 @@ the screen in under a second.
 the animation can never disagree. Under `prefers-reduced-motion` there is no
 confetti and no animation, and the pause returns to what it was before.
 
+## Modes
+
+Mode and geography are independent axes: a mode says what counts as a run and
+what counts as a good one, never which regions are in play.
+
+**Classic** — three misses ends the run. Ranked by regions found, then misses,
+then time.
+
+**Practice** — no limit on misses, and the lives indicator is hidden since
+there is nothing to spend. Every run finishes, so the only axis left is misses:
+ranked by misses, then time, with one entry per miss count. Counts can exceed
+three, and can exceed the region count, since the same region can be missed on
+different turns.
+
+Each mode keeps its own board under its own storage key. They are not
+comparable — a practice run cannot fail — and merging them would bury every
+classic run under a wall of completed practice ones. Clearing a board clears
+only the mode you are looking at.
+
+The switcher appears on both the intro and the end-of-run card, so a run can be
+followed by a different kind of run without a reload.
+
 ## Leaderboard
 
 Three storage backends, tried in order:

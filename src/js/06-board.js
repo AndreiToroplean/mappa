@@ -1,6 +1,6 @@
 // leaderboard: one best time per regions-found tally, many entries at a full set
 const ALL = 'All ' + RULES.collective;
-const KEY = 'fifty:board2';
+const PROBE = 'fifty:probe';
 let memBoard = [];
 
 /* Three backends, tried in order, because the file gets run two very different
@@ -16,8 +16,8 @@ let store = 'memory';
 
 function localOK() {
   try {
-    window.localStorage.setItem(KEY + ':probe', '1');
-    window.localStorage.removeItem(KEY + ':probe');
+    window.localStorage.setItem(PROBE, '1');
+    window.localStorage.removeItem(PROBE);
     return true;
   } catch (e) { return false; }
 }
@@ -28,26 +28,27 @@ const parse = s => { try { return normalise(JSON.parse(s) || []); } catch (e) { 
    by running out of lives, so its count is known exactly. A completed run's is
    not recoverable, and is left blank rather than invented. */
 function normalise(board) {
+  if (!Number.isFinite(MODE.lives)) return board;   // nothing to infer
   return board.map(r => (typeof r.e === 'number' || r.f === TOTAL)
-    ? r : Object.assign({}, r, { e: RULES.lives }));
+    ? r : Object.assign({}, r, { e: MODE.lives }));
 }
 
 async function loadBoard() {
   if (window.storage && window.storage.get) {
     try {
-      const r = await window.storage.get(KEY);
+      const r = await window.storage.get(MODE.key);
       store = 'artifact';
       return r ? parse(r.value) : [];
     } catch (e) {
       // An unset key throws here, which is not the same as a broken backend.
       // Settle it with a write: if that lands, the backend is fine and empty.
-      try { await window.storage.set(KEY, '[]'); store = 'artifact'; return []; }
+      try { await window.storage.set(MODE.key, '[]'); store = 'artifact'; return []; }
       catch (e2) {}
     }
   }
   if (localOK()) {
     store = 'local';
-    return parse(window.localStorage.getItem(KEY));
+    return parse(window.localStorage.getItem(MODE.key));
   }
   store = 'memory';
   return normalise(memBoard);
@@ -57,11 +58,11 @@ async function saveBoard(b) {
   memBoard = b;
   const json = JSON.stringify(b);
   if (store === 'artifact') {
-    try { await window.storage.set(KEY, json); return; }
+    try { await window.storage.set(MODE.key, json); return; }
     catch (e) { store = localOK() ? 'local' : 'memory'; }
   }
   if (store === 'local') {
-    try { window.localStorage.setItem(KEY, json); return; }
+    try { window.localStorage.setItem(MODE.key, json); return; }
     catch (e) { store = 'memory'; }          // quota, or permission revoked
   }
 }
@@ -82,30 +83,17 @@ function showNote() {
    worst a completed run could be — a full run cannot have spent all its lives,
    so the ceiling is one short of them. It can then never outrank a run we know
    was cleaner. Displayed as blank, not as that number. */
-const errorsOf = r => typeof r.e === 'number' ? r.e : RULES.lives - 1;
+const errorsOf = r => typeof r.e === 'number' ? r.e
+  : (Number.isFinite(MODE.lives) ? MODE.lives - 1 : Infinity);
 
 /* The one definition of "better": more found first, then fewer errors, then
-   quicker. Only the full runs really contend on errors — anything short of the
-   full set ended by running out of lives, so its count is fixed. */
+   quicker. It serves both modes unchanged — every practice run is a completed
+   set, so the first term is always a tie there and the ordering falls through
+   to misses, then time, which is exactly what practice wants. */
 const better = (a, c) => c.f - a.f || errorsOf(a) - errorsOf(c) || a.t - c.t;
 const rankBoard = b => b.sort(better);
 
-function addEntry(board, entry) {
-  if (entry.f === 0) return { board, kept: false };
-  if (entry.f === TOTAL) {
-    board.push(entry);
-    const full = board.filter(r => r.f === TOTAL).sort(better).slice(0, 5);
-    board = full.concat(board.filter(r => r.f < TOTAL));
-    return { board, kept: full.includes(entry) };
-  }
-  const prev = board.find(r => r.f === entry.f);
-  if (!prev) { board.push(entry); return { board, kept: true }; }
-  if (better(entry, prev) < 0) {
-    board[board.indexOf(prev)] = entry;
-    return { board, kept: true };
-  }
-  return { board, kept: false };
-}
+const addEntry = (board, entry) => MODE.insert(board, entry);
 
 /* Both cards show the same board, so they are always painted together. Three
    call sites used to render one or both with slightly different arguments. */
@@ -119,26 +107,42 @@ function showBoards(board, mine) {
    already know the column is errors. Spell it out instead, and let a clean run
    say so — zero is the whole point of the ranking, so it should read as an
    achievement rather than as the number below one. */
-function missText(e) {
-  if (typeof e !== 'number') return '<span class="errs unknown">—</span>';
-  if (e === 0) return '<span class="errs perfect">Perfect</span>';
-  return `<span class="errs">${e} miss${e === 1 ? '' : 'es'}</span>`;
+function missWords(e) {
+  if (typeof e !== 'number') return '—';
+  if (e === 0) return 'Perfect';
+  return `${e} miss${e === 1 ? '' : 'es'}`;
+}
+
+/* Classic rows lead with how far you got and carry the misses alongside.
+   Every practice run is a completed set, so leading with "All fifty" on every
+   row would say nothing — misses become the headline instead. */
+function rowParts(r) {
+  const words = missWords(r.e);
+  if (MODE.id === 'practice') {
+    return { tier: r.e === 0 ? 'full' : 'partial', tally: words, errs: '' };
+  }
+  const cls = typeof r.e !== 'number' ? ' unknown' : r.e === 0 ? ' perfect' : '';
+  return {
+    tier: r.f === TOTAL ? 'full' : 'partial',
+    tally: r.f === TOTAL ? ALL : r.f + ' ' + RULES.noun + 's',
+    errs: `<span class="errs${cls}">${words}</span>`,
+  };
 }
 
 function renderBoard(target, board, mine) {
   const rows = rankBoard(board.slice()).slice(0, 6);
   target.innerHTML = rows.length
     ? rows.map((r, i) => {
-        const tier = r.f === TOTAL ? 'full' : 'partial';
+        const p = rowParts(r);
         const you = mine && r.d === mine ? ' you' : '';
-        return `<div class="row ${tier}${you}">
+        return `<div class="row ${p.tier}${you}">
             <span class="rank">${String(i + 1).padStart(2, '0')}</span>
-            <span class="tally">${r.f === TOTAL ? ALL : r.f + ' ' + RULES.noun + 's'}</span>
-            ${missText(r.e)}
+            <span class="tally">${p.tally}</span>
+            ${p.errs}
             <span class="time">${fmt(r.t)}</span>
           </div>`;
       }).join('')
-    : '<div class="empty">No runs yet. Every run posts a time for however many states you reach.</div>';
+    : `<div class="empty">${MODE.empty}</div>`;
 }
 
 async function finish(won, lastClick) {
@@ -170,7 +174,8 @@ async function finish(won, lastClick) {
     pause = 2600;   // time to read the miss and see the real answer
   }
 
-  el.ovTitle.textContent = won ? ALL + '.' : 'Out of lives.';
+  el.ovTitle.textContent = !won ? 'Out of lives.'
+    : errors === 0 ? 'Perfect run.' : ALL + '.';
   el.ovSub.textContent =
     won ? `Complete in ${fmt(ms)} · ${errors} ${errors === 1 ? 'miss' : 'misses'}`
         : `${found} of ${TOTAL} found · ${fmt(ms)}`;
@@ -206,8 +211,23 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape' && !confirmBox.hidden) confirmBox.hidden = true;
 });
 
+/* Switching mode swaps the rules copy and the board, and is available from
+   both cards so a run can be followed by a different kind of run without a
+   reload. */
+async function setMode(id) {
+  MODE = MODES[id];
+  document.querySelectorAll('.modeBtn').forEach(b =>
+    b.classList.toggle('on', b.dataset.mode === id));
+  document.querySelectorAll('.modeRule').forEach(n => { n.textContent = MODE.rule; });
+  document.querySelectorAll('.clearLabel').forEach(n => { n.textContent = MODE.label; });
+  showBoards(await loadBoard(), null);
+}
+
+document.querySelectorAll('.modeBtn').forEach(b =>
+  b.addEventListener('click', () => setMode(b.dataset.mode)));
+
 el.again.addEventListener('click', beginRun);
 el.startBtn.addEventListener('click', beginRun);
 
 // show any existing best runs on the intro screen
-loadBoard().then(b => showBoards(b, null));
+setMode(MODE.id);

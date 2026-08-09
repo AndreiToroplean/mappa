@@ -148,6 +148,17 @@ segment, which is the whole point of it.
 randomised points and dead-sets; cost is ~0.1ms and only when not inside a
 selectable state.
 
+**Errors, not lives, are what gets counted.** `errors` is the counter and
+`livesLeft()` derives from it. Tracking lives directly would leave practice
+mode — unlimited lives, ranked on errors — with nothing to count.
+
+Errors rank ahead of time in `better()`. Boards written before this exist, so
+`normalise()` fills in what is recoverable: a run that did not finish ended by
+running out of lives, so its count is exactly `RULES.lives`. A completed run's
+count is not recoverable and is left blank rather than invented — displayed as
+a dash, and ranked by `errorsOf()` as the worst a completed run could be, one
+short of the lives, so it can never outrank a run known to be cleaner.
+
 **Leaderboard reset.** Needed because Chrome treats every `file://` page as one
 origin, so all downloaded copies share a single `localStorage` bucket; renaming
 or moving the file does not give a fresh board. The button sits by the board
@@ -168,6 +179,9 @@ full-fifty runs that took real effort.
   (your best 31-state run replaces your previous 31-state run, never competes
   with your 12-state one). Up to five full runs coexist, ranked on time.
   Zero-state runs don't post.
+- Errors are counted per run and rank ahead of time: cleaner beats quicker.
+  Only full runs really contend on it, since anything short of the full set
+  ended by running out of lives and therefore has exactly that many errors.
 
 ## If uploading to a Claude Project
 

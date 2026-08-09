@@ -22,7 +22,15 @@ function localOK() {
   } catch (e) { return false; }
 }
 
-const parse = s => { try { return JSON.parse(s) || []; } catch (e) { return []; } };
+const parse = s => { try { return normalise(JSON.parse(s) || []); } catch (e) { return []; } };
+
+/* Boards written before runs counted errors. A run that did not finish ended
+   by running out of lives, so its count is known exactly. A completed run's is
+   not recoverable, and is left blank rather than invented. */
+function normalise(board) {
+  return board.map(r => (typeof r.e === 'number' || r.f === TOTAL)
+    ? r : Object.assign({}, r, { e: RULES.lives }));
+}
 
 async function loadBoard() {
   if (window.storage && window.storage.get) {
@@ -42,7 +50,7 @@ async function loadBoard() {
     return parse(window.localStorage.getItem(KEY));
   }
   store = 'memory';
-  return memBoard;
+  return normalise(memBoard);
 }
 
 async function saveBoard(b) {
@@ -70,10 +78,16 @@ function showNote() {
   });
 }
 
-/* The one definition of "better": more found first, then quicker. Ranking and
-   insertion used to encode this separately, which is two places to change when
-   a mode ranks on something else. */
-const better = (a, c) => c.f - a.f || a.t - c.t;
+/* A completed run whose error count predates this feature is ranked as the
+   worst a completed run could be — a full run cannot have spent all its lives,
+   so the ceiling is one short of them. It can then never outrank a run we know
+   was cleaner. Displayed as blank, not as that number. */
+const errorsOf = r => typeof r.e === 'number' ? r.e : RULES.lives - 1;
+
+/* The one definition of "better": more found first, then fewer errors, then
+   quicker. Only the full runs really contend on errors — anything short of the
+   full set ended by running out of lives, so its count is fixed. */
+const better = (a, c) => c.f - a.f || errorsOf(a) - errorsOf(c) || a.t - c.t;
 const rankBoard = b => b.sort(better);
 
 function addEntry(board, entry) {
@@ -86,7 +100,7 @@ function addEntry(board, entry) {
   }
   const prev = board.find(r => r.f === entry.f);
   if (!prev) { board.push(entry); return { board, kept: true }; }
-  if (entry.t < prev.t) {
+  if (better(entry, prev) < 0) {
     board[board.indexOf(prev)] = entry;
     return { board, kept: true };
   }
@@ -110,6 +124,8 @@ function renderBoard(target, board, mine) {
         return `<div class="row ${tier}${you}">
             <span class="rank">${String(i + 1).padStart(2, '0')}</span>
             <span class="tally">${r.f === TOTAL ? ALL : r.f + ' ' + RULES.noun + 's'}</span>
+            <span class="errs${typeof r.e === 'number' ? '' : ' unknown'}"
+              >${typeof r.e === 'number' ? r.e : '—'}</span>
             <span class="time">${fmt(r.t)}</span>
           </div>`;
       }).join('')
@@ -141,9 +157,10 @@ async function finish(won, lastClick) {
 
   el.ovTitle.textContent = won ? ALL + '.' : 'Out of lives.';
   el.ovSub.textContent =
-    won ? `Complete in ${fmt(ms)}` : `${found} of ${TOTAL} found · ${fmt(ms)}`;
+    won ? `Complete in ${fmt(ms)} · ${errors} ${errors === 1 ? 'miss' : 'misses'}`
+        : `${found} of ${TOTAL} found · ${fmt(ms)}`;
 
-  const entry = { f: found, t: ms, d: Date.now() };
+  const entry = { f: found, e: errors, t: ms, d: Date.now() };
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);
   showBoards(res.board, res.kept ? entry.d : null);

@@ -93,6 +93,9 @@
   .row:last-child{border-bottom:0}
   .row .rank{color:var(--muted);width:22px;flex:none}
   .row .tally{flex:1}
+  .row .errs{color:var(--muted);flex:none;min-width:24px;text-align:right}
+  .row .errs::after{content:"✕";font-size:9px;margin-left:2px;opacity:.55}
+  .row .errs.unknown::after{content:""}
   .row .time{color:var(--text)}
   .row.full .tally{color:var(--foundline)}
   .row.full .tally::before{content:"◆ ";font-size:9px;vertical-align:2px}

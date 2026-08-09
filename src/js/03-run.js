@@ -1,8 +1,14 @@
 // game state
 let queue, current, lives, found, t0, raf, running;
-const clock = document.getElementById('clock');
-const ticker = document.getElementById('ticker');
-const overlay = document.getElementById('overlay');
+/* Every element the game touches, looked up once. These were a mix of cached
+   consts and repeated getElementById calls scattered through the code. */
+const el = {};
+['bar', 'promptLabel', 'target', 'lives', 'progress', 'clock', 'ticker',
+ 'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
+ 'boardList', 'confirm', 'again', 'startBtn', 'clearNo', 'clearYes',
+].forEach(id => { el[id] = $(id); });
+
+const clock = el.clock, ticker = el.ticker, overlay = el.overlay;
 
 const fmt = ms => {
   const s = ms / 1000;
@@ -11,7 +17,7 @@ const fmt = ms => {
 };
 
 function drawLives() {
-  document.getElementById('lives').innerHTML =
+  el.lives.innerHTML =
     [0,1,2].map(i => `<div class="pip${i < lives ? '' : ' gone'}"></div>`).join('');
   if (lives === 0) document.querySelector('.pip').classList.add('lastgone');
 }
@@ -25,21 +31,20 @@ function resetRun() {
   lives = 3; found = 0; running = false;
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawLives();
-  document.getElementById('bar').classList.remove('lost');
-  document.getElementById('target').classList.remove('lost');
+  el.bar.classList.remove('lost');
+  el.target.classList.remove('lost');
   clock.classList.remove('lost');
-  document.getElementById('promptLabel').textContent = 'Find this state';
-  document.getElementById('progress').textContent = '0/50';
-  document.getElementById('target').textContent = 'Get ready';
+  el.promptLabel.textContent = 'Find this state';
+  el.progress.textContent = '0/50';
+  el.target.textContent = 'Get ready';
   clock.textContent = '0:00.0';
   ticker.textContent = 'Click the state named above, or press and hold to zoom. Three misses ends the run.';
   overlay.hidden = true;
-  document.getElementById('intro').hidden = true;
+  el.intro.hidden = true;
 }
 
 function countdown(done) {
-  const box = document.getElementById('countdown');
-  const num = document.getElementById('countNum');
+  const box = el.countdown, num = el.countNum;
   let n = 3;
   box.hidden = false;
   const show = () => {
@@ -70,7 +75,7 @@ function tick() {
 
 function next() {
   current = queue.pop();
-  document.getElementById('target').innerHTML = current + '<span class="caret"></span>';
+  el.target.innerHTML = current + '<span class="caret"></span>';
 }
 
 function guess(name) {
@@ -81,7 +86,7 @@ function guess(name) {
     // the turn is over: clear this turn's misses, they count again next time
     REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });
     found++;
-    document.getElementById('progress').textContent = found + '/50';
+    el.progress.textContent = found + '/50';
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
     if (queue.length === 0) return finish(true, name);
     next();

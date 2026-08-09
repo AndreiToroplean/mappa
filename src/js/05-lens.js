@@ -12,9 +12,7 @@ const GUARD_MS = 180;   // trailing window discarded: the twitch on lift-off
 const DWELL_MS = 120;   // rest this long on a state for it to read as intent
 const SLOP     = 10;    // px of drift still counted as holding still
 
-const lensBox = document.getElementById('lens');
-const lensMap = document.getElementById('lensMap');
-const lensCap = document.getElementById('lensCap');
+const lensBox = $('lens'), lensMap = $('lensMap'), lensCap = $('lensCap');
 
 // one throwaway path per state, built once; only the classes change per open
 const lensPaths = {};

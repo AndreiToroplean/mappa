@@ -1,4 +1,5 @@
-const svg = document.getElementById('map');
+const $ = id => document.getElementById(id);
+const svg = $('map');
 const NS = 'http://www.w3.org/2000/svg';
 const nodes = {};
 const REGION_NAMES = STATES.map(s => s.n);

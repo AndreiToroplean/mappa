@@ -18,6 +18,7 @@ src/js/03-run.js    run lifecycle: queue, lives, clock, guesses
 src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
 src/js/05-lens.js   the press-and-hold magnifier
 src/js/06-board.js  storage, leaderboard, end of run
+check.py            regression harness for the pure logic (no browser needed)
 src/build.py        decodes the map data and computes label anchors
 src/make.py         assembles everything into dist/fifty.html
 data/states.json    generated: path geometry, label anchor, inscribed radius per state

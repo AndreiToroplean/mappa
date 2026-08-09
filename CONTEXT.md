@@ -188,6 +188,48 @@ scoped per artifact instance, so scores do *not* carry across a rebuild — that
 is the runtime's boundary, not a bug, and the cards now say so rather than
 leaving it to be discovered.
 
+## Structure
+
+`src/` is split for editing; `make.py` inlines it all back into one file, so
+the shipped artifact is unchanged — single file, no external references.
+
+```
+01-data.js    the region set; expands the short payload keys, holds RULES
+02-map.js     SVG construction, paint layers, labels, tap targets, STATUS
+03-run.js     run lifecycle: queue, lives, clock, guess()
+04-geometry.js  screen->map coords, distance, resolving a position
+05-lens.js    the press-and-hold magnifier
+06-board.js   storage, leaderboard, end of run
+```
+
+Numeric prefixes are the load order and nothing else enforces it. The rule is
+one direction only: later modules may use earlier ones.
+
+**One status per region, changed in one place.** `STATUS` maps a status to its
+map class, paint layer, label kind and magnifier class; `setStatus()` is the
+only thing allowed to apply it, and `statusOf` is the truth. Before this,
+"found" was a DOM class and "missed" a JS `Set`, so `selectable()` consulted
+both, and the transition was hand-written at five call sites — two via
+`setAttribute`, two via `classList`, which is how a region ends up carrying
+`state found miss`.
+
+**`borderDist2` is the geometric primitive.** Squared distance from a point to
+a region's border, with an early-out ceiling. The snap threshold is a ceiling
+on it, resolving a position is a minimum over it, and blind mode's error score
+is `distanceTo()` — the same measure aimed at one named region, zero inside.
+`distanceTo` is deliberately unused today; it is there so the roadmap does not
+reinvent it.
+
+**Totals are derived.** `TOTAL` from the region set, lives and wording from
+`RULES`. Fifty was hardcoded in eight places and three lives in two, which is
+what blocked both a practice mode and a second geography.
+
+**`check.py`** runs the pure logic against independent Python implementations:
+`resolve()` over 120 randomised points and dead-sets, `settle()` over its seven
+lift scenarios, `distanceTo()` over 45 points. It needs no browser. Anything
+moved out of the DOM becomes testable this way, which is a reason to keep
+moving things out of the DOM.
+
 ## Roadmap (recorded, not started)
 
 Three directions, sketched by Andrei. Nothing here is committed to; they are

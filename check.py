@@ -57,11 +57,27 @@ for _ in range(120):
     snap = random.choice([True, False])
     cases.append((x, y, sorted(dead), snap, ref_resolve(x, y, dead, snap)))
 
+def ref_distance(x, y, name):
+    if contains(x, y) == name: return 0.0
+    best = min(seg_d2(x, y, r[i][0], r[i][1], r[i+1][0], r[i+1][1])
+               for r in rings[name] for i in range(len(r) - 1))
+    return best ** 0.5
+
+dist_cases = []
+for _ in range(40):
+    x = round(random.uniform(-60, 960), 1); y = round(random.uniform(10, 610), 1)
+    nm = random.choice(names)
+    dist_cases.append((x, y, nm, round(ref_distance(x, y, nm), 6)))
+# plus a guaranteed-inside point per a few regions
+for s in S[:5]:
+    dist_cases.append((s['l'][0], s['l'][1], s['n'], 0.0))
+
 # ------------------------------------------------------------------ harness
 geo = (JS / '04-geometry.js').read_text()
 blk = geo[geo.index('const SNAP_UNITS'):]
-blk = blk.replace(blk[blk.index('function stateUnder'):blk.index('function nearestSelectable')],
-                  'function stateUnder(u){ return polyHit(u.x, u.y); }\n\n')
+blk = blk.replace(blk[blk.index('function stateUnder'):blk.index('function borderDist2')],
+                  'function stateUnder(u){ return polyHit(u.x, u.y); }\nconst CAN_HIT = true;\n'
+                  'const shapes = new Proxy({}, { get: (_, n) => ({ isPointInFill: u => polyHit(u.x, u.y) === n }) });\n\n')
 blk = blk.replace(blk[blk.index('function selectable'):blk.index('function segDist2')],
                   'function selectable(name){ return !!name && !DEAD.has(name); }\n\n')
 blk = blk.replace("""function resolve(clientX, clientY, snapFromDead) {
@@ -79,6 +95,7 @@ pathlib.Path('/tmp/fifty-check.js').write_text(
     "const REGIONS = " + json.dumps([{'name': r['n'], 'd': r['d']} for r in S]) + ";\n"
     "const REGION_NAMES = REGIONS.map(r => r.name);\n"
     "const CASES = " + json.dumps(cases) + ";\n"
+    "const DIST = " + json.dumps(dist_cases) + ";\n"
     "let DEAD = new Set();\nconst GUARD_MS = 180, DWELL_MS = 120;\nlet trail = [], NOW = 0;\n"
     """
 function polyHit(x, y){
@@ -124,7 +141,14 @@ for (const [label, segs, now, want] of S_CASES){
   if (got !== want){ sfail++; console.log('  settle FAIL ' + label + ' -> ' + got + ' (want ' + want + ')'); }
 }
 console.log('  settle:  ' + (S_CASES.length - sfail) + '/' + S_CASES.length + ' pass');
-process.exitCode = (fail || sfail) ? 1 : 0;
+
+let dfail = 0;
+for (const [x, y, nm, want] of DIST){
+  const got = distanceTo(nm, {x: x, y: y});
+  if (Math.abs(got - want) > 1e-6){ dfail++; if (dfail <= 3) console.log('  distanceTo mismatch ' + nm + ' at ('+x+','+y+') js='+got+' ref='+want); }
+}
+console.log('  distanceTo: ' + (DIST.length - dfail) + '/' + DIST.length + ' match the reference (0 inside, border distance outside)');
+process.exitCode = (fail || sfail || dfail) ? 1 : 0;
 """)
 
 r = subprocess.run(['node', '/tmp/fifty-check.js'], capture_output=True, text=True)

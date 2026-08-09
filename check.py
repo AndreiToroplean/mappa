@@ -76,12 +76,13 @@ lens = (JS / '05-lens.js').read_text()
 settle = lens[lens.index('function settle()'):lens.index('\nfunction closeLens')]
 
 pathlib.Path('/tmp/fifty-check.js').write_text(
-    "const STATES = " + json.dumps(S) + ";\n"
+    "const REGIONS = " + json.dumps([{'name': r['n'], 'd': r['d']} for r in S]) + ";\n"
+    "const REGION_NAMES = REGIONS.map(r => r.name);\n"
     "const CASES = " + json.dumps(cases) + ";\n"
     "let DEAD = new Set();\nconst GUARD_MS = 180, DWELL_MS = 120;\nlet trail = [], NOW = 0;\n"
     """
 function polyHit(x, y){
-  for (const s of STATES){
+  for (const s of REGIONS){
     let c = false;
     for (const part of s.d.split('M')){
       if(!part) continue;
@@ -91,7 +92,7 @@ function polyHit(x, y){
         if ((ay > y) !== (by > y) && x < (bx-ax)*(y-ay)/(by-ay)+ax) c = !c;
       }
     }
-    if (c) return s.n;
+    if (c) return s.name;
   }
   return null;
 }

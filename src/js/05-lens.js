@@ -16,11 +16,11 @@ const lensBox = $('lens'), lensMap = $('lensMap'), lensCap = $('lensCap');
 
 // one throwaway path per state, built once; only the classes change per open
 const lensPaths = {};
-STATES.forEach(s => {
+REGIONS.forEach(r => {
   const p = document.createElementNS(NS, 'path');
-  p.setAttribute('d', s.d);
+  p.setAttribute('d', r.d);
   lensMap.appendChild(p);
-  lensPaths[s.n] = p;
+  lensPaths[r.name] = p;
 });
 
 let holdTimer = null, lensOn = false, swallowClick = false;
@@ -28,11 +28,9 @@ let downX = 0, downY = 0, aim = null, trail = [], moveRaf = 0, lastPt = null;
 
 function openLens(x, y) {
   lensOn = true;
-  for (const nm in lensPaths) {
-    const c = nodes[nm].classList;
-    lensPaths[nm].setAttribute('class',
-      c.contains('found') ? 'found' : c.contains('miss') ? 'miss' : '');
-  }
+  // the STATUS table decides how a status looks in the disc too, so the disc
+  // and the map can never drift apart
+  for (const nm in lensPaths) lensPaths[nm].setAttribute('class', STATUS[status(nm)].lens);
   trail = [];
   aim = undefined;          // force the first update to register a segment
   lensBox.hidden = false;

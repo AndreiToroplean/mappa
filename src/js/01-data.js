@@ -29,13 +29,15 @@ const RULES = {
    Each mode owns its own board, under its own storage key. They are not
    comparable — a practice run cannot fail, so ranking it against runs that
    could would be meaningless — and mixing them in one list would quietly
-   bury every classic run under a wall of completed practice ones. */
+   bury every ranked run under a wall of completed practice ones. */
 const MODES = {
-  classic: {
-    id: 'classic',
-    label: 'Classic',
+  ranked: {
+    id: 'ranked',
+    label: 'Ranked',
     lives: 3,
+    // unchanged from when this mode was the only one — existing boards survive
     key: 'fifty:board2',
+    counter: 'Lives',       // what the header's third column is counting
     rule: 'Three misses ends the run. Your time is the score.',
     hint: 'Click the state named above, or press and hold to zoom. '
         + 'Three misses ends the run.',
@@ -61,6 +63,7 @@ const MODES = {
     label: 'Practice',
     lives: Infinity,
     key: 'fifty:practice1',
+    counter: 'Misses',
     rule: 'No limit on misses. Fewest misses wins, then quickest.',
     hint: 'Click the state named above, or press and hold to zoom. '
         + 'Misses are counted, not fatal.',
@@ -77,7 +80,7 @@ const MODES = {
   },
 };
 
-let MODE = MODES.classic;
+let MODE = MODES.ranked;
 
 /* Shared by both policies: keep one entry per bucket, replacing only on an
    improvement. */

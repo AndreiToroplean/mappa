@@ -178,14 +178,14 @@ eq('practice: quicker replaces same count', pb.find(r=>r.e===7).t/1000, 250);
 eq('practice: misses may exceed the region count', addEntry([], {f:50,e:73,t:1,d:1}).board[0].e, 73);
 eq('practice: lives are unbounded', Number.isFinite(MODES.practice.lives), false);
 
-MODE = MODES.classic;
+MODE = MODES.ranked;
 let cb = [];
 [[50,2,100],[50,0,500],[31,3,200],[50,1,300],[31,3,150],[0,3,9]].forEach(([f,e,t],i) => {
   cb = addEntry(cb, {f:f,e:e,t:t*1000,d:i}).board; });
-eq('classic: one entry per partial tally', cb.filter(r=>r.f===31).map(r=>r.t/1000), [150]);
-eq('classic: full runs by misses then time', rankBoard(cb.slice()).filter(r=>r.f===50).map(r=>r.e), [0,1,2]);
-eq('classic: zero-region run does not post', cb.some(r=>r.f===0), false);
-eq('boards are stored apart', MODES.classic.key === MODES.practice.key, false);
+eq('ranked: one entry per partial tally', cb.filter(r=>r.f===31).map(r=>r.t/1000), [150]);
+eq('ranked: full runs by misses then time', rankBoard(cb.slice()).filter(r=>r.f===50).map(r=>r.e), [0,1,2]);
+eq('ranked: zero-region run does not post', cb.some(r=>r.f===0), false);
+eq('boards are stored apart', MODES.ranked.key === MODES.practice.key, false);
 console.log('  modes:   ' + (fail ? fail + ' FAILED' : '8/8 pass'));
 process.exitCode = fail ? 1 : 0;
 """)

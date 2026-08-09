@@ -163,18 +163,19 @@ confetti and no animation, and the pause returns to what it was before.
 Mode and geography are independent axes: a mode says what counts as a run and
 what counts as a good one, never which regions are in play.
 
-**Classic** — three misses ends the run. Ranked by regions found, then misses,
-then time.
+**Ranked** — three misses ends the run. Ordered by regions found, then
+misses, then time.
 
-**Practice** — no limit on misses, and the lives indicator is hidden since
-there is nothing to spend. Every run finishes, so the only axis left is misses:
+**Practice** — no limit on misses. The header column that counts lives in
+Ranked counts misses here instead, so the layout holds steady between modes.
+Every run finishes, so the only axis left is misses:
 ranked by misses, then time, with one entry per miss count. Counts can exceed
 three, and can exceed the region count, since the same region can be missed on
 different turns.
 
 Each mode keeps its own board under its own storage key. They are not
 comparable — a practice run cannot fail — and merging them would bury every
-classic run under a wall of completed practice ones. Clearing a board clears
+ranked run under a wall of completed practice ones. Clearing a board clears
 only the mode you are looking at.
 
 The switcher appears on both the intro and the end-of-run card, so a run can be
@@ -194,7 +195,7 @@ The intro and game-over cards state which one is in use, and carry a reset
 button (with a confirmation step) beside the board. A board that silently
 forgets is worse than one that says up front that it will.
 
-Ranked by states found first, then errors, then time — a slow 50 always beats
+Ordered by states found first, then errors, then time — a slow 50 always beats
 a fast 40, and a clean 50 beats a quicker one with misses. Errors are shown on
 every row; entries saved before runs counted them show a dash.
 Sub-50 runs keep one entry per tally, so your best 31-state run replaces your

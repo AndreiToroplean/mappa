@@ -114,8 +114,13 @@
   .modes button.on{background:var(--amber);color:var(--ink);
     box-shadow:none;font-weight:600}
   .modes button.on:hover{color:var(--ink)}
-  /* practice has no lives to spend, so the pips would only ever show three */
-  body.practice #livesStat{display:none}
+  /* Practice has no lives to spend, so the same column counts what it does
+     have. Keeping the column rather than hiding it holds the header layout
+     steady between modes. */
+  #missCount{display:none;min-width:38px}
+  body.practice #missCount{display:block}
+  body.practice #lives{display:none}
+  .val.bad{color:#D4797C}
   .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
   .bhead{display:flex;align-items:center;justify-content:space-between;
     gap:10px;margin:0 0 10px}
@@ -228,6 +233,7 @@
     .stat .val{font-size:17px}
     #progress{min-width:58px}
     #clock{min-width:78px}
+    #missCount{min-width:30px}
     footer{font-size:11px;padding:0 14px;height:52px}
     .countdown span{font-size:78px}
     .fanfare span{font-size:40px}

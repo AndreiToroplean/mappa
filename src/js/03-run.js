@@ -8,7 +8,8 @@ const livesLeft = () => MODE.lives - errors;
 /* Every element the game touches, looked up once. These were a mix of cached
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
-['bar', 'promptLabel', 'target', 'lives', 'progress', 'clock', 'ticker',
+['bar', 'promptLabel', 'target', 'lives', 'counterLabel', 'missCount',
+ 'progress', 'clock', 'ticker',
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'startBtn', 'clearNo', 'clearYes',
 ].forEach(id => { el[id] = $(id); });
@@ -21,8 +22,15 @@ const fmt = ms => {
     + '.' + Math.floor((s * 10) % 10);
 };
 
-function drawLives() {
-  if (!Number.isFinite(MODE.lives)) { el.lives.innerHTML = ''; return; }
+/* The same header column either way: lives left when they are countable,
+   misses taken when they are not. */
+function drawCounter() {
+  el.counterLabel.textContent = MODE.counter;
+  if (!Number.isFinite(MODE.lives)) {
+    el.missCount.textContent = errors;
+    el.missCount.classList.toggle('bad', errors > 0);
+    return;
+  }
   el.lives.innerHTML = Array.from({ length: MODE.lives }, (_, i) =>
     `<div class="pip${i < livesLeft() ? '' : ' gone'}"></div>`).join('');
   if (livesLeft() === 0) document.querySelector('.pip').classList.add('lastgone');
@@ -37,7 +45,7 @@ function resetRun() {
   errors = 0; found = 0; running = false;
   document.body.classList.toggle('practice', MODE.id === 'practice');
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
-  drawLives();
+  drawCounter();
   document.body.classList.remove('won');
   el.bar.classList.remove('lost', 'won');
   el.target.classList.remove('lost', 'won');
@@ -101,7 +109,7 @@ function guess(name) {
   } else {
     setStatus(name, 'missed');
     errors++;
-    drawLives();
+    drawCounter();
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
     if (livesLeft() === 0) finish(false, name);
   }

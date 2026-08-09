@@ -69,13 +69,17 @@ function showNote() {
   });
 }
 
-const rankBoard = b => b.sort((a, c) => c.f - a.f || a.t - c.t);
+/* The one definition of "better": more found first, then quicker. Ranking and
+   insertion used to encode this separately, which is two places to change when
+   a mode ranks on something else. */
+const better = (a, c) => c.f - a.f || a.t - c.t;
+const rankBoard = b => b.sort(better);
 
 function addEntry(board, entry) {
   if (entry.f === 0) return { board, kept: false };
   if (entry.f === 50) {
     board.push(entry);
-    const full = board.filter(r => r.f === 50).sort((a, c) => a.t - c.t).slice(0, 5);
+    const full = board.filter(r => r.f === 50).sort(better).slice(0, 5);
     board = full.concat(board.filter(r => r.f < 50));
     return { board, kept: full.includes(entry) };
   }
@@ -88,9 +92,17 @@ function addEntry(board, entry) {
   return { board, kept: false };
 }
 
-function renderBoard(el, board, mine) {
+/* Both cards show the same board, so they are always painted together. Three
+   call sites used to render one or both with slightly different arguments. */
+function showBoards(board, mine) {
+  renderBoard(el.introBoard, board, mine);
+  renderBoard(el.boardList, board, mine);
+  showNote();
+}
+
+function renderBoard(target, board, mine) {
   const rows = rankBoard(board.slice()).slice(0, 6);
-  el.innerHTML = rows.length
+  target.innerHTML = rows.length
     ? rows.map((r, i) => {
         const tier = r.f === 50 ? 'full' : 'partial';
         const you = mine && r.d === mine ? ' you' : '';
@@ -115,11 +127,10 @@ async function finish(won, lastClick) {
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's all fifty.`;
     pause = 1200;   // let the last state fill in and the map read as complete
   } else {
-    document.getElementById('bar').classList.add('lost');
-    document.getElementById('promptLabel').textContent = 'Run over';
-    const tgt = document.getElementById('target');
-    tgt.textContent = 'Out of lives';
-    tgt.classList.add('lost');
+    el.bar.classList.add('lost');
+    el.promptLabel.textContent = 'Run over';
+    el.target.textContent = 'Out of lives';
+    el.target.classList.add('lost');
     clock.classList.add('lost');
     setStatus(current, 'answer');
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +
@@ -127,15 +138,14 @@ async function finish(won, lastClick) {
     pause = 2600;   // time to read the miss and see the real answer
   }
 
-  document.getElementById('ovTitle').textContent = won ? 'All fifty.' : 'Out of lives.';
-  document.getElementById('ovSub').textContent =
+  el.ovTitle.textContent = won ? 'All fifty.' : 'Out of lives.';
+  el.ovSub.textContent =
     won ? `Complete in ${fmt(ms)}` : `${found} of 50 found · ${fmt(ms)}`;
 
   const entry = { f: found, t: ms, d: Date.now() };
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);
-  renderBoard(document.getElementById('boardList'), res.board, res.kept ? entry.d : null);
-  showNote();
+  showBoards(res.board, res.kept ? entry.d : null);
 
   const remaining = Math.max(0, pause - (Date.now() - endedAt));
   setTimeout(() => { overlay.hidden = false; }, remaining);
@@ -146,21 +156,16 @@ async function finish(won, lastClick) {
    single origin. Renaming or moving the file does not give you a fresh board,
    so this is the only way to get one. */
 async function clearBoard() {
-  memBoard = [];
-  try { if (window.storage && window.storage.set) await window.storage.set(KEY, '[]'); }
-  catch (e) {}
-  try { window.localStorage.removeItem(KEY); } catch (e) {}
-  renderBoard(document.getElementById('introBoard'), [], null);
-  renderBoard(document.getElementById('boardList'), [], null);
-  showNote();
+  await saveBoard([]);      // whichever backend is live already knows how
+  showBoards([], null);
 }
 
-const confirmBox = document.getElementById('confirm');
+const confirmBox = el.confirm;
 document.querySelectorAll('.clearBtn').forEach(b =>
   b.addEventListener('click', () => { confirmBox.hidden = false; }));
-document.getElementById('clearNo').addEventListener('click',
+el.clearNo.addEventListener('click',
   () => { confirmBox.hidden = true; });
-document.getElementById('clearYes').addEventListener('click', async () => {
+el.clearYes.addEventListener('click', async () => {
   await clearBoard();
   confirmBox.hidden = true;
 });
@@ -168,11 +173,8 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape' && !confirmBox.hidden) confirmBox.hidden = true;
 });
 
-document.getElementById('again').addEventListener('click', beginRun);
-document.getElementById('startBtn').addEventListener('click', beginRun);
+el.again.addEventListener('click', beginRun);
+el.startBtn.addEventListener('click', beginRun);
 
 // show any existing best runs on the intro screen
-loadBoard().then(b => {
-  renderBoard(document.getElementById('introBoard'), b, null);
-  showNote();
-});
+loadBoard().then(b => showBoards(b, null));

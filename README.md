@@ -10,12 +10,23 @@ including offline.
 ## Layout
 
 ```
-src/template.html   the game: markup, CSS, and logic, with __DATA__ / __ABBR__ placeholders
+src/index.html      markup, with __CSS__ / __JS__ placeholders
+src/style.css       all styling
+src/js/01-data.js   the region data, injected as __DATA__ / __ABBR__
+src/js/02-map.js    building the SVG, paint layers, labels, tap targets
+src/js/03-run.js    run lifecycle: queue, lives, clock, guesses
+src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
+src/js/05-lens.js   the press-and-hold magnifier
+src/js/06-board.js  storage, leaderboard, end of run
 src/build.py        decodes the map data and computes label anchors
-src/make.py         injects data into the template and writes dist/fifty.html
+src/make.py         assembles everything into dist/fifty.html
 data/states.json    generated: path geometry, label anchor, inscribed radius per state
 dist/fifty.html     generated (gitignored): the playable file
 ```
+
+The split is for editing only. `make.py` inlines the CSS, concatenates the JS
+modules in filename order, and injects the data, so the shipped artifact is
+still one file with no external references.
 
 Rebuild:
 

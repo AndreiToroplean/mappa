@@ -1,0 +1,115 @@
+// game state
+let queue, current, lives, found, t0, raf, running;
+let missed = new Set();   // wrong guesses in the current turn only
+const clock = document.getElementById('clock');
+const ticker = document.getElementById('ticker');
+const overlay = document.getElementById('overlay');
+
+const fmt = ms => {
+  const s = ms / 1000;
+  return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0')
+    + '.' + Math.floor((s * 10) % 10);
+};
+
+function drawLives() {
+  document.getElementById('lives').innerHTML =
+    [0,1,2].map(i => `<div class="pip${i < lives ? '' : ' gone'}"></div>`).join('');
+  if (lives === 0) document.querySelector('.pip').classList.add('lastgone');
+}
+
+function resetRun() {
+  queue = STATES.map(s => s.n);
+  for (let i = queue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue[i], queue[j]] = [queue[j], queue[i]];
+  }
+  lives = 3; found = 0; running = false;
+  missed.clear();
+  Object.values(nodes).forEach(p => {
+    p.setAttribute('class', 'state');
+    L_BASE.appendChild(p);
+  });
+  Object.values(labels).forEach(t => t.style.display = 'none');
+  drawLives();
+  document.getElementById('bar').classList.remove('lost');
+  document.getElementById('target').classList.remove('lost');
+  clock.classList.remove('lost');
+  document.getElementById('promptLabel').textContent = 'Find this state';
+  document.getElementById('progress').textContent = '0/50';
+  document.getElementById('target').textContent = 'Get ready';
+  clock.textContent = '0:00.0';
+  ticker.textContent = 'Click the state named above, or press and hold to zoom. Three misses ends the run.';
+  overlay.hidden = true;
+  document.getElementById('intro').hidden = true;
+}
+
+function countdown(done) {
+  const box = document.getElementById('countdown');
+  const num = document.getElementById('countNum');
+  let n = 3;
+  box.hidden = false;
+  const show = () => {
+    num.textContent = n;
+    num.style.animation = 'none';
+    void num.offsetWidth;
+    num.style.animation = '';
+    if (n-- > 1) setTimeout(show, 700);
+    else setTimeout(() => { box.hidden = true; done(); }, 700);
+  };
+  show();
+}
+
+function beginRun() {
+  resetRun();
+  countdown(() => {
+    running = true;
+    t0 = Date.now();
+    tick();
+    next();
+  });
+}
+
+function tick() {
+  clock.textContent = fmt(Date.now() - t0);
+  if (running) raf = requestAnimationFrame(tick);
+}
+
+function next() {
+  current = queue.pop();
+  document.getElementById('target').innerHTML = current + '<span class="caret"></span>';
+}
+
+function guess(name) {
+  if (!running || !name) return;
+  // the oversized hit circles still fire over solved states — ignore those
+  if (nodes[name].classList.contains('found')) return;
+
+  if (name === current) {
+    nodes[name].setAttribute('class', 'state found');
+    L_FOUND.appendChild(nodes[name]);
+    setLabel(name, 'found');
+    // the turn is over: clear this turn's misses, they count again next time
+    missed.forEach(m => {
+      nodes[m].classList.remove('miss');
+      L_BASE.appendChild(nodes[m]);
+      setLabel(m, null);
+    });
+    missed.clear();
+    found++;
+    document.getElementById('progress').textContent = found + '/50';
+    ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
+    if (queue.length === 0) return finish(true, name);
+    next();
+  } else {
+    if (missed.has(name)) return;   // already wrong this turn, no double penalty
+    missed.add(name);
+    nodes[name].classList.add('miss');
+    L_MISS.appendChild(nodes[name]);
+    setLabel(name, 'wrong');
+    lives--;
+    drawLives();
+    ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
+    if (lives === 0) finish(false, name);
+  }
+}
+

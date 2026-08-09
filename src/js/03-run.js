@@ -1,5 +1,10 @@
 // game state
-let queue, current, lives, found, t0, raf, running;
+let queue, current, errors, found, t0, raf, running;
+
+/* Errors are the thing that is counted; lives are a rule about them. Tracking
+   lives directly would leave practice mode — unlimited lives, ranked on errors
+   — with nothing to count. */
+const livesLeft = () => RULES.lives - errors;
 /* Every element the game touches, looked up once. These were a mix of cached
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
@@ -18,8 +23,8 @@ const fmt = ms => {
 
 function drawLives() {
   el.lives.innerHTML = Array.from({ length: RULES.lives }, (_, i) =>
-    `<div class="pip${i < lives ? '' : ' gone'}"></div>`).join('');
-  if (lives === 0) document.querySelector('.pip').classList.add('lastgone');
+    `<div class="pip${i < livesLeft() ? '' : ' gone'}"></div>`).join('');
+  if (livesLeft() === 0) document.querySelector('.pip').classList.add('lastgone');
 }
 
 function resetRun() {
@@ -28,7 +33,7 @@ function resetRun() {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
-  lives = RULES.lives; found = 0; running = false;
+  errors = 0; found = 0; running = false;
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawLives();
   el.bar.classList.remove('lost');
@@ -92,10 +97,10 @@ function guess(name) {
     next();
   } else {
     setStatus(name, 'missed');
-    lives--;
+    errors++;
     drawLives();
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
-    if (lives === 0) finish(false, name);
+    if (livesLeft() === 0) finish(false, name);
   }
 }
 

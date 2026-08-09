@@ -158,7 +158,9 @@ The intro and game-over cards state which one is in use, and carry a reset
 button (with a confirmation step) beside the board. A board that silently
 forgets is worse than one that says up front that it will.
 
-Ranked by states found first, time second — a slow 50 always beats a fast 40.
+Ranked by states found first, then errors, then time — a slow 50 always beats
+a fast 40, and a clean 50 beats a quicker one with misses. Errors are shown on
+every row; entries saved before runs counted them show a dash.
 Sub-50 runs keep one entry per tally, so your best 31-state run replaces your
 previous 31-state run but never competes with your 12-state one. Full runs are
 the exception: up to five coexist, ranked purely on time. Zero-state runs don't

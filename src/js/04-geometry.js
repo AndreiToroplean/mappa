@@ -1,4 +1,4 @@
-const CAN_HIT = typeof Object.values(nodes)[0].isPointInFill === 'function';
+const CAN_HIT = typeof shapes[REGION_NAMES[0]].isPointInFill === 'function';
 
 function userPoint(x, y) {
   const m = svg.getScreenCTM();
@@ -28,9 +28,9 @@ function userPoint(x, y) {
 const SNAP_UNITS = 40;   // reach in map units — see CONTEXT.md for why not px
 
 // boundary points, parsed once out of the same path data the map draws from
-const outline = {};
-STATES.forEach(s => {
-  outline[s.n] = s.d.split('M').filter(Boolean).map(ring => {
+const borders = {};   // region name -> its boundary point arrays
+REGIONS.forEach(r => {
+  borders[r.name] = r.d.split('M').filter(Boolean).map(ring => {
     const pairs = ring.replace(/Z$/, '').split('L');
     const a = new Float64Array(pairs.length * 2);
     for (let i = 0; i < pairs.length; i++) {
@@ -43,7 +43,7 @@ STATES.forEach(s => {
 });
 
 function selectable(name) {
-  return !!name && !!nodes[name] && status(name) === 'open';
+  return !!name && !!shapes[name] && status(name) === 'open';
 }
 
 function segDist2(px, py, ax, ay, bx, by) {
@@ -60,9 +60,9 @@ function segDist2(px, py, ax, ay, bx, by) {
 // which state's fill contains this point, selectable or not
 function stateUnder(u, clientX, clientY) {
   if (CAN_HIT) {
-    for (let i = 0; i < STATES.length; i++) {
-      const nm = STATES[i].n;
-      if (nodes[nm].isPointInFill(u)) return nm;
+    for (let i = 0; i < REGION_NAMES.length; i++) {
+      const nm = REGION_NAMES[i];
+      if (shapes[nm].isPointInFill(u)) return nm;
     }
     return null;
   }
@@ -72,10 +72,10 @@ function stateUnder(u, clientX, clientY) {
 
 function nearestSelectable(u) {
   let best = null, bestD = SNAP_UNITS * SNAP_UNITS;   // seeded at the cap
-  for (let s = 0; s < STATES.length; s++) {
-    const nm = STATES[s].n;
+  for (let s = 0; s < REGION_NAMES.length; s++) {
+    const nm = REGION_NAMES[s];
     if (!selectable(nm)) continue;
-    const rs = outline[nm];
+    const rs = borders[nm];
     for (let r = 0; r < rs.length; r++) {
       const a = rs[r], len = a.length;
       for (let i = 0; i + 3 < len; i += 2) {

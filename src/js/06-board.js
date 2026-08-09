@@ -1,4 +1,5 @@
-// leaderboard: one best time per states-found tally, but many entries at a full 50
+// leaderboard: one best time per regions-found tally, many entries at a full set
+const ALL = 'All ' + RULES.collective;
 const KEY = 'fifty:board2';
 let memBoard = [];
 
@@ -77,10 +78,10 @@ const rankBoard = b => b.sort(better);
 
 function addEntry(board, entry) {
   if (entry.f === 0) return { board, kept: false };
-  if (entry.f === 50) {
+  if (entry.f === TOTAL) {
     board.push(entry);
-    const full = board.filter(r => r.f === 50).sort(better).slice(0, 5);
-    board = full.concat(board.filter(r => r.f < 50));
+    const full = board.filter(r => r.f === TOTAL).sort(better).slice(0, 5);
+    board = full.concat(board.filter(r => r.f < TOTAL));
     return { board, kept: full.includes(entry) };
   }
   const prev = board.find(r => r.f === entry.f);
@@ -104,11 +105,11 @@ function renderBoard(target, board, mine) {
   const rows = rankBoard(board.slice()).slice(0, 6);
   target.innerHTML = rows.length
     ? rows.map((r, i) => {
-        const tier = r.f === 50 ? 'full' : 'partial';
+        const tier = r.f === TOTAL ? 'full' : 'partial';
         const you = mine && r.d === mine ? ' you' : '';
         return `<div class="row ${tier}${you}">
             <span class="rank">${String(i + 1).padStart(2, '0')}</span>
-            <span class="tally">${r.f === 50 ? 'All fifty' : r.f + ' states'}</span>
+            <span class="tally">${r.f === TOTAL ? ALL : r.f + ' ' + RULES.noun + 's'}</span>
             <span class="time">${fmt(r.t)}</span>
           </div>`;
       }).join('')
@@ -124,7 +125,7 @@ async function finish(won, lastClick) {
   const endedAt = Date.now();
   let pause;
   if (won) {
-    ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's all fifty.`;
+    ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's ${ALL.toLowerCase()}.`;
     pause = 1200;   // let the last state fill in and the map read as complete
   } else {
     el.bar.classList.add('lost');
@@ -138,9 +139,9 @@ async function finish(won, lastClick) {
     pause = 2600;   // time to read the miss and see the real answer
   }
 
-  el.ovTitle.textContent = won ? 'All fifty.' : 'Out of lives.';
+  el.ovTitle.textContent = won ? ALL + '.' : 'Out of lives.';
   el.ovSub.textContent =
-    won ? `Complete in ${fmt(ms)}` : `${found} of 50 found · ${fmt(ms)}`;
+    won ? `Complete in ${fmt(ms)}` : `${found} of ${TOTAL} found · ${fmt(ms)}`;
 
   const entry = { f: found, t: ms, d: Date.now() };
   const res = addEntry(await loadBoard(), entry);

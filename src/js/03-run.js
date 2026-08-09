@@ -17,8 +17,8 @@ const fmt = ms => {
 };
 
 function drawLives() {
-  el.lives.innerHTML =
-    [0,1,2].map(i => `<div class="pip${i < lives ? '' : ' gone'}"></div>`).join('');
+  el.lives.innerHTML = Array.from({ length: RULES.lives }, (_, i) =>
+    `<div class="pip${i < lives ? '' : ' gone'}"></div>`).join('');
   if (lives === 0) document.querySelector('.pip').classList.add('lastgone');
 }
 
@@ -28,14 +28,14 @@ function resetRun() {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
-  lives = 3; found = 0; running = false;
+  lives = RULES.lives; found = 0; running = false;
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawLives();
   el.bar.classList.remove('lost');
   el.target.classList.remove('lost');
   clock.classList.remove('lost');
-  el.promptLabel.textContent = 'Find this state';
-  el.progress.textContent = '0/50';
+  el.promptLabel.textContent = 'Find this ' + RULES.noun;
+  el.progress.textContent = '0/' + TOTAL;
   el.target.textContent = 'Get ready';
   clock.textContent = '0:00.0';
   ticker.textContent = 'Click the state named above, or press and hold to zoom. Three misses ends the run.';
@@ -86,7 +86,7 @@ function guess(name) {
     // the turn is over: clear this turn's misses, they count again next time
     REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });
     found++;
-    el.progress.textContent = found + '/50';
+    el.progress.textContent = found + '/' + TOTAL;
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
     if (queue.length === 0) return finish(true, name);
     next();

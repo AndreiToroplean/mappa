@@ -1,8 +1,7 @@
 const $ = id => document.getElementById(id);
 const svg = $('map');
 const NS = 'http://www.w3.org/2000/svg';
-const nodes = {};
-const REGION_NAMES = STATES.map(s => s.n);
+const shapes = {};   // region name -> its <path>
 
 // SVG paints in document order, so resolved states must physically move up the
 // stack or neighbours drawn later will clip their outlines.
@@ -11,24 +10,24 @@ const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
       L_ANSWER = layer(), L_LABEL = layer(), L_HIT = layer();
 
 // draw states
-STATES.forEach(s => {
+REGIONS.forEach(r => {
   const p = document.createElementNS(NS, 'path');
-  p.setAttribute('d', s.d);
+  p.setAttribute('d', r.d);
   p.setAttribute('class', 'state');
-  p.dataset.name = s.n;
+  p.dataset.name = r.name;
   L_BASE.appendChild(p);
-  nodes[s.n] = p;
+  shapes[r.name] = p;
 });
 // every state gets one reusable label node, hidden until it's needed
 const labels = {};
-STATES.forEach(s => {
+REGIONS.forEach(r => {
   const t = document.createElementNS(NS, 'text');
   t.setAttribute('class', 'label');
-  t.setAttribute('x', s.l[0]); t.setAttribute('y', s.l[1] + 4);
-  t.textContent = ABBR[s.n];
+  t.setAttribute('x', r.anchor[0]); t.setAttribute('y', r.anchor[1] + 4);
+  t.textContent = ABBR[r.name];
   t.style.display = 'none';
   L_LABEL.appendChild(t);
-  labels[s.n] = t;
+  labels[r.name] = t;
 });
 
 function setLabel(name, kind) {
@@ -50,10 +49,11 @@ function setLabel(name, kind) {
    asks. */
 const STATUS = {
   //        paint class      layer     label
-  open:   { cls: 'state',        layer: null,     label: null },
-  found:  { cls: 'state found',  layer: 'FOUND',  label: 'found' },
-  missed: { cls: 'state miss',   layer: 'MISS',   label: 'wrong' },
-  answer: { cls: 'state reveal', layer: 'ANSWER', label: 'answer' },
+  //        map class        layer     label       magnifier class
+  open:   { cls: 'state',        layer: null,     label: null,     lens: '' },
+  found:  { cls: 'state found',  layer: 'FOUND',  label: 'found',  lens: 'found' },
+  missed: { cls: 'state miss',   layer: 'MISS',   label: 'wrong',  lens: 'miss' },
+  answer: { cls: 'state reveal', layer: 'ANSWER', label: 'answer', lens: '' },
 };
 const LAYERS = { FOUND: L_FOUND, MISS: L_MISS, ANSWER: L_ANSWER };
 
@@ -62,8 +62,8 @@ const statusOf = {};   // region name -> key of STATUS
 function setStatus(name, key) {
   const spec = STATUS[key];
   statusOf[name] = key;
-  nodes[name].setAttribute('class', spec.cls);
-  (spec.layer ? LAYERS[spec.layer] : L_BASE).appendChild(nodes[name]);
+  shapes[name].setAttribute('class', spec.cls);
+  (spec.layer ? LAYERS[spec.layer] : L_BASE).appendChild(shapes[name]);
   setLabel(name, spec.label);
 }
 
@@ -71,12 +71,12 @@ const status = name => statusOf[name] || 'open';
 // Any state whose widest inscribed circle is under ~12px is hard to hit with a
 // thumb, so it gets an invisible tap target at its pole of inaccessibility.
 // Tightest states go last so they sit on top of their roomier neighbours.
-STATES.filter(s => s.r < 12).sort((a, b) => b.r - a.r).forEach(s => {
+REGIONS.filter(r => r.radius < 12).sort((a, b) => b.radius - a.radius).forEach(r => {
   const c = document.createElementNS(NS, 'circle');
   c.setAttribute('class', 'hit');
-  c.setAttribute('cx', s.l[0]); c.setAttribute('cy', s.l[1]);
-  c.setAttribute('r', Math.max(10, s.r));
-  c.dataset.name = s.n;
+  c.setAttribute('cx', r.anchor[0]); c.setAttribute('cy', r.anchor[1]);
+  c.setAttribute('r', Math.max(10, r.radius));
+  c.dataset.name = r.name;
   L_HIT.appendChild(c);
 });
 

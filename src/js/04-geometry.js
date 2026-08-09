@@ -70,19 +70,43 @@ function stateUnder(u, clientX, clientY) {
   return (el && el.dataset && el.dataset.name) || null;
 }
 
+/* Squared distance from a point to a region's border, stopping early once it
+   cannot beat `ceiling`. Squared throughout: the only thing done with these is
+   compare them, and a square root per segment across ~9000 points is waste.
+
+   This is the primitive the rest of the file is built from, and the one the
+   roadmap keeps asking for — the snap threshold is a ceiling on it, resolving
+   a position is a minimum over it, and blind mode's continuous error score is
+   this same measure aimed at one named region. */
+function borderDist2(name, u, ceiling) {
+  const rs = borders[name];
+  let best = ceiling === undefined ? Infinity : ceiling;
+  for (let r = 0; r < rs.length; r++) {
+    const a = rs[r], len = a.length;
+    for (let i = 0; i + 3 < len; i += 2) {
+      const d = segDist2(u.x, u.y, a[i], a[i + 1], a[i + 2], a[i + 3]);
+      if (d < best) best = d;
+    }
+  }
+  return best;
+}
+
+/* Distance in map units from a point to a region: zero anywhere inside it,
+   otherwise the distance to the nearest point on its border. Unused by the
+   game as it stands — it is the shape blind mode's error score needs, kept
+   here next to the primitive it belongs with rather than reinvented later. */
+function distanceTo(name, u) {
+  if (CAN_HIT && shapes[name].isPointInFill(u)) return 0;
+  return Math.sqrt(borderDist2(name, u));
+}
+
 function nearestSelectable(u) {
   let best = null, bestD = SNAP_UNITS * SNAP_UNITS;   // seeded at the cap
   for (let s = 0; s < REGION_NAMES.length; s++) {
     const nm = REGION_NAMES[s];
     if (!selectable(nm)) continue;
-    const rs = borders[nm];
-    for (let r = 0; r < rs.length; r++) {
-      const a = rs[r], len = a.length;
-      for (let i = 0; i + 3 < len; i += 2) {
-        const d = segDist2(u.x, u.y, a[i], a[i + 1], a[i + 2], a[i + 3]);
-        if (d < bestD) { bestD = d; best = nm; }
-      }
-    }
+    const d = borderDist2(nm, u, bestD);
+    if (d < bestD) { bestD = d; best = nm; }
   }
   return best;
 }

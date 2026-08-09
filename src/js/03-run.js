@@ -1,6 +1,5 @@
 // game state
 let queue, current, lives, found, t0, raf, running;
-let missed = new Set();   // wrong guesses in the current turn only
 const clock = document.getElementById('clock');
 const ticker = document.getElementById('ticker');
 const overlay = document.getElementById('overlay');
@@ -18,18 +17,13 @@ function drawLives() {
 }
 
 function resetRun() {
-  queue = STATES.map(s => s.n);
+  queue = REGION_NAMES.slice();
   for (let i = queue.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
   lives = 3; found = 0; running = false;
-  missed.clear();
-  Object.values(nodes).forEach(p => {
-    p.setAttribute('class', 'state');
-    L_BASE.appendChild(p);
-  });
-  Object.values(labels).forEach(t => t.style.display = 'none');
+  REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawLives();
   document.getElementById('bar').classList.remove('lost');
   document.getElementById('target').classList.remove('lost');
@@ -80,32 +74,19 @@ function next() {
 }
 
 function guess(name) {
-  if (!running || !name) return;
-  // the oversized hit circles still fire over solved states — ignore those
-  if (nodes[name].classList.contains('found')) return;
+  if (!running || !selectable(name)) return;
 
   if (name === current) {
-    nodes[name].setAttribute('class', 'state found');
-    L_FOUND.appendChild(nodes[name]);
-    setLabel(name, 'found');
+    setStatus(name, 'found');
     // the turn is over: clear this turn's misses, they count again next time
-    missed.forEach(m => {
-      nodes[m].classList.remove('miss');
-      L_BASE.appendChild(nodes[m]);
-      setLabel(m, null);
-    });
-    missed.clear();
+    REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });
     found++;
     document.getElementById('progress').textContent = found + '/50';
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
     if (queue.length === 0) return finish(true, name);
     next();
   } else {
-    if (missed.has(name)) return;   // already wrong this turn, no double penalty
-    missed.add(name);
-    nodes[name].classList.add('miss');
-    L_MISS.appendChild(nodes[name]);
-    setLabel(name, 'wrong');
+    setStatus(name, 'missed');
     lives--;
     drawLives();
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;

@@ -121,9 +121,7 @@ async function finish(won, lastClick) {
     tgt.textContent = 'Out of lives';
     tgt.classList.add('lost');
     clock.classList.add('lost');
-    nodes[current].setAttribute('class', 'state reveal');
-    L_ANSWER.appendChild(nodes[current]);
-    setLabel(current, 'answer');
+    setStatus(current, 'answer');
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +
                        `Out of lives; you were looking for <b>${current}</b>.`;
     pause = 2600;   // time to read the miss and see the real answer

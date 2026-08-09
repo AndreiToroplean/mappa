@@ -173,9 +173,18 @@ keys: a practice run cannot fail, so ranking it against runs that could is
 meaningless, and merging them would bury every classic run under completed
 practice ones.
 
-`Infinity` lives is load-bearing in one place — `drawLives()` would try to
-build an infinite array, so it returns early when lives are not finite, which
-also happens to be exactly when the indicator should be hidden.
+`Infinity` lives is load-bearing in one place — the counter would try to build
+an infinite array of pips, so `drawCounter()` branches on whether lives are
+finite, which is exactly the same question as whether to show pips or a number.
+
+The header keeps the column in both modes rather than hiding it in practice:
+same three stats, same widths, no reflow when switching. Ranked spends pips,
+practice counts misses upward, and the eyebrow says which.
+
+The mode was called Classic while it was the only one. `Ranked` reads as the
+competitive counterpart to Practice, which is the pairing the words already
+carry elsewhere. The storage key was deliberately *not* renamed with it, so
+boards saved before this survive.
 
 **Winning looks like winning.** A completed run used to be nearly
 indistinguishable from a failed one: the map stopped responding and a card slid

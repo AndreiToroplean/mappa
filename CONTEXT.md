@@ -12,7 +12,7 @@ tested and verified.
 ## Rebuilding
 
 ```
-python3 src/make.py          # data/states.json + template -> dist/fifty.html
+python3 src/make.py          # src/* + data/states.json -> dist/fifty.html
 ```
 
 `dist/` is generated and deliberately not committed.
@@ -171,8 +171,8 @@ full-fifty runs that took real effort.
 
 ## If uploading to a Claude Project
 
-Upload the text sources — `README.md`, `CONTEXT.md`, `src/template.html`,
-`src/build.py`, `src/make.py`. Roughly 30KB.
+Upload the text sources — `README.md`, `CONTEXT.md`, `src/index.html`,
+`src/style.css`, `src/js/*.js`, `src/build.py`, `src/make.py`.
 
 Do **not** upload `data/states.json`. It's ~107KB of coordinates on a single
 line, it tells a reader nothing, and it would consume context in every

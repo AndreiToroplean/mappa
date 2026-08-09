@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fifty — a US states drill</title>
+<style>
+__CSS__</style>
+</head>
+<body>
+
+<header id="bar">
+  <div class="prompt">
+    <div class="eyebrow" id="promptLabel">Find this state</div>
+    <div class="target" id="target">—<span class="caret"></span></div>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="eyebrow">Lives</div>
+      <div class="lives" id="lives"></div>
+    </div>
+    <div class="stat">
+      <div class="eyebrow">Found</div>
+      <div class="val" id="progress">0/50</div>
+    </div>
+    <div class="stat">
+      <div class="eyebrow">Time</div>
+      <div class="val" id="clock">0:00.0</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <svg id="map" viewBox="-60 10 1020 600" preserveAspectRatio="xMidYMid meet"></svg>
+</main>
+
+<footer><span id="ticker">Click the state named above, or press and hold to zoom. Three misses ends the run.</span></footer>
+
+<div class="lens" id="lens" hidden>
+  <div class="disc">
+    <svg id="lensMap" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="cross"></div>
+  </div>
+  <div class="cap" id="lensCap">—</div>
+</div>
+
+<div class="overlay" id="confirm" hidden>
+  <div class="card narrow">
+    <h2>Clear the board?</h2>
+    <div class="sub">This cannot be undone</div>
+    <p class="rules">Every saved run will be deleted, including any full fifty.</p>
+    <div class="btnrow">
+      <button class="ghost" id="clearNo">Cancel</button>
+      <button class="danger" id="clearYes">Clear</button>
+    </div>
+  </div>
+</div>
+
+<div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
+
+<div class="overlay" id="intro">
+  <div class="card">
+    <h2>Fifty</h2>
+    <div class="sub">A United States drill</div>
+    <p class="rules">You'll be named a state. Click it on the map.<br>
+      For the small ones, press and hold to open a magnifier — drag to aim,
+      lift to pick.<br>
+      Three misses ends the run. Your time is the score.</p>
+    <div class="board">
+      <div class="bhead">
+        <h3>Best runs</h3>
+        <button class="iconbtn clearBtn" aria-label="Clear the leaderboard"
+                title="Clear the leaderboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M10 4h4M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L18.5 7M10 11v5M14 11v5"/>
+          </svg>
+        </button>
+      </div>
+      <div id="introBoard"></div>
+      <div class="storenote"></div>
+    </div>
+    <button id="startBtn">Start</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="card">
+    <h2 id="ovTitle">Run over</h2>
+    <div class="sub" id="ovSub"></div>
+    <div class="board">
+      <div class="bhead">
+        <h3>Best runs</h3>
+        <button class="iconbtn clearBtn" aria-label="Clear the leaderboard"
+                title="Clear the leaderboard">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M10 4h4M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L18.5 7M10 11v5M14 11v5"/>
+          </svg>
+        </button>
+      </div>
+      <div id="boardList"></div>
+      <div class="storenote"></div>
+    </div>
+    <button id="again">Play again</button>
+  </div>
+</div>
+
+<script>
+__JS__</script>
+</body>
+</html>

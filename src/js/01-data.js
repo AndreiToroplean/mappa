@@ -29,11 +29,11 @@ const RULES = {
    Each mode owns its own board, under its own storage key. They are not
    comparable — a practice run cannot fail, so ranking it against runs that
    could would be meaningless — and mixing them in one list would quietly
-   bury every ranked run under a wall of completed practice ones. */
+   bury every Trial run under a wall of completed practice ones. */
 const MODES = {
-  ranked: {
-    id: 'ranked',
-    label: 'Ranked',
+  trial: {
+    id: 'trial',
+    label: 'Trial',
     lives: 3,
     // unchanged from when this mode was the only one — existing boards survive
     key: 'fifty:board2',
@@ -80,7 +80,7 @@ const MODES = {
   },
 };
 
-let MODE = MODES.ranked;
+let MODE = MODES.trial;
 
 /* Shared by both policies: keep one entry per bucket, replacing only on an
    improvement. */

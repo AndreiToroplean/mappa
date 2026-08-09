@@ -188,6 +188,38 @@ scoped per artifact instance, so scores do *not* carry across a rebuild — that
 is the runtime's boundary, not a bug, and the cards now say so rather than
 leaving it to be discovered.
 
+## Roadmap (recorded, not started)
+
+Three directions, sketched by Andrei. Nothing here is committed to; they are
+written down so refactoring leaves the right seams rather than to be built now.
+
+**Practice mode.** Unlimited lives. Separate leaderboard, ranked by error count
+first and time second, with one entry per error count — the same
+"one entry per tally" rule the classic board uses for sub-50 runs, but keyed on
+errors instead of states found.
+
+**Other geographies.** The same game over a different region set — countries of
+Europe was the example. Implies the data format, the prompt wording and the
+board keys all stop being US-specific. `build.py` is currently welded to
+us-atlas.
+
+**Blind mode.** No borders drawn — landmasses only. Every click reveals the
+target region, so no click can be *wrong* and there are no lives. Instead error
+is continuous and accumulates: each click scores the distance from the click to
+the nearest point of the region that was being asked for. Inside it scores
+zero; near it scores a little; the far side of the map scores a lot. Ocean is
+not special-cased — same measure, no discount.
+
+Worth noting the blind-mode metric is a function the code nearly has already:
+`nearestSelectable()` computes distance to the closest point on a region's
+border while searching for a minimum. Blind mode needs the same measure aimed
+at one *named* region rather than minimised across all of them, plus zero when
+the point is inside. A shared `distanceTo(region, point)` primitive serves the
+resolver, the snap threshold and the blind-mode score at once.
+
+Combinations are plausible: blind mode over Europe, practice over anything. So
+mode and geography want to be independent axes, not a fixed list of modes.
+
 ## Possible next steps
 
 Not started, in rough order of appeal:

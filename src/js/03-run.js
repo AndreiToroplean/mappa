@@ -36,9 +36,10 @@ function resetRun() {
   errors = 0; found = 0; running = false;
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawLives();
-  el.bar.classList.remove('lost');
-  el.target.classList.remove('lost');
-  clock.classList.remove('lost');
+  document.body.classList.remove('won');
+  el.bar.classList.remove('lost', 'won');
+  el.target.classList.remove('lost', 'won');
+  clock.classList.remove('lost', 'won');
   el.promptLabel.textContent = 'Find this ' + RULES.noun;
   el.progress.textContent = '0/' + TOTAL;
   el.target.textContent = 'Get ready';

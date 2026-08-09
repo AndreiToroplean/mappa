@@ -115,6 +115,16 @@ function showBoards(board, mine) {
   showNote();
 }
 
+/* A bare count with a symbol read as "1x", which means nothing unless you
+   already know the column is errors. Spell it out instead, and let a clean run
+   say so — zero is the whole point of the ranking, so it should read as an
+   achievement rather than as the number below one. */
+function missText(e) {
+  if (typeof e !== 'number') return '<span class="errs unknown">—</span>';
+  if (e === 0) return '<span class="errs perfect">Perfect</span>';
+  return `<span class="errs">${e} miss${e === 1 ? '' : 'es'}</span>`;
+}
+
 function renderBoard(target, board, mine) {
   const rows = rankBoard(board.slice()).slice(0, 6);
   target.innerHTML = rows.length
@@ -124,8 +134,7 @@ function renderBoard(target, board, mine) {
         return `<div class="row ${tier}${you}">
             <span class="rank">${String(i + 1).padStart(2, '0')}</span>
             <span class="tally">${r.f === TOTAL ? ALL : r.f + ' ' + RULES.noun + 's'}</span>
-            <span class="errs${typeof r.e === 'number' ? '' : ' unknown'}"
-              >${typeof r.e === 'number' ? r.e : '—'}</span>
+            ${missText(r.e)}
             <span class="time">${fmt(r.t)}</span>
           </div>`;
       }).join('')
@@ -142,7 +151,13 @@ async function finish(won, lastClick) {
   let pause;
   if (won) {
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's ${ALL.toLowerCase()}.`;
-    pause = 1200;   // let the last state fill in and the map read as complete
+    // say it in the header too, so a win reads as a win the instant it lands
+    el.bar.classList.add('won');
+    el.promptLabel.textContent = 'Complete';
+    el.target.textContent = ALL;
+    el.target.classList.add('won');
+    clock.classList.add('won');
+    pause = celebrate(errors === 0 ? 'Perfect run' : ALL);
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';

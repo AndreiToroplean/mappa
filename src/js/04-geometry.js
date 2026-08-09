@@ -43,9 +43,7 @@ STATES.forEach(s => {
 });
 
 function selectable(name) {
-  return !!name && !!nodes[name]
-    && !nodes[name].classList.contains('found')
-    && !missed.has(name);
+  return !!name && !!nodes[name] && status(name) === 'open';
 }
 
 function segDist2(px, py, ax, ay, bx, by) {

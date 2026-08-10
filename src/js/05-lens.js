@@ -15,13 +15,18 @@ const SLOP     = 10;    // px of drift still counted as holding still
 const lensBox = $('lens'), lensMap = $('lensMap'), lensCap = $('lensCap');
 
 // one throwaway path per state, built once; only the classes change per open
-const lensPaths = {};
-REGIONS.forEach(r => {
-  const p = document.createElementNS(NS, 'path');
-  p.setAttribute('d', r.d);
-  lensMap.appendChild(p);
-  lensPaths[r.name] = p;
-});
+let lensPaths = {};
+
+function buildLens() {
+  while (lensMap.firstChild) lensMap.removeChild(lensMap.firstChild);
+  lensPaths = {};
+  REGIONS.forEach(r => {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', r.d);
+    lensMap.appendChild(p);
+    lensPaths[r.name] = p;
+  });
+}
 
 let holdTimer = null, lensOn = false, swallowClick = false;
 let downX = 0, downY = 0, aim = null, trail = [], moveRaf = 0, lastPt = null;

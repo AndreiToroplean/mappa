@@ -1,22 +1,13 @@
-import json, math, heapq
+"""Geometry shared by every geography's build script.
 
-d = json.load(open(__import__('pathlib').Path(__file__).resolve().parent.parent / 'package' / 'states-albers-10m.json'))
-sc, tr = d['transform']['scale'], d['transform']['translate']
+Nothing in here knows about a particular country: it takes rings of projected
+coordinates and produces the shape the game loads — path data, a label anchor,
+and the inscribed radius at that anchor.
+"""
+import json, math, heapq, pathlib
 
-arcs = []
-for arc in d['arcs']:
-    x = y = 0; pts = []
-    for dx, dy in arc:
-        x += dx; y += dy
-        pts.append((x * sc[0] + tr[0], y * sc[1] + tr[1]))
-    arcs.append(pts)
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-def ring_pts(idxs):
-    out = []
-    for i in idxs:
-        a = arcs[~i][::-1] if i < 0 else arcs[i]
-        out.extend(a[1:] if out else a)
-    return out
 
 def simplify(pts, tol=0.45):
     if len(pts) < 4: return pts
@@ -91,38 +82,60 @@ def polylabel(rings, precision=0.4):
             heapq.heappush(q, make(x+ox, y+oy, hh))
     return (best[1], best[2]), best[4]
 
-states = []
-for g in d['objects']['states']['geometries']:
-    name = g['properties']['name']
-    if name == 'District of Columbia':
-        continue
-    polys = g['arcs'] if g['type'] == 'MultiPolygon' else [g['arcs']]
 
-    dstr = []
-    best_pt, best_r = None, -1
-    for poly in polys:
-        rings = [ring_pts(r) for r in poly]
-        if area(rings[0]) < 1.2:      # skip specks
+def path_data(rings, places=1):
+    """One SVG path string for a set of rings."""
+    fmt = '{:.' + str(places) + 'f}'
+    return ''.join(
+        'M' + 'L'.join(fmt.format(x) + ',' + fmt.format(y) for x, y in r) + 'Z'
+        for r in rings)
+
+
+def region(name, polys, min_area=1.2, tol=0.45, places=1):
+    """Build one region from its polygons (each a list of rings).
+
+    tol bounds how far the simplified outline may stray from the original, in
+    view units, since each dropped point was within tol of the one kept before
+    it. places is the coordinate precision written out; there is no sense in
+    writing more precision than tol preserves.
+
+    Islands smaller than min_area are dropped as specks. The label goes in
+    whichever landmass has the roomiest interior, which is what keeps a
+    label out of the water for places made of several pieces.
+    """
+    parts, best_pt, best_r = [], None, -1
+    for rings in polys:
+        if area(rings[0]) < min_area:
             continue
-        rings = [simplify(r) for r in rings]
-        for r in rings:
-            dstr.append('M' + 'L'.join(f'{x:.1f},{y:.1f}' for x, y in r) + 'Z')
-        # label goes in whichever landmass has the roomiest interior
+        rings = [simplify(r, tol) for r in rings]
+        parts.extend(rings)
         pt, rad = polylabel(rings)
         if rad > best_r:
             best_pt, best_r = pt, rad
-
-    states.append({
+    if best_pt is None:      # every piece was a speck; keep the largest anyway
+        rings = [simplify(r, tol) for r in max(polys, key=lambda p: area(p[0]))]
+        parts.extend(rings)
+        best_pt, best_r = polylabel(rings)
+    return {
         'n': name,
-        'd': ''.join(dstr),
+        'd': path_data(parts, places),
         'l': [round(best_pt[0], 1), round(best_pt[1], 1)],
         'r': round(best_r, 1),
-    })
+    }
 
-states.sort(key=lambda s: s['n'])
-json.dump(states, open(__import__('pathlib').Path(__file__).resolve().parent.parent / 'data' / 'states.json', 'w'), separators=(',', ':'))
 
-print(f'{len(states)} states')
-print('\ntightest interiors (these need enlarged tap targets):')
-for s in sorted(states, key=lambda s: s['r'])[:12]:
-    print(f"  {s['n']:<16} r={s['r']:>5}  at {s['l']}")
+def emit(path, view_box, regions, abbr, meta=None):
+    """Write a geography file: everything the game needs, and nothing else."""
+    regions.sort(key=lambda r: r['n'])
+    assert set(abbr) == {r['n'] for r in regions}, 'abbreviations do not match'
+    out = {'viewBox': view_box, 'abbr': abbr, 'regions': regions}
+    if meta:
+        out['meta'] = meta
+    p = ROOT / 'data' / path
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(json.dumps(out, separators=(',', ':')))
+    print(f'wrote {p} ({p.stat().st_size:,} bytes, {len(regions)} regions)')
+    tight = sorted(regions, key=lambda r: r['r'])[:10]
+    print('  tightest interiors (these get enlarged tap targets):')
+    for r in tight:
+        print(f"    {r['n'][:24]:<24} r={r['r']:>5}")

@@ -32,10 +32,10 @@ __CSS__</style>
 </header>
 
 <main>
-  <svg id="map" viewBox="-60 10 1020 600" preserveAspectRatio="xMidYMid meet"></svg>
+  <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
-<footer><span id="ticker">Click the state named above, or press and hold to zoom. Three misses ends the run.</span></footer>
+<footer><span id="ticker">Pick a geography and press Start.</span></footer>
 
 <div class="lens" id="lens" hidden>
   <div class="disc">
@@ -66,12 +66,17 @@ __CSS__</style>
 <div class="overlay" id="intro">
   <div class="card">
     <h2>Fifty</h2>
-    <div class="sub">A United States drill</div>
+    <div class="sub geoSub">A United States drill</div>
+      <select class="geoSel" aria-label="Which geography">
+        <option value="us">United States — states</option>
+        <option value="fr">France — départements</option>
+      </select>
       <div class="modes">
         <button class="modeBtn" data-mode="trial">Trial</button>
         <button class="modeBtn" data-mode="practice">Practice</button>
       </div>
-    <p class="rules">You'll be named a state. Click it on the map.<br>
+    <p class="rules">You'll be named a <span class="geoNoun">state</span>.
+      Click it on the map.<br>
       For the small ones, press and hold to open a magnifier — drag to aim,
       lift to pick.<br>
       <span class="modeRule"></span></p>
@@ -96,6 +101,10 @@ __CSS__</style>
   <div class="card">
     <h2 id="ovTitle">Run over</h2>
     <div class="sub" id="ovSub"></div>
+      <select class="geoSel" aria-label="Which geography">
+        <option value="us">United States — states</option>
+        <option value="fr">France — départements</option>
+      </select>
       <div class="modes">
         <button class="modeBtn" data-mode="trial">Trial</button>
         <button class="modeBtn" data-mode="practice">Practice</button>

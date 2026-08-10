@@ -1,4 +1,4 @@
-const CAN_HIT = typeof shapes[REGION_NAMES[0]].isPointInFill === 'function';
+let CAN_HIT = false;   // set by buildMap(), which has the paths to ask
 
 function userPoint(x, y) {
   const m = svg.getScreenCTM();
@@ -28,19 +28,23 @@ function userPoint(x, y) {
 const SNAP_UNITS = 40;   // reach in map units — see CONTEXT.md for why not px
 
 // boundary points, parsed once out of the same path data the map draws from
-const borders = {};   // region name -> its boundary point arrays
-REGIONS.forEach(r => {
-  borders[r.name] = r.d.split('M').filter(Boolean).map(ring => {
-    const pairs = ring.replace(/Z$/, '').split('L');
-    const a = new Float64Array(pairs.length * 2);
-    for (let i = 0; i < pairs.length; i++) {
-      const c = pairs[i].split(',');
-      a[i * 2] = +c[0];
-      a[i * 2 + 1] = +c[1];
-    }
-    return a;
+let borders = {};   // region name -> its boundary point arrays
+
+function buildBorders() {
+  borders = {};
+  REGIONS.forEach(r => {
+    borders[r.name] = r.d.split('M').filter(Boolean).map(ring => {
+      const pairs = ring.replace(/Z$/, '').split('L');
+      const a = new Float64Array(pairs.length * 2);
+      for (let i = 0; i < pairs.length; i++) {
+        const c = pairs[i].split(',');
+        a[i * 2] = +c[0];
+        a[i * 2 + 1] = +c[1];
+      }
+      return a;
+    });
   });
-});
+}
 
 function selectable(name) {
   return !!name && !!shapes[name] && status(name) === 'open';

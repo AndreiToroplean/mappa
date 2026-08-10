@@ -1,7 +1,19 @@
 // leaderboard: one best time per regions-found tally, many entries at a full set
-const ALL = 'All ' + RULES.collective;
+
 const PROBE = 'fifty:probe';
-let memBoard = [];
+const PREF_GEO = 'fifty:geo';
+
+/* Every geography-and-mode combination keeps its own board. Mixing them would
+   be meaningless — a practice run cannot fail, and a departement is not a
+   state — and merging would bury one under another.
+
+   The two US keys are the ones written before geographies existed, so they are
+   kept verbatim rather than renamed into the scheme. Boards saved by earlier
+   versions survive; the cost is this exception. */
+const LEGACY_US = { trial: 'fifty:board2', practice: 'fifty:practice1' };
+const boardKey = () => GEO.id === 'us' ? LEGACY_US[MODE.id]
+                                       : `fifty:${GEO.id}:${MODE.id}`;
+const mem = {};   // last resort backend
 
 /* Three backends, tried in order, because the file gets run two very different
    ways. Inside the artifact runtime `window.storage` exists and is scoped per
@@ -22,7 +34,7 @@ function localOK() {
   } catch (e) { return false; }
 }
 
-const parse = s => { try { return normalise(JSON.parse(s) || []); } catch (e) { return []; } };
+const parse = s => { try { return JSON.parse(s) || []; } catch (e) { return []; } };
 
 /* Boards written before runs counted errors. A run that did not finish ended
    by running out of lives, so its count is known exactly. A completed run's is
@@ -33,39 +45,43 @@ function normalise(board) {
     ? r : Object.assign({}, r, { e: MODE.lives }));
 }
 
-async function loadBoard() {
+/* One key-value layer over the three backends. Boards and the saved geography
+   both go through it, so the backend logic exists once. */
+async function kvGet(key) {
   if (window.storage && window.storage.get) {
     try {
-      const r = await window.storage.get(MODE.key);
+      const r = await window.storage.get(key);
       store = 'artifact';
-      return r ? parse(r.value) : [];
+      return r ? r.value : null;
     } catch (e) {
       // An unset key throws here, which is not the same as a broken backend.
       // Settle it with a write: if that lands, the backend is fine and empty.
-      try { await window.storage.set(MODE.key, '[]'); store = 'artifact'; return []; }
+      try { await window.storage.set(key, ''); store = 'artifact'; return null; }
       catch (e2) {}
     }
   }
   if (localOK()) {
     store = 'local';
-    return parse(window.localStorage.getItem(MODE.key));
+    return window.localStorage.getItem(key);
   }
   store = 'memory';
-  return normalise(memBoard);
+  return key in mem ? mem[key] : null;
 }
 
-async function saveBoard(b) {
-  memBoard = b;
-  const json = JSON.stringify(b);
+async function kvSet(key, value) {
+  mem[key] = value;
   if (store === 'artifact') {
-    try { await window.storage.set(MODE.key, json); return; }
+    try { await window.storage.set(key, value); return; }
     catch (e) { store = localOK() ? 'local' : 'memory'; }
   }
   if (store === 'local') {
-    try { window.localStorage.setItem(MODE.key, json); return; }
+    try { window.localStorage.setItem(key, value); return; }
     catch (e) { store = 'memory'; }          // quota, or permission revoked
   }
 }
+
+const loadBoard = async () => normalise(parse(await kvGet(boardKey())));
+const saveBoard = b => kvSet(boardKey(), JSON.stringify(b));
 
 const STORE_NOTE = {
   artifact: 'Saved to this copy of the game. A new build starts a fresh board.',
@@ -124,7 +140,9 @@ function rowParts(r) {
   const cls = typeof r.e !== 'number' ? ' unknown' : r.e === 0 ? ' perfect' : '';
   return {
     tier: r.f === TOTAL ? 'full' : 'partial',
-    tally: r.f === TOTAL ? ALL : r.f + ' ' + RULES.noun + 's',
+    // "31 of 101" rather than "31 départements": the noun does not fit the
+    // row on a phone, and the total is the more useful half anyway
+    tally: r.f === TOTAL ? GEO.all : `${r.f} of ${TOTAL}`,
     errs: `<span class="errs${cls}">${words}</span>`,
   };
 }
@@ -154,14 +172,14 @@ async function finish(won, lastClick) {
   const endedAt = Date.now();
   let pause;
   if (won) {
-    ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's ${ALL.toLowerCase()}.`;
+    ticker.innerHTML = `<span class="ok">Correct</span> — <b>${lastClick}</b>. That's ${GEO.all.toLowerCase()}.`;
     // say it in the header too, so a win reads as a win the instant it lands
     el.bar.classList.add('won');
     el.promptLabel.textContent = 'Complete';
-    el.target.textContent = ALL;
+    el.target.textContent = GEO.all;
     el.target.classList.add('won');
     clock.classList.add('won');
-    pause = celebrate(errors === 0 ? 'Perfect run' : ALL);
+    pause = celebrate(errors === 0 ? 'Perfect run' : GEO.all);
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';
@@ -175,7 +193,7 @@ async function finish(won, lastClick) {
   }
 
   el.ovTitle.textContent = !won ? 'Out of lives.'
-    : errors === 0 ? 'Perfect run.' : ALL + '.';
+    : errors === 0 ? 'Perfect run.' : GEO.all + '.';
   el.ovSub.textContent =
     won ? `Complete in ${fmt(ms)} · ${errors} ${errors === 1 ? 'miss' : 'misses'}`
         : `${found} of ${TOTAL} found · ${fmt(ms)}`;
@@ -218,16 +236,63 @@ async function setMode(id) {
   MODE = MODES[id];
   document.querySelectorAll('.modeBtn').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === id));
+  refreshCopy();
+  showBoards(await loadBoard(), null);
+}
+
+/* Everything on the two cards that depends on which geography or mode is live.
+   Kept in one place because these strings drifted out of step otherwise. */
+function refreshCopy() {
   document.querySelectorAll('.modeRule').forEach(n => { n.textContent = MODE.rule; });
-  document.querySelectorAll('.clearLabel').forEach(n => { n.textContent = MODE.label; });
+  document.querySelectorAll('.clearLabel').forEach(n => {
+    n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label}`;
+  });
+  document.querySelectorAll('.geoSub').forEach(n => { n.textContent = GEO.sub; });
+  document.querySelectorAll('.geoNoun').forEach(n => { n.textContent = GEO.noun; });
+  document.querySelectorAll('.geoSel').forEach(s => { s.value = GEO.id; });
+  /* "Alpes-de-Haute-Provence" is 23 characters against "North Carolina"'s 14,
+     and the prompt must never ellipsise — that was the first bug reported on a
+     phone. Longer names get a smaller prompt rather than a truncated one. */
+  const longest = Math.max(...REGION_NAMES.map(n => n.length));
+  document.body.classList.toggle('longnames', longest > 16);
+}
+
+/* A geography change rebuilds every structure derived from the region set: the
+   drawn map, the border index used for hit-testing, and the magnifier's copy of
+   the shapes. Anything derived from REGIONS has to be listed here. */
+function loadGeography(id) {
+  useGeo(id);
+  buildMap();
+  buildBorders();
+  buildLens();
+}
+
+async function setGeo(id) {
+  if (!GEOS[id] || id === GEO.id) return;
+  loadGeography(id);
+  await kvSet(PREF_GEO, id);
+  refreshCopy();
+  resetRun();                       // repaint the header for the new totals
+  el.intro.hidden = false;          // a half-played map must not linger
+  overlay.hidden = true;
   showBoards(await loadBoard(), null);
 }
 
 document.querySelectorAll('.modeBtn').forEach(b =>
   b.addEventListener('click', () => setMode(b.dataset.mode)));
+document.querySelectorAll('.geoSel').forEach(s =>
+  s.addEventListener('change', () => setGeo(s.value)));
 
 el.again.addEventListener('click', beginRun);
 el.startBtn.addEventListener('click', beginRun);
 
 // show any existing best runs on the intro screen
-setMode(MODE.id);
+/* Startup. The geography is remembered between visits; the mode is not, since
+   Trial is the default reading of "play the game". */
+(async () => {
+  const saved = await kvGet(PREF_GEO);
+  loadGeography(GEOS[saved] ? saved : DEFAULT_GEO);
+  await setMode(MODE.id);
+  resetRun();
+  el.intro.hidden = false;
+})();

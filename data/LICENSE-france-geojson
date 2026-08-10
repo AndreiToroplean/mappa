@@ -1,0 +1,10 @@
+France département geometry
+---------------------------
+Source: https://github.com/gregoiredavid/france-geojson
+File:   departements-avec-outre-mer.geojson (full resolution)
+
+Derived from French government open data (IGN / Etalab), published under the
+Licence Ouverte / Open Licence. Attribution to IGN and Etalab is required;
+see the upstream repository for the current terms.
+
+Reprojected to Lambert-93 and simplified by src/build-fr.py.

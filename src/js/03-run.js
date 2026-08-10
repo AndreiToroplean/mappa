@@ -50,11 +50,11 @@ function resetRun() {
   el.bar.classList.remove('lost', 'won');
   el.target.classList.remove('lost', 'won');
   clock.classList.remove('lost', 'won');
-  el.promptLabel.textContent = 'Find this ' + RULES.noun;
+  el.promptLabel.textContent = 'Find this ' + GEO.noun;
   el.progress.textContent = '0/' + TOTAL;
   el.target.textContent = 'Get ready';
   clock.textContent = '0:00.0';
-  ticker.textContent = MODE.hint;
+  ticker.textContent = MODE.hint();
   overlay.hidden = true;
   el.intro.hidden = true;
 }

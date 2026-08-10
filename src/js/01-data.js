@@ -1,47 +1,65 @@
-/* The region set. Keys are single letters purely to keep the injected payload
-   small; they are expanded once, here, so nothing downstream has to know them.
+/* ---- geographies ---------------------------------------------------------
+   A geography is a set of regions plus the words used to talk about them.
+   Each build script emits one, already projected and laid out inside the same
+   1020x600 frame, which is what lets every distance constant in the game —
+   snap reach, tap-target threshold, magnifier zoom — mean the same thing in
+   both without being re-tuned.
+
+   Region payload keys are single letters purely to keep the injected data
+   small, and are expanded once, in useGeo(), so nothing downstream knows them:
 
      n -> name    d -> SVG path data
      l -> label anchor (pole of inaccessibility)   r -> inscribed radius there
+*/
+const GEOS = {
+  us: Object.assign({
+    id: 'us',
+    label: 'United States — states',
+    noun: 'state',
+    all: 'All fifty',
+    sub: 'A United States drill',
+  }, __US__),
 
-   Everything below this line talks about regions, not states, so a second
-   geography drops in without touching the game. */
-const REGIONS = __DATA__.map(r => ({
-  name: r.n, d: r.d, anchor: r.l, radius: r.r,
-}));
-const ABBR = __ABBR__;
-
-const REGION_NAMES = REGIONS.map(r => r.name);
-const TOTAL = REGIONS.length;
-
-/* Vocabulary belongs to the region set, not to the game rules — swapping in a
-   different geography changes these, swapping mode does not. */
-const RULES = {
-  noun: 'state',          // what the prompt calls one region
-  collective: 'fifty',    // used in the end-of-run copy
+  fr: Object.assign({
+    id: 'fr',
+    label: 'France — départements',
+    noun: 'département',
+    all: 'All 101',
+    sub: 'Les départements de France',
+  }, __FR__),
 };
 
-/* ---- modes ---------------------------------------------------------------
-   Mode and geography are independent axes, so a mode says nothing about which
-   regions are in play, only what counts as a run and what counts as a good
-   one.
+const DEFAULT_GEO = 'us';
 
-   Each mode owns its own board, under its own storage key. They are not
-   comparable — a practice run cannot fail, so ranking it against runs that
-   could would be meaningless — and mixing them in one list would quietly
-   bury every Trial run under a wall of completed practice ones. */
+/* Live geography, and the values derived from it. These are reassigned rather
+   than rebound per module, so every module sees the switch. */
+let GEO, REGIONS, REGION_NAMES, TOTAL, ABBR;
+
+function useGeo(id) {
+  GEO = GEOS[id] || GEOS[DEFAULT_GEO];
+  REGIONS = GEO.regions.map(r => ({
+    name: r.n, d: r.d, anchor: r.l, radius: r.r,
+  }));
+  REGION_NAMES = REGIONS.map(r => r.name);
+  TOTAL = REGIONS.length;
+  ABBR = GEO.abbr;
+}
+
+/* ---- modes ---------------------------------------------------------------
+   Mode and geography are independent axes: a mode says what counts as a run
+   and what counts as a good one, never which regions are in play. Every
+   combination gets its own board — see boardKey().
+*/
 const MODES = {
   trial: {
     id: 'trial',
     label: 'Trial',
     lives: 3,
-    // unchanged from when this mode was the only one — existing boards survive
-    key: 'fifty:board2',
     counter: 'Lives',       // what the header's third column is counting
     rule: 'Three misses ends the run. Your time is the score.',
-    hint: 'Click the state named above, or press and hold to zoom. '
-        + 'Three misses ends the run.',
-    empty: 'No runs yet. Every run posts a time for however many states you reach.',
+    hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
+              + 'Three misses ends the run.',
+    empty: 'No runs yet. Every run posts a time for however far you get.',
 
     /* Sub-full runs keep one entry per tally, so a best 31 replaces a previous
        31 without competing with a 12. Full runs are the exception: up to five
@@ -62,11 +80,10 @@ const MODES = {
     id: 'practice',
     label: 'Practice',
     lives: Infinity,
-    key: 'fifty:practice1',
     counter: 'Misses',
     rule: 'No limit on misses. Fewest misses wins, then quickest.',
-    hint: 'Click the state named above, or press and hold to zoom. '
-        + 'Misses are counted, not fatal.',
+    hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
+              + 'Misses are counted, not fatal.',
     empty: 'No runs yet. Every run here finishes, so the score is how few '
          + 'misses it took.',
 

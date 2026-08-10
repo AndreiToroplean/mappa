@@ -329,6 +329,23 @@ lift scenarios, `distanceTo()` over 45 points. It needs no browser. Anything
 moved out of the DOM becomes testable this way, which is a reason to keep
 moving things out of the DOM.
 
+## Looking at the map
+
+`render.py <geo> <width> <height>` rasterises a geography exactly as the game
+would show it — viewport minus header and footer, view box fitted with `meet` —
+and writes a PNG. It is not part of the build.
+
+It exists because every layout decision here until now was made by measuring
+numbers, and the numbers hid how bad the result was. "Ink covers 29% of the map
+area" is a true sentence that does not convey a map sitting in a thin band with
+three fifths of the screen empty. Look at the render before trusting a layout
+argument.
+
+Known and not yet fixed: a fixed view box per geography cannot fit both a
+portrait phone and a landscape desktop. At 390x780 both geographies waste about
+60% of the available height, and France additionally wastes a wide gap between
+its overseas insets and the mainland. See the roadmap.
+
 ## Roadmap (recorded, not started)
 
 Three directions, sketched by Andrei. Nothing here is committed to; they are

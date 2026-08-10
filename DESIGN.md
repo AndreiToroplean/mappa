@@ -59,7 +59,7 @@ clip extents for AK and HI) at build time. Not worth it.
 
 **Pole of inaccessibility for labels.** Bounding-box centres put Michigan's
 label in Lake Michigan, Louisiana's in the Gulf, and Alaska's and Hawaii's in
-open ocean, because states aren't convex. `build.py` reimplements Mapbox's
+open ocean, because regions aren't convex. `src/geo.py` reimplements Mapbox's
 polylabel: cover the polygon in square cells, score each by signed distance to
 the nearest edge, subdivide the most promising, prune any whose upper bound
 can't beat the current best. Runs per landmass for multi-part states; roomiest

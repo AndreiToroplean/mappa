@@ -84,8 +84,9 @@ python3 src/make.py
 
 Both data files are committed, so `make.py` alone rebuilds the game.
 
-`src/build.py` is only needed if you want to regenerate the geometry.
-`data/states.json` is committed, so `make.py` alone rebuilds the game.
+The `build-*` scripts are only needed to regenerate geometry from source data.
+`data/us.json` and `data/fr.json` are committed, so `make.py` alone rebuilds the
+game.
 
 ## Map data
 
@@ -108,7 +109,7 @@ DC and the territories are excluded; 50 states exactly.
 
 Labels sit at each state's **pole of inaccessibility** — the interior point
 furthest from any edge — not the centroid or bounding-box centre. This is
-Mapbox's `polylabel` algorithm, reimplemented in `build.py`: cover the polygon in
+Mapbox's `polylabel` algorithm, reimplemented in `src/geo.py`: cover the polygon in
 square cells, score each by signed distance to the nearest edge, and repeatedly
 subdivide the most promising cell while pruning any whose upper bound can't beat
 the current best.

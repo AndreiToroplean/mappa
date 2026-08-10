@@ -2,3 +2,5 @@ dist/
 package/
 *.tgz
 package-fr/
+__pycache__/
+*.pyc

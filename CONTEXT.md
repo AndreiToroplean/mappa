@@ -159,6 +159,44 @@ count is not recoverable and is left blank rather than invented — displayed as
 a dash, and ranked by `errorsOf()` as the worst a completed run could be, one
 short of the lives, so it can never outrank a run known to be cleaner.
 
+**Geography is the second axis.** `GEOS` holds a region set plus the words for
+talking about it; `useGeo()` derives `REGIONS`, `TOTAL` and `ABBR` from it. The
+choice is remembered across visits, the mode is not — Trial is the default
+reading of "play the game".
+
+Both geographies are projected into the same 1020x600 frame by their build
+script. That is deliberate and load-bearing: every distance constant in the
+game is in map units, so a shared frame means `SNAP_UNITS`, the 12-unit
+tap-target threshold and the magnifier zoom all keep their meaning without a
+per-geography table of tuned numbers.
+
+Switching is a live rebuild, not a reload: `buildMap`, `buildBorders` and
+`buildLens` each rebuild what they derive from the region set. Anything new
+derived from `REGIONS` must be added to `loadGeography()` or it will silently
+keep the old geography's data.
+
+`CAN_HIT` moved from a load-time `const` to a value `buildMap()` assigns,
+because asking whether a path can be hit-tested needs a path to exist.
+
+**France specifics.** Lambert-93, the official French projection — conformal, so
+shapes stay recognisable, which is the entire game. The source is full
+resolution (180,000 points for the mainland, twenty times the whole US map)
+because the repository's simplified file omits the overseas départements, so
+simplification happens in our build at a 2-unit tolerance with integer
+coordinates. Tolerance bounds the error, so 2 units is about 1.3 screen pixels
+on a phone.
+
+The five overseas départements are insets down the left margin, each fitted to
+its own slot. Not to scale, and deliberately so: at the mainland's scale Mayotte
+would be under two units across.
+
+Two things the French names broke, both caught by measuring rather than by
+looking: "Alpes-de-Haute-Provence" is 23 characters against "North Carolina"'s
+14 and left 10px of slack on a 360px phone, so a `longnames` class drops the
+prompt a size — it must never ellipsise, which was the first bug ever reported
+here. And "31 départements" overflowed a leaderboard row, so the partial tally
+became "31 of 101", which is more useful anyway.
+
 **Modes are a data structure, not a branch.** `MODES` holds lives, storage
 key, copy and a board-insertion policy; `MODE` points at the live one. What
 did *not* need to change is telling: `better()` serves both unchanged, because
@@ -298,10 +336,8 @@ written down so refactoring leaves the right seams rather than to be built now.
 
 **Practice mode.** Built. See below.
 
-**Other geographies.** The same game over a different region set — countries of
-Europe was the example. Implies the data format, the prompt wording and the
-board keys all stop being US-specific. `build.py` is currently welded to
-us-atlas.
+**Other geographies.** Done for France; see below. Europe by country would now
+be a third build script and one entry in `GEOS`.
 
 **Blind mode.** No borders drawn — landmasses only. Every click reveals the
 target region, so no click can be *wrong* and there are no lives. Instead error

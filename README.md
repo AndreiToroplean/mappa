@@ -7,21 +7,46 @@ Built as a single self-contained HTML file — no CDN, no network calls, no
 dependencies at runtime. Open `dist/fifty.html` in any browser and it works,
 including offline.
 
+## Geographies
+
+Two, chosen from a dropdown on both cards and remembered between visits:
+
+| geography | regions | source | abbreviations |
+|---|---|---|---|
+| United States | 50 states | us-atlas (Albers USA) | postal codes |
+| France | 101 départements | france-geojson (Lambert-93) | département numbers |
+
+Both are projected and laid out inside the same 1020×600 frame at build time.
+That is what lets every distance constant in the game — snap reach, tap-target
+threshold, magnifier zoom — mean the same thing in both without being re-tuned.
+
+France's five overseas départements are insets down the left margin, in the band
+the mainland does not use. Each is fitted to its own slot rather than drawn to
+the mainland's scale: at true scale Mayotte would be under two units across and
+unhittable, while Guyane is larger than any metropolitan département. Insets are
+conventionally not to scale, and the game is about recognising which is which.
+
+`buildMap`, `buildBorders` and `buildLens` rebuild everything derived from the
+region set, so switching is a live rebuild rather than a reload.
+
 ## Layout
 
 ```
 src/index.html      markup, with __CSS__ / __JS__ placeholders
 src/style.css       all styling
-src/js/01-data.js   the region data, injected as __DATA__ / __ABBR__
+src/js/01-data.js   geographies (injected as __US__ / __FR__), modes, scoring
 src/js/02-map.js    building the SVG, paint layers, labels, tap targets
 src/js/03-run.js    run lifecycle: queue, lives, clock, guesses
 src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
 src/js/05-lens.js   the press-and-hold magnifier
 src/js/06-board.js  storage, leaderboard, end of run
 check.py            regression harness for the pure logic (no browser needed)
-src/build.py        decodes the map data and computes label anchors
+src/geo.py          shared build geometry: simplify, polylabel, emit
+src/build-us.py     US states from us-atlas TopoJSON
+src/build-fr.py     French départements from france-geojson, with overseas insets
 src/make.py         assembles everything into dist/fifty.html
-data/states.json    generated: path geometry, label anchor, inscribed radius per state
+data/us.json        generated: view box, abbreviations, regions
+data/fr.json        generated: same shape, 101 régions
 dist/fifty.html     generated (gitignored): the playable file
 ```
 
@@ -32,9 +57,12 @@ still one file with no external references.
 Rebuild:
 
 ```
-python3 src/build.py      # needs package/states-albers-10m.json (see below)
+python3 src/build-us.py   # needs package/states-albers-10m.json
+python3 src/build-fr.py   # needs package-fr/departements-avec-outre-mer.geojson
 python3 src/make.py
 ```
+
+Both data files are committed, so `make.py` alone rebuilds the game.
 
 `src/build.py` is only needed if you want to regenerate the geometry.
 `data/states.json` is committed, so `make.py` alone rebuilds the game.

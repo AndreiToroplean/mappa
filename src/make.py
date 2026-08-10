@@ -10,25 +10,14 @@ import json, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'src'
 
-ABBR = {
-    'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR',
-    'California': 'CA', 'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE',
-    'Florida': 'FL', 'Georgia': 'GA', 'Hawaii': 'HI', 'Idaho': 'ID',
-    'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA', 'Kansas': 'KS',
-    'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
-    'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN',
-    'Mississippi': 'MS', 'Missouri': 'MO', 'Montana': 'MT', 'Nebraska': 'NE',
-    'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
-    'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC',
-    'North Dakota': 'ND', 'Ohio': 'OH', 'Oklahoma': 'OK', 'Oregon': 'OR',
-    'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
-    'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT',
-    'Vermont': 'VT', 'Virginia': 'VA', 'Washington': 'WA',
-    'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY',
-}
 
-states = json.loads((ROOT / 'data' / 'states.json').read_text())
-assert set(ABBR) == {s['n'] for s in states}, 'state names do not match'
+# One file per geography, each self-contained: view box, abbreviations, regions.
+GEOS = ('us', 'fr')
+data = {g: (ROOT / 'data' / f'{g}.json').read_text() for g in GEOS}
+for g, raw in data.items():
+    d = json.loads(raw)
+    assert set(d['abbr']) == {r['n'] for r in d['regions']}, f'{g}: names do not match'
+    print(f"  {g}: {len(d['regions'])} regions, {len(raw):,} bytes")
 
 # JS modules are concatenated in filename order; the numeric prefixes are the
 # load order, and nothing else enforces it.
@@ -37,17 +26,17 @@ assert modules, 'no JS modules found'
 js = ''.join(m.read_text() for m in modules)
 
 html = (SRC / 'index.html').read_text()
-for token in ('__CSS__', '__JS__', '__DATA__', '__ABBR__'):
-    assert token in html or token in js, f'missing placeholder {token}'
+for token in ('__CSS__', '__JS__'):
+    assert token in html, f'missing placeholder {token}'
+for g in GEOS:
+    assert f'__{g.upper()}__' in js, f'missing placeholder __{g.upper()}__'
 
-html = (html
-        .replace('__CSS__', (SRC / 'style.css').read_text())
-        .replace('__JS__', js)
-        .replace('__DATA__', json.dumps(states, separators=(',', ':')))
-        .replace('__ABBR__', json.dumps(ABBR, separators=(',', ':'))))
+html = html.replace('__CSS__', (SRC / 'style.css').read_text()).replace('__JS__', js)
+for g in GEOS:
+    html = html.replace(f'__{g.upper()}__', data[g])
 
 out = ROOT / 'dist' / 'fifty.html'
 out.parent.mkdir(exist_ok=True)
 out.write_text(html)
-print(f'wrote {out} ({len(html):,} bytes, {len(states)} states, '
+print(f'wrote {out} ({len(html):,} bytes, {len(GEOS)} geographies, '
       f'{len(modules)} modules)')

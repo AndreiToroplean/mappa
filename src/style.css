@@ -26,6 +26,7 @@
   .stat{text-align:right;flex:none}
   .target{font-size:30px;font-weight:700;letter-spacing:-0.02em;line-height:1.05;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.longnames .target{font-size:25px}
   .lives{display:flex;gap:7px;justify-content:flex-end;height:22px;align-items:center;
     min-width:51px}
   #progress{min-width:72px}
@@ -92,7 +93,8 @@
     border-bottom:1px solid rgba(255,255,255,.04)}
   .row:last-child{border-bottom:0}
   .row .rank{color:var(--muted);width:22px;flex:none}
-  .row .tally{flex:1}
+  .row .tally{flex:1;min-width:0;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
   .row .errs{flex:none;min-width:62px;text-align:right;font-size:11px;
     color:#D4797C;letter-spacing:.01em}
   .row .errs.perfect{color:var(--foundline);font-weight:600}
@@ -106,6 +108,14 @@
     padding-left:8px;margin-left:-8px}
   .row.you .rank,.row.you .time{color:var(--amber)}
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 22px}
+  .geoSel{width:100%;margin:0 0 10px;padding:10px 11px;border-radius:8px;
+    background:var(--ink);color:var(--text);border:1px solid var(--line);
+    font-family:var(--sans);font-size:14px;-webkit-appearance:none;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+      linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 17px) 19px, calc(100% - 12px) 19px;
+    background-size:5px 5px, 5px 5px;background-repeat:no-repeat}
+  .geoSel:focus-visible{outline:2px solid var(--foundline);outline-offset:2px}
   .modes{display:flex;gap:8px;margin:0 0 20px}
   .modes button{margin:0;flex:1;padding:9px;font-size:13px;font-weight:500;
     border-radius:8px;background:transparent;color:var(--muted);
@@ -228,6 +238,8 @@
     .stat:last-child{text-align:right}
     .lives{justify-content:flex-start;height:18px;min-width:0}
     .target{font-size:25px}
+    body.longnames .target{font-size:20px}
+    body.longnames .caret{height:18px}
     .caret{height:22px;width:8px;vertical-align:-3px}
     .eyebrow{margin-bottom:3px}
     .stat .val{font-size:17px}
@@ -242,6 +254,7 @@
      names; step the type down rather than let them clip. */
   @media (max-width:400px){
     .target{font-size:22px}
+    body.longnames .target{font-size:18px}
     .caret{height:19px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

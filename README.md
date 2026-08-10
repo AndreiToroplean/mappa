@@ -58,6 +58,7 @@ src/js/03-run.js    run lifecycle: queue, lives, clock, guesses
 src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
 src/js/05-lens.js   the press-and-hold magnifier
 src/js/06-board.js  storage, leaderboard, end of run
+DESIGN.md           why it is the way it is, and the mistakes behind that
 check.py            regression harness for the pure logic (no browser needed)
 render.py           rasterises a geography as the game shows it, for eyeballing
 src/geo.py          shared build geometry: simplify, polylabel, emit

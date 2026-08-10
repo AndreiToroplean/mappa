@@ -25,7 +25,7 @@ function userPoint(x, y) {
    anchor or centroid: a position just off the Delmarva coast should give
    Maryland, which is metres away, not Virginia, whose centre is nearer. */
 
-const SNAP_UNITS = 40;   // reach in map units — see CONTEXT.md for why not px
+const SNAP_UNITS = 40;   // reach in map units — see DESIGN.md for why not px
 
 // boundary points, parsed once out of the same path data the map draws from
 /* Region name -> boundary points, in the composed flat space. Written by

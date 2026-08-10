@@ -1,30 +1,53 @@
-# CONTEXT
+# Design notes
 
-Notes for picking this project back up — the reasoning behind decisions that
-aren't obvious from reading the code. Written at the end of the first build
-session so a later session doesn't have to re-derive any of it.
+Why this project is the way it is — the reasoning that is not recoverable from
+reading the code, and the mistakes that produced it. `README.md` covers what the
+thing is and how to build it; this file covers why.
 
-## State of the project
+Written and kept up to date across the sessions that built it. If you change a
+decision recorded here, change the note too.
 
-Feature-complete and playable. No known bugs. Everything below has been built,
-tested and verified.
+## Structure
 
-## Rebuilding
-
-```
-python3 src/make.py          # src/* + data/states.json -> dist/fifty.html
-```
-
-`dist/` is generated and deliberately not committed.
-
-To regenerate the geometry from scratch (only needed if the map data changes):
+`src/` is split for editing; `make.py` inlines it all back into one file, so
+the shipped artifact is unchanged — single file, no external references.
 
 ```
-npm pack us-atlas@3 && tar xzf us-atlas-3.0.1.tgz    # creates package/
-python3 src/build.py                                 # rewrites data/states.json
+01-data.js    the region set; expands the short payload keys, holds RULES
+02-map.js     SVG construction, paint layers, labels, tap targets, STATUS
+03-run.js     run lifecycle: queue, lives, clock, guess()
+04-geometry.js  screen->map coords, distance, resolving a position
+05-lens.js    the press-and-hold magnifier
+06-board.js   storage, leaderboard, end of run
 ```
 
-`package/` is gitignored. The build is fully reproducible from the network.
+Numeric prefixes are the load order and nothing else enforces it. The rule is
+one direction only: later modules may use earlier ones.
+
+**One status per region, changed in one place.** `STATUS` maps a status to its
+map class, paint layer, label kind and magnifier class; `setStatus()` is the
+only thing allowed to apply it, and `statusOf` is the truth. Before this,
+"found" was a DOM class and "missed" a JS `Set`, so `selectable()` consulted
+both, and the transition was hand-written at five call sites — two via
+`setAttribute`, two via `classList`, which is how a region ends up carrying
+`state found miss`.
+
+**`borderDist2` is the geometric primitive.** Squared distance from a point to
+a region's border, with an early-out ceiling. The snap threshold is a ceiling
+on it, resolving a position is a minimum over it, and blind mode's error score
+is `distanceTo()` — the same measure aimed at one named region, zero inside.
+`distanceTo` is deliberately unused today; it is there so the roadmap does not
+reinvent it.
+
+**Totals are derived.** `TOTAL` from the region set, lives and wording from
+`RULES`. Fifty was hardcoded in eight places and three lives in two, which is
+what blocked both a practice mode and a second geography.
+
+**`check.py`** runs the pure logic against independent Python implementations:
+`resolve()` over 120 randomised points and dead-sets, `settle()` over its seven
+lift scenarios, `distanceTo()` over 45 points. It needs no browser. Anything
+moved out of the DOM becomes testable this way, which is a reason to keep
+moving things out of the DOM.
 
 ## Decisions, and why
 
@@ -290,67 +313,6 @@ full-fifty runs that took real effort.
   Only full runs really contend on it, since anything short of the full set
   ended by running out of lives and therefore has exactly that many errors.
 
-## If uploading to a Claude Project
-
-Upload the text sources — `README.md`, `CONTEXT.md`, `src/index.html`,
-`src/style.css`, `src/js/*.js`, `src/build.py`, `src/make.py`.
-
-Do **not** upload `data/states.json`. It's ~107KB of coordinates on a single
-line, it tells a reader nothing, and it would consume context in every
-conversation. It can be regenerated with `npm pack us-atlas@3` +
-`python3 src/build.py`.
-
-**Leaderboard storage, three backends.** `window.storage` inside the artifact
-runtime; `localStorage` when the file is downloaded and opened directly; memory
-as the last resort. The original code only tried `window.storage` and fell
-silently into a memory array otherwise, which meant a downloaded copy lost its
-board on every refresh and gave no hint why. Note that `window.storage` is
-scoped per artifact instance, so scores do *not* carry across a rebuild — that
-is the runtime's boundary, not a bug, and the cards now say so rather than
-leaving it to be discovered.
-
-## Structure
-
-`src/` is split for editing; `make.py` inlines it all back into one file, so
-the shipped artifact is unchanged — single file, no external references.
-
-```
-01-data.js    the region set; expands the short payload keys, holds RULES
-02-map.js     SVG construction, paint layers, labels, tap targets, STATUS
-03-run.js     run lifecycle: queue, lives, clock, guess()
-04-geometry.js  screen->map coords, distance, resolving a position
-05-lens.js    the press-and-hold magnifier
-06-board.js   storage, leaderboard, end of run
-```
-
-Numeric prefixes are the load order and nothing else enforces it. The rule is
-one direction only: later modules may use earlier ones.
-
-**One status per region, changed in one place.** `STATUS` maps a status to its
-map class, paint layer, label kind and magnifier class; `setStatus()` is the
-only thing allowed to apply it, and `statusOf` is the truth. Before this,
-"found" was a DOM class and "missed" a JS `Set`, so `selectable()` consulted
-both, and the transition was hand-written at five call sites — two via
-`setAttribute`, two via `classList`, which is how a region ends up carrying
-`state found miss`.
-
-**`borderDist2` is the geometric primitive.** Squared distance from a point to
-a region's border, with an early-out ceiling. The snap threshold is a ceiling
-on it, resolving a position is a minimum over it, and blind mode's error score
-is `distanceTo()` — the same measure aimed at one named region, zero inside.
-`distanceTo` is deliberately unused today; it is there so the roadmap does not
-reinvent it.
-
-**Totals are derived.** `TOTAL` from the region set, lives and wording from
-`RULES`. Fifty was hardcoded in eight places and three lives in two, which is
-what blocked both a practice mode and a second geography.
-
-**`check.py`** runs the pure logic against independent Python implementations:
-`resolve()` over 120 randomised points and dead-sets, `settle()` over its seven
-lift scenarios, `distanceTo()` over 45 points. It needs no browser. Anything
-moved out of the DOM becomes testable this way, which is a reason to keep
-moving things out of the DOM.
-
 ## Looking at the map
 
 `render.py <geo> <width> <height>` rasterises a geography exactly as the game
@@ -369,39 +331,19 @@ time; the US, which is a single wide panel, is unchanged at 35% on a phone and
 91% on a laptop — a 1.7:1 map in a 0.6:1 area cannot do better without splitting
 Alaska and Hawaii into their own panels, which is a deliberate no.
 
-## Roadmap (recorded, not started)
-
-Three directions, sketched by Andrei. Nothing here is committed to; they are
-written down so refactoring leaves the right seams rather than to be built now.
-
-**Practice mode.** Built. See below.
-
-**Other geographies.** Done for France; see below. Europe by country would now
-be a third build script and one entry in `GEOS`.
+## Ideas not built
 
 **Blind mode.** No borders drawn — landmasses only. Every click reveals the
-target region, so no click can be *wrong* and there are no lives. Instead error
-is continuous and accumulates: each click scores the distance from the click to
-the nearest point of the region that was being asked for. Inside it scores
-zero; near it scores a little; the far side of the map scores a lot. Ocean is
-not special-cased — same measure, no discount.
+target region, so no click can be wrong and there are no lives. Error is instead
+continuous and accumulates: each click scores the distance from the click to the
+nearest point of the region being asked for. Inside scores zero, near scores a
+little, the far side of the map scores a lot. Ocean is not special-cased.
 
-Worth noting the blind-mode metric is a function the code nearly has already:
-`nearestSelectable()` computes distance to the closest point on a region's
-border while searching for a minimum. Blind mode needs the same measure aimed
-at one *named* region rather than minimised across all of them, plus zero when
-the point is inside. A shared `distanceTo(region, point)` primitive serves the
-resolver, the snap threshold and the blind-mode score at once.
+`distanceTo(region, point)` in `04-geometry.js` exists for exactly this and is
+otherwise unused. It is the only speculative code in the repo; if blind mode is
+abandoned, delete it.
 
-Combinations are plausible: blind mode over Europe, practice over anything. So
-mode and geography want to be independent axes, not a fixed list of modes.
-
-## Possible next steps
-
-Not started, in rough order of appeal:
-
-- Region mode: drill one area (New England, Mountain West) instead of all 50.
-- Reverse mode: highlight a state, pick the name from four options.
-- Per-state timing, to surface which states consistently cost you the most.
-- Streak bonus, or a lives-remaining tiebreak in leaderboard ranking.
-- Name entry on the leaderboard, so it works for more than one player.
+Smaller ones, never started: region mode (drill one area rather than the whole
+set), reverse mode (highlight a region, pick its name from four options),
+per-region timing to surface which cost you the most, a lives-remaining tiebreak,
+and name entry so a board works for more than one player.

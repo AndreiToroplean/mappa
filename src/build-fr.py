@@ -11,24 +11,16 @@ five are full-resolution only. Simplification happens here instead, which also
 keeps the tolerance under our control.
 """
 import json, math
-from geo import ROOT, region, emit, area
+from geo import ROOT, region, emit, normalise
 
-# Everything is laid out inside the same frame the US map uses, so every
-# distance constant in the game — snap reach, tap-target threshold, magnifier
-# zoom — means the same thing in both geographies without being re-tuned.
-VIEW_W, VIEW_H = 1020, 600
-
-# The mainland sits right of centre; the empty band on the left is where the
-# overseas insets go. Values are the box the mainland is fitted into.
-MAIN = (300, 24, 984, 576)          # x0, y0, x1, y1
-
-# The source is full resolution — 180,000 points for the mainland, twenty times
-# the entire US map — so it needs real reduction. Tolerance bounds how far the
-# outline may stray, in view units, and 2 units is about 1.3 screen pixels on a
-# phone. Coordinates are written as integers for the same reason: no point
-# storing precision the tolerance has already thrown away.
-MAIN_TOL = 2.0
-OS_TOL = 0.6
+# Panels are stored in local coordinates, each normalised to a 1000-unit span,
+# so tolerance is per panel: what matters is the error once drawn. The mainland
+# is drawn at roughly 600-1100 composed units across, an inset at 150-250, so
+# the same on-screen error allows a much coarser tolerance for the insets.
+# Both work out to about two composed units, a pixel or so on a phone —
+# coordinates are written as integers for the same reason.
+TOL_MAIN = 3.5
+TOL_INSET = 9.0
 
 # ---------------------------------------------------------------- projection
 # Lambert-93: the official French projection. Conformal conic, so shapes stay
@@ -59,25 +51,11 @@ def rings_of(feature, project):
              else [geom['coordinates']])
     return [[[project(x, y) for x, y in ring] for ring in poly] for poly in polys]
 
-def bbox(polys):
-    xs = [x for poly in polys for ring in poly for x, y in ring]
-    ys = [y for poly in polys for ring in poly for x, y in ring]
-    return min(xs), min(ys), max(xs), max(ys)
-
-def fit(polys, box, pad=0.0):
-    """Scale and translate polygons to sit inside box, preserving aspect."""
-    x0, y0, x1, y1 = box
-    x0 += pad; y0 += pad; x1 -= pad; y1 -= pad
-    bx0, by0, bx1, by1 = bbox(polys)
-    s = min((x1 - x0) / (bx1 - bx0), (y1 - y0) / (by1 - by0))
-    ox = x0 + ((x1 - x0) - (bx1 - bx0) * s) / 2 - bx0 * s
-    oy = y0 + ((y1 - y0) - (by1 - by0) * s) / 2 - by0 * s
-    return [[[(x * s + ox, y * s + oy) for x, y in ring] for ring in poly]
-            for poly in polys], s
-
-def transform(polys, s, ox, oy):
-    return [[[(x * s + ox, y * s + oy) for x, y in ring] for ring in poly]
-            for poly in polys]
+def lonlat_centre(feature):
+    pts = [p for poly in rings_of(feature, lambda a, b: (a, b))
+           for ring in poly for p in ring]
+    xs = [p[0] for p in pts]; ys = [p[1] for p in pts]
+    return (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
 
 # --------------------------------------------------------------------- build
 path = ROOT / 'package-fr' / 'departements-avec-outre-mer.geojson'
@@ -89,51 +67,37 @@ OVERSEAS = ['971', '972', '973', '974', '976']
 mainland = [c for c in by_code if c not in OVERSEAS]
 assert len(mainland) == 96
 
-# --- mainland: one projection, one fit, so relative sizes are true ---------
-projected = {c: rings_of(by_code[c], lambert_conic) for c in mainland}
-everything = [poly for c in mainland for poly in projected[c]]
-_, scale = fit(everything, MAIN)
-bx0, by0, bx1, by1 = bbox(everything)
-x0, y0, x1, y1 = MAIN
-ox = x0 + ((x1 - x0) - (bx1 - bx0) * scale) / 2 - bx0 * scale
-oy = y0 + ((y1 - y0) - (by1 - by0) * scale) / 2 - by0 * scale
+panels, regions = [], []
 
-regions = []
-placed = []
-for code in mainland:
-    polys = transform(projected[code], scale, ox, oy)
-    placed.extend(polys)
-    regions.append(region(by_code[code]['properties']['nom'], polys,
-                          min_area=1.2, tol=MAIN_TOL, places=0))
+# --- panel 0: the mainland, one projection so relative sizes are true ------
+proj = {c: rings_of(by_code[c], lambert_conic) for c in mainland}
+flat = [poly for c in mainland for poly in proj[c]]
+placed, pw, ph = normalise(flat)
+panels.append({'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1)})
+i = 0
+for c in mainland:
+    n = len(proj[c])
+    regions.append(region(by_code[c]['properties']['nom'], placed[i:i + n],
+                          panel=0, tol=TOL_MAIN, places=0))
+    i += n
 
-# --- overseas: insets down the left margin --------------------------------
-# Each is fitted to its own slot rather than drawn to the mainland's scale.
-# At true scale Mayotte would be under two units across and unhittable, while
-# Guyane is larger than any metropolitan departement; insets are conventionally
-# not to scale, and the game is about recognising which is which.
-SLOT_H = VIEW_H / len(OVERSEAS)
-for i, code in enumerate(OVERSEAS):
-    f = by_code[code]
-    polys = rings_of(f, lambert_conic)   # placeholder, replaced below
-    lon0, lat0 = None, None
-    xs = [x for poly in rings_of(f, lambda a, b: (a, b))
-          for ring in poly for x, y in ring]
-    ys = [y for poly in rings_of(f, lambda a, b: (a, b))
-          for ring in poly for x, y in ring]
-    lon0, lat0 = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+# --- one panel per overseas departement -----------------------------------
+# Each gets its own panel rather than a reserved slot in a fixed frame, so the
+# layout can put them wherever the screen has room. Each is normalised on its
+# own, which is what makes them not to scale relative to the mainland: at true
+# scale Mayotte would be a couple of units across and Guyane larger than any
+# metropolitan departement.
+for c in OVERSEAS:
+    f = by_code[c]
+    lon0, lat0 = lonlat_centre(f)
     polys = rings_of(f, lambda a, b: local_plane(a, b, lon0, lat0))
-    slot = (28, i * SLOT_H + 10, 28 + 150, (i + 1) * SLOT_H - 10)
-    polys, _ = fit(polys, slot, pad=6)
-    placed.extend(polys)
-    regions.append(region(f['properties']['nom'], polys,
-                          min_area=0.05, tol=OS_TOL, places=0))
-
-# ------------------------------------------------------------------- checks
-mx0, my0, mx1, my1 = bbox([p for p in placed])
-assert -1 <= mx0 and mx1 <= VIEW_W + 1, f'x out of frame: {mx0}..{mx1}'
-assert -1 <= my0 and my1 <= VIEW_H + 1, f'y out of frame: {my0}..{my1}'
+    placed, pw, ph = normalise(polys)
+    panels.append({'id': c, 'w': round(pw, 1), 'h': round(ph, 1)})
+    regions.append(region(f['properties']['nom'], placed,
+                          panel=len(panels) - 1, min_area=0.05,
+                          tol=TOL_INSET, places=0))
 
 ABBR = {by_code[c]['properties']['nom']: c for c in by_code}
 
-emit('fr.json', f'0 0 {VIEW_W} {VIEW_H}', regions, ABBR,
+emit('fr.json', panels, regions, ABBR,
      meta={'source': 'france-geojson (gregoiredavid), from IGN/Etalab open data'})

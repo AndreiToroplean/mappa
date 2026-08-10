@@ -21,8 +21,7 @@ function buildLens() {
   while (lensMap.firstChild) lensMap.removeChild(lensMap.firstChild);
   lensPaths = {};
   REGIONS.forEach(r => {
-    const p = document.createElementNS(NS, 'path');
-    p.setAttribute('d', r.d);
+    const p = document.createElementNS(NS, 'path');   // compose() sets the path
     lensMap.appendChild(p);
     lensPaths[r.name] = p;
   });

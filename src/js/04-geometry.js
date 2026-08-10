@@ -28,23 +28,9 @@ function userPoint(x, y) {
 const SNAP_UNITS = 40;   // reach in map units — see CONTEXT.md for why not px
 
 // boundary points, parsed once out of the same path data the map draws from
-let borders = {};   // region name -> its boundary point arrays
-
-function buildBorders() {
-  borders = {};
-  REGIONS.forEach(r => {
-    borders[r.name] = r.d.split('M').filter(Boolean).map(ring => {
-      const pairs = ring.replace(/Z$/, '').split('L');
-      const a = new Float64Array(pairs.length * 2);
-      for (let i = 0; i < pairs.length; i++) {
-        const c = pairs[i].split(',');
-        a[i * 2] = +c[0];
-        a[i * 2 + 1] = +c[1];
-      }
-      return a;
-    });
-  });
-}
+/* Region name -> boundary points, in the composed flat space. Written by
+   compose(), which is the only thing that knows how panels were placed. */
+let borders = {};
 
 function selectable(name) {
   return !!name && !!shapes[name] && status(name) === 'open';

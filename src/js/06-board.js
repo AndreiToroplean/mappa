@@ -263,9 +263,18 @@ function refreshCopy() {
 function loadGeography(id) {
   useGeo(id);
   buildMap();
-  buildBorders();
   buildLens();
+  compose();      // places the panels and fills in every path
 }
+
+/* A resize or rotation changes which arrangement is best, so the layout is
+   recomputed. Statuses survive: compose() only rewrites geometry, and the
+   classes live on the nodes it is rewriting. */
+let composeTimer = null;
+addEventListener('resize', () => {
+  clearTimeout(composeTimer);
+  composeTimer = setTimeout(() => { if (GEO) compose(); }, 120);
+});
 
 async function setGeo(id) {
   if (!GEOS[id] || id === GEO.id) return;

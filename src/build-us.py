@@ -5,7 +5,7 @@ Needs package/states-albers-10m.json:
     npm pack us-atlas@3 && tar xzf us-atlas-3.0.1.tgz
 """
 import json
-from geo import ROOT, region, emit
+from geo import ROOT, region, emit, normalise
 
 ABBR = {
     'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR',
@@ -42,15 +42,28 @@ def ring_pts(idxs):
         out.extend(a[1:] if out else a)
     return out
 
-regions = []
+# One panel. Albers USA already composites Alaska and Hawaii into the frame at
+# fixed positions, and that arrangement is worth keeping — so the US has a
+# mainland panel and no insets. A geography can do either: bake its insets into
+# one panel, or hand them over and let the layout place them.
+polys_by_name, order = {}, []
 for g in d['objects']['states']['geometries']:
     name = g['properties']['name']
     if name == 'District of Columbia':
         continue
-    polys = g['arcs'] if g['type'] == 'MultiPolygon' else [g['arcs']]
-    regions.append(region(name, [[ring_pts(r) for r in poly] for poly in polys]))
+    raw = g['arcs'] if g['type'] == 'MultiPolygon' else [g['arcs']]
+    polys_by_name[name] = [[ring_pts(r) for r in poly] for poly in raw]
+    order.append(name)
 
-# Albers USA is already laid out with Alaska and Hawaii in their insets, so the
-# view box is just the frame that has always been used.
-emit('us.json', '-60 10 1020 600', regions, ABBR,
+flat = [poly for name in order for poly in polys_by_name[name]]
+placed, pw, ph = normalise(flat)
+i = 0
+regions = []
+for name in order:
+    n = len(polys_by_name[name])
+    regions.append(region(name, placed[i:i + n], panel=0))
+    i += n
+
+emit('us.json', [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1)}],
+     regions, ABBR,
      meta={'source': 'us-atlas v3.0.1 (ISC), US Census Bureau boundaries'})

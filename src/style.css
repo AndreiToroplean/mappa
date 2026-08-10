@@ -77,7 +77,7 @@
   footer .ok{color:var(--foundline)}
   footer .no{color:var(--red)}
 
-  .overlay{position:fixed;inset:0;background:rgba(10,14,23,.92);
+  .overlay{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;background:rgba(10,14,23,.92);
     display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
   .overlay[hidden]{display:none}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
@@ -183,9 +183,15 @@
   #confirm{z-index:30}
   /* Celebration. Above the overlay so the last of the confetti can still be
      falling as the leaderboard arrives; both clear themselves. */
-  .confetti{position:fixed;inset:0;z-index:22;pointer-events:none}
+  /* Shown only when something threw; selectable so it can be quoted back. */
+  .crash{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px;
+    background:#4A1418;color:#FFD9DB;border-top:1px solid var(--red);
+    font-family:var(--mono);font-size:11px;line-height:1.45;
+    -webkit-user-select:text;user-select:text}
+  .crash[hidden]{display:none}
+  .confetti{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:22;pointer-events:none}
   .confetti[hidden]{display:none}
-  .fanfare{position:fixed;inset:0;z-index:23;display:flex;
+  .fanfare{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:23;display:flex;
     align-items:center;justify-content:center;pointer-events:none}
   .fanfare[hidden]{display:none}
   .fanfare span{font-family:var(--mono);font-size:56px;font-weight:700;
@@ -212,7 +218,7 @@
   .target.won{color:var(--foundline)}
   .val.won{color:var(--foundline)}
 
-  .countdown{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  .countdown{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;
     pointer-events:none;z-index:20;background:rgba(10,14,23,.55)}
   .countdown[hidden]{display:none}
   .countdown span{font-family:var(--mono);font-size:104px;font-weight:700;color:var(--amber);

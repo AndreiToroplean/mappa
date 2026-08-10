@@ -233,11 +233,13 @@ addEventListener('keydown', e => {
    both cards so a run can be followed by a different kind of run without a
    reload. */
 async function setMode(id) {
+  if (!GEO || !MODES[id]) return;    // a tap can land before startup finishes
   MODE = MODES[id];
   document.querySelectorAll('.modeBtn').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === id));
   refreshCopy();
-  showBoards(await loadBoard(), null);
+  try { showBoards(await loadBoard(), null); }
+  catch (e) { reportCrash('board: ' + e.message); }
 }
 
 /* Everything on the two cards that depends on which geography or mode is live.
@@ -277,7 +279,7 @@ addEventListener('resize', () => {
 });
 
 async function setGeo(id) {
-  if (!GEOS[id] || id === GEO.id) return;
+  if (!GEO || !GEOS[id] || id === GEO.id) return;
   loadGeography(id);
   await kvSet(PREF_GEO, id);
   refreshCopy();
@@ -299,9 +301,14 @@ el.startBtn.addEventListener('click', beginRun);
 /* Startup. The geography is remembered between visits; the mode is not, since
    Trial is the default reading of "play the game". */
 (async () => {
-  const saved = await kvGet(PREF_GEO);
+  // The geography is built first and separately from anything that can fail:
+  // if reading the saved preference throws, the game should still start, just
+  // without remembering the choice.
+  let saved = null;
+  try { saved = await kvGet(PREF_GEO); } catch (e) { reportCrash('storage: ' + e.message); }
   loadGeography(GEOS[saved] ? saved : DEFAULT_GEO);
-  await setMode(MODE.id);
+  refreshCopy();
   resetRun();
   el.intro.hidden = false;
+  try { showBoards(await loadBoard(), null); } catch (e) { reportCrash('board: ' + e.message); }
 })();

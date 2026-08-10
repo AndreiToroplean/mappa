@@ -164,16 +164,30 @@ talking about it; `useGeo()` derives `REGIONS`, `TOTAL` and `ABBR` from it. The
 choice is remembered across visits, the mode is not — Trial is the default
 reading of "play the game".
 
-Both geographies are projected into the same 1020x600 frame by their build
-script. That is deliberate and load-bearing: every distance constant in the
-game is in map units, so a shared frame means `SNAP_UNITS`, the 12-unit
-tap-target threshold and the magnifier zoom all keep their meaning without a
-per-geography table of tuned numbers.
+**Layout is chosen at run time, then baked flat.** The build emits panels in
+local coordinates and places nothing. `chooseLayout()` scores candidate
+arrangements and `compose()` bakes the winner into one flat coordinate space,
+rewriting path data.
 
-Switching is a live rebuild, not a reload: `buildMap`, `buildBorders` and
-`buildLens` each rebuild what they derive from the region set. Anything new
-derived from `REGIONS` must be added to `loadGeography()` or it will silently
-keep the old geography's data.
+Baking flat is the important half. The alternative — a transform per panel —
+would have meant hit testing in several coordinate systems at once, per-panel
+inverse matrices, and distances that are not comparable between panels because
+the scales differ. Composing to a flat space instead means *nothing downstream
+knows panels exist*: `resolve`, `borders`, `distanceTo` and `SNAP_UNITS` are
+untouched. The cost is re-emitting about 16,000 points on a layout change, a few
+milliseconds, only when the geography or the window changes.
+
+The frame now matches the container's aspect with the shorter side fixed at 600
+units, so the map fills the space instead of being letterboxed. A fixed 1.7:1
+frame in a 0.6:1 map area was wasting three fifths of a phone's height — see
+`render.py`, which is how that was finally noticed.
+
+`compose()` also rebuilds the tap targets, since whether a region is too small
+to hit depends on the scale it ended up at. Statuses survive a recompose because
+only geometry is rewritten and the classes live on the nodes being rewritten.
+
+Anything new derived from `REGIONS` belongs in `buildMap`/`compose`, or it will
+silently keep the previous geography's data.
 
 `CAN_HIT` moved from a load-time `const` to a value `buildMap()` assigns,
 because asking whether a path can be hit-tested needs a path to exist.
@@ -186,9 +200,17 @@ simplification happens in our build at a 2-unit tolerance with integer
 coordinates. Tolerance bounds the error, so 2 units is about 1.3 screen pixels
 on a phone.
 
-The five overseas départements are insets down the left margin, each fitted to
-its own slot. Not to scale, and deliberately so: at the mainland's scale Mayotte
-would be under two units across.
+The five overseas départements are each their own panel, normalised on their
+own, so they are not to scale relative to the mainland — deliberately: at the
+mainland's scale Mayotte would be a couple of units across. Tolerance is per
+panel, because what matters is error once drawn, and an inset is drawn at a
+fifth of the mainland's scale.
+
+`arrange()` had rows and columns the wrong way round for side placement in its
+first version, sized the inset block against the wrong axis, and pushed it off
+the frame — Guadeloupe and Corsica were sliced off on a laptop. Invisible in the
+numbers; obvious in a render. `check.py` now asserts every panel lands inside
+the frame and none overlap, across nine aspect ratios per geography.
 
 Two things the French names broke, both caught by measuring rather than by
 looking: "Alpes-de-Haute-Provence" is 23 characters against "North Carolina"'s
@@ -341,10 +363,11 @@ area" is a true sentence that does not convey a map sitting in a thin band with
 three fifths of the screen empty. Look at the render before trusting a layout
 argument.
 
-Known and not yet fixed: a fixed view box per geography cannot fit both a
-portrait phone and a landscape desktop. At 390x780 both geographies waste about
-60% of the available height, and France additionally wastes a wide gap between
-its overseas insets and the mainland. See the roadmap.
+The numbers it prints are worth keeping an eye on. France on a 390x780 phone
+went from ink covering 29% of the map area to 91% when the layout moved to run
+time; the US, which is a single wide panel, is unchanged at 35% on a phone and
+91% on a laptop — a 1.7:1 map in a 0.6:1 area cannot do better without splitting
+Alaska and Hawaii into their own panels, which is a deliberate no.
 
 ## Roadmap (recorded, not started)
 

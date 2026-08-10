@@ -91,7 +91,7 @@ def path_data(rings, places=1):
         for r in rings)
 
 
-def region(name, polys, min_area=1.2, tol=0.45, places=1):
+def region(name, polys, panel=0, min_area=1.2, tol=0.45, places=1):
     """Build one region from its polygons (each a list of rings).
 
     tol bounds how far the simplified outline may stray from the original, in
@@ -118,24 +118,58 @@ def region(name, polys, min_area=1.2, tol=0.45, places=1):
         best_pt, best_r = polylabel(rings)
     return {
         'n': name,
+        'p': panel,
         'd': path_data(parts, places),
         'l': [round(best_pt[0], 1), round(best_pt[1], 1)],
         'r': round(best_r, 1),
     }
 
 
-def emit(path, view_box, regions, abbr, meta=None):
-    """Write a geography file: everything the game needs, and nothing else."""
+def bounds(polys):
+    xs = [x for poly in polys for ring in poly for x, y in ring]
+    ys = [y for poly in polys for ring in poly for x, y in ring]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+PANEL_SPAN = 1000.0
+
+
+def normalise(polys, span=PANEL_SPAN):
+    """Move a panel's geometry to its own origin and scale its longest side to
+    span, returning the transformed polygons and the panel size.
+
+    Panels are stored in local coordinates because the layout is decided at run
+    time, from the shape of the screen — the build no longer knows where a panel
+    will sit or how big it will be. Normalising means one simplification
+    tolerance is meaningful for every panel regardless of its real-world size.
+    """
+    x0, y0, x1, y1 = bounds(polys)
+    s = span / max(x1 - x0, y1 - y0)
+    out = [[[((x - x0) * s, (y - y0) * s) for x, y in ring] for ring in poly]
+           for poly in polys]
+    return out, (x1 - x0) * s, (y1 - y0) * s
+
+
+def emit(path, panels, regions, abbr, meta=None):
+    """Write a geography: panels in local coordinates, and the regions in them.
+
+    No view box and no placement — see normalise(). The game composes these
+    into one flat coordinate space once it knows the shape of the screen.
+    """
     regions.sort(key=lambda r: r['n'])
     assert set(abbr) == {r['n'] for r in regions}, 'abbreviations do not match'
-    out = {'viewBox': view_box, 'abbr': abbr, 'regions': regions}
+    for i, panel in enumerate(panels):
+        assert any(r['p'] == i for r in regions), f'panel {i} has no regions'
+    out = {'panels': panels, 'abbr': abbr, 'regions': regions}
     if meta:
         out['meta'] = meta
     p = ROOT / 'data' / path
     p.parent.mkdir(exist_ok=True)
     p.write_text(json.dumps(out, separators=(',', ':')))
-    print(f'wrote {p} ({p.stat().st_size:,} bytes, {len(regions)} regions)')
-    tight = sorted(regions, key=lambda r: r['r'])[:10]
-    print('  tightest interiors (these get enlarged tap targets):')
-    for r in tight:
-        print(f"    {r['n'][:24]:<24} r={r['r']:>5}")
+    pts = sum(r['d'].count(',') for r in regions)
+    print(f'wrote {p} ({p.stat().st_size:,} bytes, {len(regions)} regions, '
+          f'{len(panels)} panel(s), {pts:,} points)')
+    for i, panel in enumerate(panels):
+        n = sum(1 for r in regions if r['p'] == i)
+        print(f"    panel {i} {panel['id']:<12} {panel['w']:.0f}x{panel['h']:.0f} "
+              f"local units, {n} region(s)")

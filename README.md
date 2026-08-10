@@ -16,18 +16,36 @@ Two, chosen from a dropdown on both cards and remembered between visits:
 | United States | 50 states | us-atlas (Albers USA) | postal codes |
 | France | 101 départements | france-geojson (Lambert-93) | département numbers |
 
-Both are projected and laid out inside the same 1020×600 frame at build time.
-That is what lets every distance constant in the game — snap reach, tap-target
-threshold, magnifier zoom — mean the same thing in both without being re-tuned.
+## Layout
 
-France's five overseas départements are insets down the left margin, in the band
-the mainland does not use. Each is fitted to its own slot rather than drawn to
-the mainland's scale: at true scale Mayotte would be under two units across and
-unhittable, while Guyane is larger than any metropolitan département. Insets are
-conventionally not to scale, and the game is about recognising which is which.
+The build does not place anything. Each geography is a set of **panels** in
+their own local coordinates — a mainland, plus one inset per piece that sits
+apart from it — and the arrangement is chosen at run time from the shape of the
+space available.
 
-`buildMap`, `buildBorders` and `buildLens` rebuild everything derived from the
-region set, so switching is a live rebuild rather than a reload.
+A geography may also bake its insets in and ship a single panel, which is what
+the US does: Albers USA already composites Alaska and Hawaii where they belong,
+and that arrangement is worth keeping.
+
+`chooseLayout` scores a handful of candidate arrangements — the inset block
+below the mainland or beside it, in every rows-by-columns shape — and takes the
+one giving the mainland the largest scale, then grows the insets into whatever
+space is left. `compose` bakes the winner into one flat coordinate space and
+rewrites the path data.
+
+That last part matters: composing back to a flat space means nothing downstream
+knows panels exist. Hit testing, `borders`, distances and the snap threshold are
+the same code they were when the build did the placing.
+
+France's five overseas départements each get their own panel, normalised on
+their own, which is what makes them not to scale relative to the mainland: at
+true scale Mayotte would be a couple of units across and Guyane larger than any
+metropolitan département. Insets are conventionally not to scale, and the game
+is about recognising which is which.
+
+The composed frame always matches the container's aspect, with the shorter side
+fixed at 600 units. Fitting a fixed frame into a differently-shaped container
+was wasting about three fifths of a phone's height.
 
 ## Layout
 

@@ -85,7 +85,7 @@ class Ref:
         return 0.0 if self.contains(x, y) == nm else math.sqrt(self.border_d2(nm, x, y))
 
 
-def geometry_harness(regions, view_box, cases, dist_cases, anchor_cases, cap):
+def geometry_harness(regions, cases, dist_cases, anchor_cases, cap):
     blk = geo_src[geo_src.index('const SNAP_UNITS'):]
     blk = blk.replace(
         blk[blk.index('function stateUnder'):blk.index('function borderDist2')],
@@ -125,7 +125,20 @@ function polyHit(x, y){
   return null;
 }
 """ + blk + """
-buildBorders();
+// borders are filled by compose() in the real thing; here the regions arrive
+// already composed, so index them directly
+borders = {};
+for (const r of REGIONS) {
+  borders[r.name] = r.d.split('M').filter(Boolean).map(ring => {
+    const pairs = ring.replace(/Z$/, '').split('L');
+    const a = new Float64Array(pairs.length * 2);
+    for (let i = 0; i < pairs.length; i++) {
+      const c = pairs[i].split(',');
+      a[i*2] = +c[0]; a[i*2+1] = +c[1];
+    }
+    return a;
+  });
+}
 CAN_HIT = true;
 let fail = 0;
 for (const [x, y, dead, snap, want] of CASES){
@@ -150,13 +163,97 @@ process.exitCode = (fail || dfail || afail) ? 1 : 0;
 
 
 SNAP = int(geo_src.split('const SNAP_UNITS =')[1].split(';')[0])
+map_src = (JS / '02-map.js').read_text()
+LAYOUT = map_src[map_src.index('const SHORT ='):map_src.index('/* ---- composing')]
+
+
+def layout_for(panels, aspect):
+    """Run the game's own layout code. Not reimplemented here on purpose: a
+    second copy would be a second thing to keep in step."""
+    s = (LAYOUT + '\nconsole.log(JSON.stringify(chooseLayout('
+         + repr(aspect) + ', ' + json.dumps(panels) + ')));')
+    pathlib.Path('/tmp/fifty-layout.js').write_text(s)
+    r = subprocess.run(['node', '/tmp/fifty-layout.js'], capture_output=True, text=True)
+    if r.returncode:
+        raise SystemExit(r.stderr)
+    return json.loads(r.stdout)
+
+
+def composed(d, aspect):
+    """Apply a layout to the stored panels, giving the flat space the game
+    actually hit-tests in."""
+    L = layout_for(d['panels'], aspect)
+    out = []
+    for r in d['regions']:
+        at = L['place'][r['p']]
+        parts = []
+        for part in r['d'].split('M'):
+            if not part:
+                continue
+            pts = [(float(a) * at['s'] + at['dx'], float(b) * at['s'] + at['dy'])
+                   for a, b in (q.split(',') for q in part.rstrip('Z').split('L'))]
+            parts.append('M' + 'L'.join(f'{x:.3f},{y:.3f}' for x, y in pts) + 'Z')
+        out.append({'n': r['n'], 'd': ''.join(parts), 'p': r['p'],
+                    'l': [r['l'][0] * at['s'] + at['dx'], r['l'][1] * at['s'] + at['dy']]})
+    return L, out
+
+
+# ------------------------------------------------- layout invariants
+# The first version of arrange() mixed up rows and columns for side placement,
+# sized the inset block against the wrong axis and pushed it off the frame. That
+# is invisible in numbers unless something checks for it.
+print('layout invariants')
+bad = 0
+for geo in GEOS:
+    d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+    for aspect in (0.35, 0.5, 0.603, 0.8, 1.0, 1.3, 1.878, 3.1, 5.0):
+        L, regs = composed(d, aspect)
+        xs = []; ys = []
+        for r in regs:
+            for part in r['d'].split('M'):
+                if not part:
+                    continue
+                for q in part.rstrip('Z').split('L'):
+                    a, b = q.split(',')
+                    xs.append(float(a)); ys.append(float(b))
+        if min(xs) < -0.5 or max(xs) > L['W'] + 0.5 or min(ys) < -0.5 or max(ys) > L['H'] + 0.5:
+            bad += 1
+            print(f'  FAIL {geo} aspect {aspect}: ink {min(xs):.0f}..{max(xs):.0f} x '
+                  f'{min(ys):.0f}..{max(ys):.0f} outside frame {L["W"]:.0f}x{L["H"]:.0f}')
+        boxes = []
+        for i in range(len(d['panels'])):
+            px = [x for r, x in zip(regs, xs) if False]
+        # panel boxes, for overlap
+        per = {}
+        for r in regs:
+            for part in r['d'].split('M'):
+                if not part:
+                    continue
+                for q in part.rstrip('Z').split('L'):
+                    a, b = map(float, q.split(','))
+                    bb = per.setdefault(r['p'], [a, b, a, b])
+                    bb[0] = min(bb[0], a); bb[1] = min(bb[1], b)
+                    bb[2] = max(bb[2], a); bb[3] = max(bb[3], b)
+        keys = sorted(per)
+        for i in range(len(keys)):
+            for j in range(i + 1, len(keys)):
+                x0, y0, x1, y1 = per[keys[i]]; a0, b0, a1, b1 = per[keys[j]]
+                if not (x1 <= a0 or a1 <= x0 or y1 <= b0 or b1 <= y0):
+                    bad += 1
+                    print(f'  FAIL {geo} aspect {aspect}: panels {keys[i]} and {keys[j]} overlap')
+print(f'  {"FAILED" if bad else "all panels inside the frame and non-overlapping, "
+      f"{len(GEOS) * 9} layouts"}')
+fails += 1 if bad else 0
+
 random.seed(7)
 
 for geo in GEOS:
     d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
-    regions, names = d['regions'], [r['n'] for r in d['regions']]
-    vx, vy, vw, vh = map(float, d['viewBox'].split())
-    print(f'{geo}: {len(regions)} regions, viewBox {d["viewBox"]}')
+    L, regions = composed(d, 0.603)          # a portrait phone
+    names = [r['n'] for r in regions]
+    vx, vy, vw, vh = 0.0, 0.0, L['W'], L['H']
+    print(f'{geo}: {len(regions)} regions, {len(d["panels"])} panel(s), '
+          f'composed frame {vw:.0f}x{vh:.0f}')
     ref = Ref(regions)
 
     n_cases = 120 if geo == 'us' else 60
@@ -180,7 +277,7 @@ for geo in GEOS:
     anchors = [(r['l'][0], r['l'][1], r['n']) for r in regions]
 
     p = pathlib.Path(f'/tmp/fifty-geom-{geo}.js')
-    p.write_text(geometry_harness(regions, d['viewBox'], cases, dist_cases, anchors, SNAP))
+    p.write_text(geometry_harness(regions, cases, dist_cases, anchors, SNAP))
     r = subprocess.run(['node', str(p)], capture_output=True, text=True)
     print(r.stdout.rstrip() or r.stderr)
     fails += r.returncode

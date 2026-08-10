@@ -13,7 +13,7 @@ It reproduces what the map area actually gets: the viewport minus the header and
 footer, then the view box fitted inside that with preserveAspectRatio meet,
 which is where the wasted space shows up.
 """
-import json, pathlib, sys
+import json, pathlib, subprocess, sys
 from PIL import Image, ImageDraw
 
 ROOT = pathlib.Path(__file__).resolve().parent
@@ -25,29 +25,52 @@ LINE = (31, 42, 58)
 FRAME = (255, 194, 75)
 
 
-def rings(d):
-    out = []
-    for part in d.split('M'):
-        if not part:
-            continue
-        out.append([tuple(map(float, q.split(',')))
-                    for q in part.rstrip('Z').split('L')])
-    return out
+LAYOUT_JS = None
 
 
-def render(geo, vw, vh, scale=2, show_frame=True):
+def compose(geo, aspect):
+    """Compose a geography for an aspect ratio, using the game's own layout code.
+
+    Shelling out to node keeps one implementation of the layout: a Python copy
+    would be a second thing to keep in step, and the whole point of this file is
+    to check what the real thing does.
+    """
+    global LAYOUT_JS
+    if LAYOUT_JS is None:
+        src = (ROOT / 'src' / 'js' / '02-map.js').read_text()
+        LAYOUT_JS = src[src.index('const SHORT ='):src.index('/* ---- composing')]
     data = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
-    vx, vy, bw, bh = map(float, data['viewBox'].split())
+    script = (LAYOUT_JS + "\nconst d = " + json.dumps(data) + ";\n"
+              "console.log(JSON.stringify(chooseLayout(" + repr(aspect) + ", d.panels)));")
+    out = pathlib.Path('/tmp/layout-probe.js')
+    out.write_text(script)
+    res = subprocess.run(['node', str(out)], capture_output=True, text=True)
+    if res.returncode:
+        raise SystemExit(res.stderr)
+    L = json.loads(res.stdout)
+    regions = []
+    for r in data['regions']:
+        at = L['place'][r['p']]
+        rings = []
+        for part in r['d'].split('M'):
+            if not part:
+                continue
+            rings.append([(float(a) * at['s'] + at['dx'], float(b) * at['s'] + at['dy'])
+                          for a, b in (q.split(',') for q in part.rstrip('Z').split('L'))])
+        regions.append({'n': r['n'], 'rings': rings})
+    return L, regions
 
-    # the chrome the real page has, from style.css
+
+def render(geo, vw, vh, scale=2):
     header = 94 if vw <= 600 else 76
     footer = 52 if vw <= 600 else 48
     pad = 10
     area_w, area_h = vw - pad * 2, vh - header - footer - pad * 2
 
-    s = min(area_w / bw, area_h / bh)                     # meet
-    ox = pad + (area_w - bw * s) / 2 - vx * s
-    oy = header + pad + (area_h - bh * s) / 2 - vy * s
+    L, regions = compose(geo, area_w / area_h)
+    s = min(area_w / L['W'], area_h / L['H'])
+    ox = pad + (area_w - L['W'] * s) / 2
+    oy = header + pad + (area_h - L['H'] * s) / 2
 
     img = Image.new('RGB', (vw * scale, vh * scale), INK)
     dr = ImageDraw.Draw(img)
@@ -56,29 +79,26 @@ def render(geo, vw, vh, scale=2, show_frame=True):
     dr.line([0, header * scale, vw * scale, header * scale], fill=LINE, width=scale)
     dr.line([0, (vh - footer) * scale, vw * scale, (vh - footer) * scale],
             fill=LINE, width=scale)
+    dr.rectangle([ox * scale, oy * scale,
+                  (ox + L['W'] * s) * scale, (oy + L['H'] * s) * scale],
+                 outline=(60, 48, 24), width=scale)
 
-    if show_frame:      # the view box itself, to make wasted space visible
-        dr.rectangle([ox * scale, oy * scale,
-                      (ox + bw * s) * scale, (oy + bh * s) * scale],
-                     outline=(60, 48, 24), width=scale)
-
-    for r in data['regions']:
-        for ring in rings(r['d']):
+    ink = []
+    for r in regions:
+        for ring in r['rings']:
             pts = [((x * s + ox) * scale, (y * s + oy) * scale) for x, y in ring]
+            ink.extend(pts)
             if len(pts) >= 3:
                 dr.polygon(pts, fill=LAND, outline=EDGE)
 
-    used = [(x * s + ox, y * s + oy) for r in data['regions']
-            for ring in rings(r['d']) for x, y in ring]
-    ux0 = min(p[0] for p in used); ux1 = max(p[0] for p in used)
-    uy0 = min(p[1] for p in used); uy1 = max(p[1] for p in used)
-    fill = ((ux1 - ux0) * (uy1 - uy0)) / (area_w * area_h)
-    out = ROOT / f'/tmp/render-{geo}-{vw}x{vh}.png'
+    x0 = min(p[0] for p in ink) / scale; x1 = max(p[0] for p in ink) / scale
+    y0 = min(p[1] for p in ink) / scale; y1 = max(p[1] for p in ink) / scale
+    out = pathlib.Path(f'/tmp/render-{geo}-{vw}x{vh}.png')
     img.save(out)
     print(f'{out}')
-    print(f'  map area {area_w:.0f}x{area_h:.0f}px   view box {bw:.0f}x{bh:.0f} '
-          f'at {s:.3f} px/unit')
-    print(f'  ink bounding box covers {fill*100:.0f}% of the available map area')
+    print(f'  map area {area_w:.0f}x{area_h:.0f}px  frame {L["W"]:.0f}x{L["H"]:.0f} units'
+          f'  insets {L.get("side", "none")}')
+    print(f'  ink covers {((x1-x0)*(y1-y0))/(area_w*area_h)*100:.0f}% of the map area')
     return out
 
 

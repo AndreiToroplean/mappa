@@ -1,15 +1,18 @@
 /* ---- geographies ---------------------------------------------------------
    A geography is a set of regions plus the words used to talk about them.
-   Each build script emits one, already projected and laid out inside the same
-   1020x600 frame, which is what lets every distance constant in the game —
-   snap reach, tap-target threshold, magnifier zoom — mean the same thing in
-   both without being re-tuned.
+   Each build script emits one as a set of panels in local coordinates: a
+   mainland, plus an inset per piece that sits apart from it. Where those go is
+   decided at run time from the shape of the screen, then composed into one flat
+   coordinate space — see chooseLayout() and compose(). A geography may bake its
+   insets into the mainland panel instead, which is what the US does, since
+   Albers USA already composites Alaska and Hawaii where they belong.
 
    Region payload keys are single letters purely to keep the injected data
    small, and are expanded once, in useGeo(), so nothing downstream knows them:
 
-     n -> name    d -> SVG path data
+     n -> name    d -> SVG path data, in its panel's local units
      l -> label anchor (pole of inaccessibility)   r -> inscribed radius there
+     p -> which panel it belongs to
 */
 const GEOS = {
   us: Object.assign({
@@ -38,7 +41,7 @@ let GEO, REGIONS, REGION_NAMES, TOTAL, ABBR;
 function useGeo(id) {
   GEO = GEOS[id] || GEOS[DEFAULT_GEO];
   REGIONS = GEO.regions.map(r => ({
-    name: r.n, d: r.d, anchor: r.l, radius: r.r,
+    name: r.n, d: r.d, anchor: r.l, radius: r.r, panel: r.p,
   }));
   REGION_NAMES = REGIONS.map(r => r.name);
   TOTAL = REGIONS.length;

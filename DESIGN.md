@@ -313,6 +313,33 @@ full-fifty runs that took real effort.
   Only full runs really contend on it, since anything short of the full set
   ended by running out of lives and therefore has exactly that many errors.
 
+## When it breaks on a browser you cannot open
+
+`00-crash.js` loads first and shows any thrown error in a band at the bottom of
+the screen, selectable so it can be quoted back. Before it existed, an error
+during startup was completely silent: the menu still drew, because it is static
+markup, but nothing was wired up, so every button did nothing at all. That is
+indistinguishable from "the buttons don't work" — a terrible thing to debug from
+a description, on a browser that cannot be run here.
+
+Safari problems found by audit rather than by reproduction:
+
+- `isPointInFill` takes an `SVGPoint` in WebKit and throws a `TypeError` on a
+  plain `{x, y}` dictionary. Chrome accepts either, so every tap on the map
+  failed on iPhone while nothing failed here. `userPoint()` now returns a real
+  point from `createSVGPoint`.
+- Startup no longer depends on storage succeeding: the geography is built before
+  anything that can throw, so a storage failure costs the remembered preference
+  and nothing else.
+- `setMode` and `setGeo` bail out if `GEO` is not set yet, since a tap can land
+  before the async startup has finished.
+- `inset: 0` is spelled out as four sides as well, for iOS before 14.5.
+
+Unresolved: the reported iPhone symptom was that selecting a mode in the menu
+did nothing. None of the above is confirmed to be its cause — the SVGPoint bug
+would break taps on the map, not buttons in the menu. The crash band exists so
+the next report says what actually threw.
+
 ## Looking at the map
 
 `render.py <geo> <width> <height>` rasterises a geography exactly as the game

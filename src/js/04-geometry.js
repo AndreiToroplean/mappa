@@ -1,10 +1,18 @@
 let CAN_HIT = false;   // set by buildMap(), which has the paths to ask
 
+/* Must return a real SVGPoint, not a plain {x, y}. WebKit's isPointInFill
+   takes an SVGPoint and throws a TypeError on a dictionary, so every tap on
+   the map failed on Safari while working fine in Chrome, which accepts either.
+   createSVGPoint is ancient and available everywhere. */
+const scratch = svg.createSVGPoint ? svg.createSVGPoint() : null;
+
 function userPoint(x, y) {
   const m = svg.getScreenCTM();
   if (!m) return null;
-  const inv = m.inverse();
-  return { x: inv.a * x + inv.c * y + inv.e, y: inv.b * x + inv.d * y + inv.f };
+  if (!scratch) return { x: x, y: y };      // no SVG point factory: last resort
+  scratch.x = x;
+  scratch.y = y;
+  return scratch.matrixTransform(m.inverse());
 }
 
 // Geometry hit test rather than elementFromPoint: inside the disc we want the
@@ -101,18 +109,18 @@ function nearestSelectable(u) {
   return best;
 }
 
-/* snapFromDead decides what happens *inside* an unselectable state. The
-   magnifier passes true: it draws the result under the crosshair before
-   anything is committed, so sliding over a solved state and being offered its
-   neighbour is visible and can be corrected. A tap passes false, because it
-   has no preview — silently turning a tap on a state you already solved into
-   a life lost on the state next door would be indefensible. Open water snaps
-   either way. */
-function resolve(clientX, clientY, snapFromDead) {
+/* Landing on something unselectable is treated exactly like landing on open
+   water: look for the nearest region worth picking. There used to be a flag
+   here so a tap inside a solved region selected nothing while the magnifier
+   snapped out of it, on the grounds that a tap has no preview. In play that
+   distinction was just an inconsistency — a tap two pixels inside a solved
+   neighbour and a tap two pixels into the sea are the same mistake, and
+   silently discarding one of them reads as the game ignoring you. */
+function resolve(clientX, clientY) {
   const u = userPoint(clientX, clientY);
   if (!u) return null;
   const under = stateUnder(u, clientX, clientY);
-  if (under) return selectable(under) ? under : (snapFromDead ? nearestSelectable(u) : null);
+  if (under && selectable(under)) return under;
   return nearestSelectable(u);
 }
 

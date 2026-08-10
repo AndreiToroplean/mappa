@@ -55,7 +55,7 @@ function moveLens(x, y) {
   if (top < 8) top = Math.min(y + 40, Math.max(8, vh - D - 46));
   lensBox.style.top = top + 'px';
 
-  const name = resolve(x, y, true);   // exactly what a release would pick
+  const name = resolve(x, y);   // exactly what a release would pick
   if (name !== aim) {
     const now = Date.now();
     if (trail.length) trail[trail.length - 1].t1 = now;
@@ -144,6 +144,6 @@ svg.addEventListener('click', e => {
   // An enlarged hit circle still counts, but only for a state worth picking;
   // anything else goes through the shared resolver.
   const tapped = e.target.dataset && e.target.dataset.name;
-  guess(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY, false));
+  guess(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY));
 });
 

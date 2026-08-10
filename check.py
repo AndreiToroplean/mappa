@@ -75,10 +75,10 @@ class Ref:
                 bd, best = d, nm
         return best
 
-    def resolve(self, x, y, dead, snap, cap):
+    def resolve(self, x, y, dead, cap):
         u = self.contains(x, y)
-        if u:
-            return u if u not in dead else (self.nearest(x, y, dead, cap) if snap else None)
+        if u and u not in dead:
+            return u
         return self.nearest(x, y, dead, cap)
 
     def distance(self, x, y, nm):
@@ -93,11 +93,11 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap):
     blk = blk.replace(
         blk[blk.index('function selectable'):blk.index('function segDist2')],
         'function selectable(name){ return !!name && !DEAD.has(name); }\n\n')
-    blk = blk.replace("""function resolve(clientX, clientY, snapFromDead) {
+    blk = blk.replace("""function resolve(clientX, clientY) {
   const u = userPoint(clientX, clientY);
   if (!u) return null;
   const under = stateUnder(u, clientX, clientY);""",
-"""function resolve(x, y, snapFromDead) {
+"""function resolve(x, y) {
   const u = {x: x, y: y};
   const under = stateUnder(u);""")
     return (
@@ -141,10 +141,10 @@ for (const r of REGIONS) {
 }
 CAN_HIT = true;
 let fail = 0;
-for (const [x, y, dead, snap, want] of CASES){
+for (const [x, y, dead, want] of CASES){
   DEAD = new Set(dead);
-  const got = resolve(x, y, snap);
-  if (got !== want){ fail++; if (fail <= 3) console.log('    resolve mismatch ('+x+','+y+') snap='+snap+' js='+got+' ref='+want); }
+  const got = resolve(x, y);
+  if (got !== want){ fail++; if (fail <= 3) console.log('    resolve mismatch ('+x+','+y+') js='+got+' ref='+want); }
 }
 console.log('    resolve:    ' + (CASES.length - fail) + '/' + CASES.length + ' match the reference');
 let dfail = 0;
@@ -155,9 +155,24 @@ for (const [x, y, nm, want] of DIST){
 console.log('    distanceTo: ' + (DIST.length - dfail) + '/' + DIST.length + ' match the reference');
 let afail = 0;
 for (const [x, y, nm] of ANCHORS){
-  if (resolve(x, y, false) !== nm) { afail++; if (afail <= 3) console.log('    anchor of ' + nm + ' resolves to ' + resolve(x, y, false)); }
+  if (resolve(x, y) !== nm) { afail++; if (afail <= 3) console.log('    anchor of ' + nm + ' resolves to ' + resolve(x, y)); }
 }
 console.log('    label anchors resolve to their own region: ' + (ANCHORS.length - afail) + '/' + ANCHORS.length);
+
+/* The behaviour this replaced: a tap inside a solved region used to select
+   nothing. Standing at each region's own anchor with only that region marked
+   solved, a neighbour should now come back. */
+let snapped = 0, stuck = 0;
+for (const [x, y, nm] of ANCHORS){
+  DEAD = new Set([nm]);
+  const got = resolve(x, y);
+  if (got === nm) stuck++;
+  else if (got) snapped++;
+}
+DEAD = new Set();
+console.log('    tapping a solved region snaps to a neighbour: ' + snapped + '/' + ANCHORS.length
+  + (stuck ? '  (' + stuck + ' returned the solved region!)' : ''));
+if (stuck) process.exitCode = 1;
 process.exitCode = (fail || dfail || afail) ? 1 : 0;
 """)
 
@@ -262,8 +277,7 @@ for geo in GEOS:
         x = round(random.uniform(vx, vx + vw), 1)
         y = round(random.uniform(vy, vy + vh), 1)
         dead = set(random.sample(names, random.choice([0, 0, 3, 10, len(names) // 4])))
-        snap = random.choice([True, False])
-        cases.append((x, y, sorted(dead), snap, ref.resolve(x, y, dead, snap, SNAP)))
+        cases.append((x, y, sorted(dead), ref.resolve(x, y, dead, SNAP)))
 
     dist_cases = []
     for _ in range(30):

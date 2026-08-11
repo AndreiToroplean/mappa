@@ -14,6 +14,7 @@ __CSS__</style>
     <div class="eyebrow" id="promptLabel">Find this state</div>
     <div class="target" id="target">—<span class="caret"></span></div>
   </div>
+  <button id="pause" class="pausebtn" aria-label="Pause">&#10073;&#10073;</button>
   <div class="stats">
     <div class="stat" id="livesStat">
       <div class="eyebrow" id="counterLabel">Lives</div>
@@ -35,7 +36,7 @@ __CSS__</style>
   <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
-<footer><button id="pause" class="pausebtn" aria-label="Pause">II</button><span id="ticker">Pick a geography and press Start.</span><button id="clue" class="cluebtn">Clue</button></footer>
+<footer><span id="ticker">Pick a geography and press Start.</span><button id="clue" class="cluebtn">Clue</button></footer>
 
 <div class="lens" id="lens" hidden>
   <div class="disc">
@@ -48,9 +49,6 @@ __CSS__</style>
 <div class="overlay" id="paused" hidden>
   <div class="card narrow">
     <h2>Paused</h2>
-    <div class="sub">The clock is stopped</div>
-    <p class="rules">The map is hidden while you are here, so a pause cannot buy
-      thinking time.</p>
     <button id="resumeBtn">Resume</button>
     <div class="btnrow">
       <button class="ghost" id="restartBtn">Restart</button>

@@ -95,23 +95,62 @@ function insetScales(sMain, main, insets) {
   });
 }
 
-/* Shelf packing, so an inset takes the room it needs and no more. `along` is
-   the axis shelves run in; the block grows on the other one. */
-function shelve(sizes, along, horizontal) {
-  const shelves = [];
-  let cur = null;
-  for (let i = 0; i < sizes.length; i++) {
-    const w = horizontal ? sizes[i].w : sizes[i].h;
-    const d = horizontal ? sizes[i].h : sizes[i].w;
-    if (!cur || cur.used + PAD + w > along) {
-      cur = { items: [], used: 0, depth: 0 };
-      shelves.push(cur);
+/* Bottom-left packing against a skyline.
+
+   Shelves were the first attempt and they wasted the room they were meant to
+   save: five insets in one shelf made the shelf as deep as Guyane, the tallest,
+   and the four small ones then floated in a band of empty space beside it. A
+   skyline lets them stack two-deep next to Guyane instead, which is how an atlas
+   would set them.
+
+   `along` is the axis the block spreads on, `depth` the one it grows into, so
+   the same packer serves a strip below the mainland and a column beside it. */
+function packInsets(sizes, limit, below) {
+  const along = s => below ? s.w : s.h;
+  const depth = s => below ? s.h : s.w;
+
+  // tallest first: the big pieces set the shape, the small ones fill in
+  const order = sizes.map((s, i) => i).sort((a, b) => depth(sizes[b]) - depth(sizes[a]));
+  const sky = [{ from: 0, to: limit, at: 0 }];   // free surface, in `along` steps
+  const at = [];
+
+  for (const i of order) {
+    const w = along(sizes[i]) + PAD, d = depth(sizes[i]) + PAD;
+    let best = null;
+    for (let k = 0; k < sky.length; k++) {
+      const start = sky[k].from;
+      if (start + w > limit + 0.01) continue;
+      // the surface height across the whole footprint, not just at its start
+      let top = 0, covered = 0;
+      for (let j = k; j < sky.length && covered < w - 0.01; j++) {
+        top = Math.max(top, sky[j].at);
+        covered = sky[j].to - start;
+      }
+      if (covered < w - 0.01) continue;
+      if (!best || top < best.top - 0.01 || (top < best.top + 0.01 && start < best.start))
+        best = { top, start };
     }
-    cur.items.push({ i, at: cur.used + (cur.used ? PAD : 0) });
-    cur.used += (cur.used ? PAD : 0) + w;
-    cur.depth = Math.max(cur.depth, d);
+    if (!best) best = { top: Math.max(...sky.map(s => s.at)), start: 0 };
+    at[i] = { along: best.start, depth: best.top };
+    raise(sky, best.start, best.start + w, best.top + d, limit);
   }
-  return shelves;
+  const total = Math.max(...at.map((a, i) => a.depth + depth(sizes[i])));
+  const used = Math.max(...at.map((a, i) => a.along + along(sizes[i])));
+  return { at, total, used };
+}
+
+/* Lift the free surface over [from, to) to `to_`, splitting spans as needed. */
+function raise(sky, from, to, to_, limit) {
+  const out = [];
+  for (const s of sky) {
+    if (s.to <= from || s.from >= to) { out.push(s); continue; }
+    if (s.from < from) out.push({ from: s.from, to: from, at: s.at });
+    if (s.to > to) out.push({ from: to, to: s.to, at: s.at });
+  }
+  out.push({ from, to: Math.min(to, limit), at: to_ });
+  out.sort((a, b) => a.from - b.from);
+  sky.length = 0;
+  sky.push(...out);
 }
 
 function tryScale(s, W, H, main, insets, below) {
@@ -120,11 +159,25 @@ function tryScale(s, W, H, main, insets, below) {
   if (main.w * s > W || main.h * s > H) return null;
   const scales = insetScales(s, main, insets);
   const sizes = insets.map((p, i) => ({ w: p.w * scales[i], h: p.h * scales[i] }));
-  const shelves = shelve(sizes, along, below);
-  const depth = shelves.reduce((t, sh) => t + sh.depth, 0) + PAD * (shelves.length - 1);
   const mainAcross = below ? main.h * s : main.w * s;
-  if (mainAcross + GAP + depth > across) return null;
-  return { s, scales, sizes, shelves, depth, below };
+  const room = across - mainAcross - GAP;
+
+  /* Packing at full width minimises depth, which is not the same as looking
+     tidy: it lays the four small insets in one long row and leaves the space
+     beside Guyane empty. Trying several widths and keeping the tightest bounding
+     box instead lets them stack two-deep next to it, which is how an atlas sets
+     them. Five items, five candidates — cheap enough to just try. */
+  const widest = Math.max(...sizes.map(z => (below ? z.w : z.h))) + PAD;
+  let packed = null;
+  for (const f of [0.3, 0.45, 0.6, 0.8, 1]) {
+    const limit = Math.max(widest, along * f);
+    const cand = packInsets(sizes, limit, below);
+    if (cand.total > room) continue;
+    cand.waste = cand.used * cand.total;
+    if (!packed || cand.waste < packed.waste * 0.995) packed = cand;
+  }
+  if (!packed) return null;
+  return { s, scales, sizes, packed, below };
 }
 
 function chooseLayout(aspect, panels) {
@@ -151,36 +204,27 @@ function chooseLayout(aspect, panels) {
   }
   if (!best) return { W, H, place: panels.map(() => ({ s: 0.1, dx: 0, dy: 0 })) };
 
-  const { s, scales, sizes, shelves, depth, below } = best;
+  const { s, scales, sizes, packed, below } = best;
   const mw = main.w * s, mh = main.h * s;
   const place = [];
-  const total = (below ? mh : mw) + GAP + depth;
+  const total = (below ? mh : mw) + GAP + packed.total;
   const start = ((below ? H : W) - total) / 2;
+  // centre the packed block on the axis it spreads along
+  const slack = ((below ? W : H) - packed.used) / 2;
 
   if (below) {
     place.push({ s, dx: (W - mw) / 2, dy: start });
-    let y = start + mh + GAP;
-    for (const sh of shelves) {
-      const rowW = sh.items.reduce((t, it) => t + sizes[it.i].w, 0) + PAD * (sh.items.length - 1);
-      const x0 = (W - rowW) / 2;
-      for (const it of sh.items) {
-        place[it.i + 1] = { s: scales[it.i], dx: x0 + it.at,
-                            dy: y + (sh.depth - sizes[it.i].h) / 2 };
-      }
-      y += sh.depth + PAD;
-    }
+    const y0 = start + mh + GAP;
+    insets.forEach((p, i) => {
+      place[i + 1] = { s: scales[i], dx: slack + packed.at[i].along,
+                       dy: y0 + packed.at[i].depth };
+    });
   } else {
-    place.push({ s, dx: start + depth + GAP, dy: (H - mh) / 2 });
-    let x = start;
-    for (const sh of shelves) {
-      const colH = sh.items.reduce((t, it) => t + sizes[it.i].h, 0) + PAD * (sh.items.length - 1);
-      const y0 = (H - colH) / 2;
-      for (const it of sh.items) {
-        place[it.i + 1] = { s: scales[it.i], dx: x + (sh.depth - sizes[it.i].w) / 2,
-                            dy: y0 + it.at };
-      }
-      x += sh.depth + PAD;
-    }
+    place.push({ s, dx: start + packed.total + GAP, dy: (H - mh) / 2 });
+    insets.forEach((p, i) => {
+      place[i + 1] = { s: scales[i], dx: start + packed.at[i].depth,
+                       dy: slack + packed.at[i].along };
+    });
   }
   return { W, H, place, side: below ? 'below' : 'left' };
 }

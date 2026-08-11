@@ -183,6 +183,28 @@
   #confirm{z-index:30}
   /* Celebration. Above the overlay so the last of the confetti can still be
      falling as the leaderboard arrives; both clear themselves. */
+  /* Names the region you got wrong, big enough to actually register. The
+     ticker said it too, in 11px at the bottom of the screen, which nobody
+     reads mid-run — least of all while tapping through several wrong guesses.
+     Below the overlay's z-index so the end-of-run card covers it, and never in
+     hit testing, so it cannot swallow the next tap. */
+  .flash{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:9;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:none;padding:0 24px}
+  .flash[hidden]{display:none}
+  .flash span{font-size:46px;font-weight:700;letter-spacing:-0.02em;
+    line-height:1.08;color:var(--red);text-align:center;max-width:100%;
+    text-shadow:0 2px 16px rgba(10,14,23,.95), 0 0 44px rgba(10,14,23,.85);
+    animation:missflash 1150ms ease-out forwards}
+  @keyframes missflash{
+    0%{transform:scale(.86);opacity:0}
+    11%{transform:scale(1.03);opacity:1}
+    20%{transform:scale(1)}
+    64%{opacity:1}
+    100%{transform:scale(1.01);opacity:0}
+  }
+  body.longnames .flash span{font-size:38px}
+
   /* Shown only when something threw; selectable so it can be quoted back. */
   .crash{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px;
     background:#4A1418;color:#FFD9DB;border-top:1px solid var(--red);
@@ -255,12 +277,16 @@
     footer{font-size:11px;padding:0 14px;height:52px}
     .countdown span{font-size:78px}
     .fanfare span{font-size:40px}
+    .flash span{font-size:34px}
+    body.longnames .flash span{font-size:27px}
   }
   /* Narrow phones. 'North Carolina' and 'New Hampshire' are the widest
      names; step the type down rather than let them clip. */
   @media (max-width:400px){
     .target{font-size:22px}
     body.longnames .target{font-size:18px}
+    .flash span{font-size:29px}
+    body.longnames .flash span{font-size:24px}
     .caret{height:19px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

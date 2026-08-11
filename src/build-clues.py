@@ -12,6 +12,7 @@ Sources (fetch into package-clues/):
       regions.json       region names
   france-geojson                    regions-version-simplifiee.geojson
   usa-states (npm)                  src/usa-states.ts, state capitals
+  cphalpert/census-regions          census.csv, US census divisions
 """
 import json, re
 from geo import ROOT
@@ -45,11 +46,15 @@ def american():
     pairs = re.findall(r'name:\s*"([^"]+)"(?:(?!name:).)*?capital:\s*"([^"]+)"',
                        ts, re.S)
     caps = dict(pairs)
+    import csv
+    div = {r['State']: r['Division']
+           for r in csv.DictReader(open(SRC / 'census.csv'))}
     ours = json.loads((ROOT / 'data' / 'us.json').read_text())
     out = {}
     for name in ours['abbr']:
         assert name in caps, f'no capital found for {name}'
-        out[name] = {'capital': caps[name]}
+        assert name in div, f'no census division for {name}'
+        out[name] = {'capital': caps[name], 'group': div[name]}
     return out
 
 

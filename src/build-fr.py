@@ -11,7 +11,7 @@ five are full-resolution only. Simplification happens here instead, which also
 keeps the tolerance under our control.
 """
 import json, math
-from geo import ROOT, region, emit, normalise
+from geo import ROOT, region, emit, normalise, bounds, simplify
 
 # Panels are stored in local coordinates, each normalised to a 1000-unit span,
 # so tolerance is per panel: what matters is the error once drawn. The mainland
@@ -68,6 +68,7 @@ mainland = [c for c in by_code if c not in OVERSEAS]
 assert len(mainland) == 96
 
 panels, regions = [], []
+groups = {}
 
 # --- panel 0: the mainland, one projection so relative sizes are true ------
 proj = {c: rings_of(by_code[c], lambert_conic) for c in mainland}
@@ -81,23 +82,40 @@ for c in mainland:
                           panel=0, tol=TOL_MAIN, places=0))
     i += n
 
+# --- grouping outlines: the regions, projected the same way ----------------
+# Taken as their own geometry rather than dissolved from the departements. Each
+# departement was simplified on its own, so a shared border is now two slightly
+# different polylines and no amount of edge matching would cancel them out.
+bx0, by0, bx1, by1 = bounds(flat)
+gscale = 1000.0 / max(bx1 - bx0, by1 - by0)
+rfeats = json.load(open(ROOT / 'package-clues' / 'regions-version-simplifiee.geojson'))
+for f in rfeats['features']:
+    polys = rings_of(f, lambert_conic)
+    parts = []
+    for poly in polys:
+        for ring in poly:
+            pts = simplify([((x - bx0) * gscale, (y - by0) * gscale) for x, y in ring],
+                           TOL_MAIN)
+            if len(pts) > 2:
+                parts.append('M' + 'L'.join(f'{x:.0f},{y:.0f}' for x, y in pts) + 'Z')
+    groups[f['properties']['nom']] = {'p': 0, 'd': ''.join(parts)}
+
 # --- one panel per overseas departement -----------------------------------
-# Each gets its own panel rather than a reserved slot in a fixed frame, so the
-# layout can put them wherever the screen has room. Each is normalised on its
-# own, which is what makes them not to scale relative to the mainland: at true
-# scale Mayotte would be a couple of units across and Guyane larger than any
-# metropolitan departement.
 for c in OVERSEAS:
     f = by_code[c]
     lon0, lat0 = lonlat_centre(f)
     polys = rings_of(f, lambda a, b: local_plane(a, b, lon0, lat0))
     placed, pw, ph = normalise(polys)
     panels.append({'id': c, 'w': round(pw, 1), 'h': round(ph, 1)})
-    regions.append(region(f['properties']['nom'], placed,
-                          panel=len(panels) - 1, min_area=0.05,
-                          tol=TOL_INSET, places=0))
+    name = f['properties']['nom']
+    regions.append(region(name, placed, panel=len(panels) - 1,
+                          min_area=0.05, tol=TOL_INSET, places=0))
+    # Each overseas departement is its own region, so its grouping outline is
+    # itself. That gives the answer away, and is kept anyway: one rule for every
+    # region beats an exception nobody can predict.
+    groups[name] = {'p': len(panels) - 1, 'd': regions[-1]['d']}
 
 ABBR = {by_code[c]['properties']['nom']: c for c in by_code}
 
-emit('fr.json', panels, regions, ABBR,
+emit('fr.json', panels, regions, ABBR, groups=groups,
      meta={'source': 'france-geojson (gregoiredavid), from IGN/Etalab open data'})

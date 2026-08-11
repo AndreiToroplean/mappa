@@ -8,7 +8,7 @@ const livesLeft = () => MODE.lives - errors;
 /* Every element the game touches, looked up once. These were a mix of cached
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
-['bar', 'promptLabel', 'target', 'lives', 'counterLabel', 'missCount',
+['bar', 'promptLabel', 'target', 'lives', 'counterLabel', 'missCount', 'clue',
  'progress', 'clock', 'ticker',
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'startBtn', 'clearNo', 'clearYes',
@@ -48,6 +48,7 @@ function resetRun() {
   drawCounter();
   clearFlash();
   clearNudge();
+  resetClues(true);
   document.body.classList.remove('won');
   el.bar.classList.remove('lost', 'won');
   el.target.classList.remove('lost', 'won');
@@ -94,6 +95,7 @@ function tick() {
 function next() {
   current = queue.pop();
   el.target.innerHTML = current + '<span class="caret"></span>';
+  resetClues(false);      // the ladder starts again for each region
 }
 
 function guess(name) {
@@ -102,6 +104,7 @@ function guess(name) {
   if (name === current) {
     clearFlash();     // a red name left over from a miss would read as wrong
     clearNudge();
+    resetClues(false);
     setStatus(name, 'found');
     // the turn is over: clear this turn's misses, they count again next time
     REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });

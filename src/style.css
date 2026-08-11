@@ -52,7 +52,10 @@
   .pip.gone{background:transparent;box-shadow:inset 0 0 0 1px var(--line);transform:rotate(45deg) scale(.8)}
 
   main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;min-height:0}
-  svg{width:100%;height:100%;max-height:100%;display:block}  path.state{fill:var(--land);stroke:var(--ink);stroke-width:1;cursor:pointer;
+  /* The map, by id. As a bare `svg` rule this reached every icon on the page,
+     each of which then had to override it — one missed override away from the
+     same bug twice. */
+  #map{width:100%;height:100%;max-height:100%;display:block}  path.state{fill:var(--land);stroke:var(--ink);stroke-width:1;cursor:pointer;
     transition:fill .15s}
   path.state:hover{fill:var(--landhi)}
   path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
@@ -72,7 +75,9 @@
   /* Only in the mode that offers them. */
   /* Hiding the map is the point of the pause: a stopped clock with a visible
      map is just free thinking time. */
-  body.paused svg{visibility:hidden}
+  /* The map, and only the map. As `body.paused svg` this also hid the full
+     screen icon inside the pause card itself, which is an svg too. */
+  body.paused #map{visibility:hidden}
   /* Top right of the header: the corner a thumb reaches without regripping. */
   .pausebtn{display:none}
   body.playing .pausebtn{display:flex;align-items:center;justify-content:center;

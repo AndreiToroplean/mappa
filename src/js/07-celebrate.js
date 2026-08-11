@@ -115,3 +115,34 @@ function celebrate(title) {
   setTimeout(() => { document.body.classList.remove('won'); }, 1600);
   return 2500;
 }
+
+
+/* ---- naming the mistake -------------------------------------------------
+   A wrong guess used to be reported only in the ticker, at 11px along the
+   bottom edge. Nobody reads that mid-run, and someone brute-forcing their way
+   through an unfamiliar map reads it least of all — which wastes the one moment
+   they are most likely to remember something, having just been surprised.
+
+   So the name of whatever they hit goes up big, in red, over the middle of the
+   map. It is decoration: pointer-events:none, and it never delays a turn. */
+const flashBox = $('flash');
+let flashTimer = null;
+
+function flashMiss(name) {
+  if (!flashBox) return;
+  const span = flashBox.firstElementChild;
+  clearTimeout(flashTimer);
+  // restart the animation from the top, in case this is a second miss in a row
+  flashBox.hidden = true;
+  span.style.animation = 'none';
+  void span.offsetWidth;
+  span.style.animation = '';
+  span.textContent = name;
+  flashBox.hidden = false;
+  flashTimer = setTimeout(() => { flashBox.hidden = true; }, 1150);
+}
+
+function clearFlash() {
+  clearTimeout(flashTimer);
+  if (flashBox) flashBox.hidden = true;
+}

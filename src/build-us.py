@@ -104,6 +104,7 @@ for gname, uses in arc_use.items():
     groups[gname] = {'p': 0, 'd': ''.join(parts)}
 assert len(groups) == 9, f'expected 9 census divisions, got {len(groups)}'
 
-emit('us.json', [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1)}],
+emit('us.json', [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1),
+                  'km': 4600}],
      regions, ABBR, groups=groups,
      meta={'source': 'us-atlas v3.0.1 (ISC), US Census Bureau boundaries'})

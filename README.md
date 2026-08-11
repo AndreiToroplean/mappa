@@ -37,11 +37,11 @@ That last part matters: composing back to a flat space means nothing downstream
 knows panels exist. Hit testing, `borders`, distances and the snap threshold are
 the same code they were when the build did the placing.
 
-France's five overseas départements each get their own panel, normalised on
-their own, which is what makes them not to scale relative to the mainland: at
-true scale Mayotte would be a couple of units across and Guyane larger than any
-metropolitan département. Insets are conventionally not to scale, and the game
-is about recognising which is which.
+France's five overseas départements each get their own panel, drawn at the
+mainland's scale and then magnified only as far as they must be to stay
+hittable, capped at 3x. Albers USA does the same thing in reverse — measured
+against known areas it draws Alaska at 0.33 and Hawaii at 0.77 of true scale —
+so relative sizes still mean something without the small islands vanishing.
 
 The composed frame always matches the container's aspect, with the shorter side
 fixed at 600 units. Fitting a fixed frame into a differently-shaped container
@@ -236,11 +236,13 @@ Practice offers a clue ladder, always on request and never automatic. Three
 rungs, in a fixed order:
 
 1. **The arrow** — only once there is a wrong guess to point away from. Before
-   the first miss the button skips this and offers the capital instead. A fresh
+   the first miss the button skips this and offers the grouping instead. A fresh
    miss re-opens it, aimed from the new mistake.
-2. **The capital** — the *chef-lieu* or state capital, named in the ticker.
-3. **The grouping** — the French *région* or US census division, outlined on the
+2. **The grouping** — the French *région* or US census division, outlined on the
    map in amber with its name.
+3. **The capital** — the *chef-lieu* or state capital, named in the ticker. Last
+   because it is the weakest: a name you either know or do not, which narrows
+   nothing on the map by itself.
 
 The arrow sits on the line between the two regions' centres and starts at the
 border of the one you hit, found by intersecting that line with the region's own

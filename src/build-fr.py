@@ -11,7 +11,7 @@ five are full-resolution only. Simplification happens here instead, which also
 keeps the tolerance under our control.
 """
 import json, math
-from geo import ROOT, region, emit, normalise, bounds, simplify
+from geo import ROOT, region, emit, normalise, bounds, simplify, span_km
 
 # Panels are stored in local coordinates, each normalised to a 1000-unit span,
 # so tolerance is per panel: what matters is the error once drawn. The mainland
@@ -74,7 +74,9 @@ groups = {}
 proj = {c: rings_of(by_code[c], lambert_conic) for c in mainland}
 flat = [poly for c in mainland for poly in proj[c]]
 placed, pw, ph = normalise(flat)
-panels.append({'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1)})
+main_km = span_km([rings_of(by_code[c], lambda a, b: (a, b))[0] for c in mainland])
+panels.append({'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1),
+               'km': round(main_km)})
 i = 0
 for c in mainland:
     n = len(proj[c])
@@ -106,7 +108,8 @@ for c in OVERSEAS:
     lon0, lat0 = lonlat_centre(f)
     polys = rings_of(f, lambda a, b: local_plane(a, b, lon0, lat0))
     placed, pw, ph = normalise(polys)
-    panels.append({'id': c, 'w': round(pw, 1), 'h': round(ph, 1)})
+    panels.append({'id': c, 'w': round(pw, 1), 'h': round(ph, 1),
+                   'km': round(span_km(rings_of(f, lambda a, b: (a, b))))})
     name = f['properties']['nom']
     regions.append(region(name, placed, panel=len(panels) - 1,
                           min_area=0.05, tol=TOL_INSET, places=0))

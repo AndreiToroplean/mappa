@@ -8,7 +8,7 @@ let labels = {};     // region name -> its abbreviation <text>
 // stack or neighbours drawn later will clip their outlines.
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
 const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
-      L_ANSWER = layer(), L_GROUP = layer(), L_LABEL = layer(),
+      L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
       L_NUDGE = layer(), L_HIT = layer();
 
 /* Composed label anchors, kept because the nudge arrow needs to point from one
@@ -70,38 +70,60 @@ const status = name => statusOf[name] || 'open';
    without a browser.                                                        */
 const SHORT = 600;      // composed units across the narrower side, always
 const GAP = 16;         // between the mainland and the inset block
-const MIN_CELL = 62;    // an inset must stay big enough to hit
-const CELL_CAP = 0.30;  // ...and no larger than this much of the mainland
+const PAD = 8;          // between insets
+const MIN_SPAN = 76;    // an inset must stay big enough to hit
+const MAX_BOOST = 3;    // ...and may be magnified no more than this
 
-/* One arrangement: the mainland at scale s, and inset cells of side t laid out
-   in a rows-by-cols block either below the mainland or to its left. */
-function arrange(W, H, main, count, side, rows) {
-  const cols = Math.ceil(count / rows);
-  const below = side === 'below';
-  const along = below ? W : H;              // the axis the block spreads along
-  const across = below ? H : W;             // the axis it eats into
-  const mainAlong = below ? main.w : main.h;
-  const mainAcross = below ? main.h : main.w;
-  // How many cells deep the block is on each axis. Getting these the wrong way
-  // round sizes the block against the wrong dimension and it overflows the
-  // frame — which is exactly what the first version of this did.
-  const deep = below ? rows : cols;
-  const wide = below ? cols : rows;
+/* Insets are drawn at the mainland's scale, then magnified only as far as they
+   must be to stay usable.
 
-  // The mainland wants the largest scale that fits; the block then takes what
-  // is left over, which is what stops a wide screen from leaving a bare strip.
-  const sAlong = along / mainAlong;
-  let s = Math.min(sAlong, (across - GAP - MIN_CELL * deep) / mainAcross);
-  if (s <= 0) return null;
-  const cap = CELL_CAP * Math.min(main.w, main.h) * s;
-  let t = Math.min((across - GAP - mainAcross * s) / deep, along / wide, cap);
-  if (t < MIN_CELL) {
-    // no room to grow: hold the minimum cell and let the mainland shrink
-    t = MIN_CELL;
-    s = Math.min(sAlong, (across - GAP - t * deep) / mainAcross);
-    if (s <= 0) return null;
+   Filling equal cells was the first attempt and it was wrong: five insets of
+   wildly different size came out identical, and together they took half a phone
+   screen for five départements out of 101. Albers USA is the precedent worth
+   following here — measured against known areas it draws Alaska at 0.33 and
+   Hawaii at 0.77 of true scale, so the convention is a *bounded* departure from
+   truth, not a free one. Here the departure runs the other way, magnifying the
+   small ones, and is capped at MAX_BOOST. Guyane stays visibly the largest,
+   Mayotte stays hittable, and their relative sizes still mean something. */
+function insetScales(sMain, main, insets) {
+  return insets.map(p => {
+    const trueScale = sMain * (p.km / main.km);   // equal km per composed unit
+    const natural = Math.max(p.w, p.h) * trueScale;
+    const boost = Math.min(MAX_BOOST, Math.max(1, MIN_SPAN / Math.max(natural, 0.01)));
+    return trueScale * boost;
+  });
+}
+
+/* Shelf packing, so an inset takes the room it needs and no more. `along` is
+   the axis shelves run in; the block grows on the other one. */
+function shelve(sizes, along, horizontal) {
+  const shelves = [];
+  let cur = null;
+  for (let i = 0; i < sizes.length; i++) {
+    const w = horizontal ? sizes[i].w : sizes[i].h;
+    const d = horizontal ? sizes[i].h : sizes[i].w;
+    if (!cur || cur.used + PAD + w > along) {
+      cur = { items: [], used: 0, depth: 0 };
+      shelves.push(cur);
+    }
+    cur.items.push({ i, at: cur.used + (cur.used ? PAD : 0) });
+    cur.used += (cur.used ? PAD : 0) + w;
+    cur.depth = Math.max(cur.depth, d);
   }
-  return { side, rows, cols, s, t, score: s * 1e4 + t };
+  return shelves;
+}
+
+function tryScale(s, W, H, main, insets, below) {
+  const along = below ? W : H;
+  const across = below ? H : W;
+  if (main.w * s > W || main.h * s > H) return null;
+  const scales = insetScales(s, main, insets);
+  const sizes = insets.map((p, i) => ({ w: p.w * scales[i], h: p.h * scales[i] }));
+  const shelves = shelve(sizes, along, below);
+  const depth = shelves.reduce((t, sh) => t + sh.depth, 0) + PAD * (shelves.length - 1);
+  const mainAcross = below ? main.h * s : main.w * s;
+  if (mainAcross + GAP + depth > across) return null;
+  return { s, scales, sizes, shelves, depth, below };
 }
 
 function chooseLayout(aspect, panels) {
@@ -114,55 +136,52 @@ function chooseLayout(aspect, panels) {
     return { W, H, place: [{ s, dx: (W - main.w * s) / 2, dy: (H - main.h * s) / 2 }] };
   }
 
+  // Largest mainland scale that still leaves room for the insets. Their size
+  // depends on it, so it is searched for rather than solved.
   let best = null;
-  for (const side of ['below', 'left']) {
-    for (let rows = 1; rows <= insets.length; rows++) {
-      const cand = arrange(W, H, main, insets.length, side, rows);
-      if (cand && (!best || cand.score > best.score)) best = cand;
+  for (const below of [true, false]) {
+    let lo = 0.02, hi = Math.min(W / main.w, H / main.h), found = null;
+    for (let k = 0; k < 24; k++) {
+      const mid = (lo + hi) / 2;
+      const cand = tryScale(mid, W, H, main, insets, below);
+      if (cand) { found = cand; lo = mid; } else { hi = mid; }
     }
+    if (found && (!best || found.s > best.s)) best = found;
   }
+  if (!best) return { W, H, place: panels.map(() => ({ s: 0.1, dx: 0, dy: 0 })) };
 
-  const { side, rows, cols, s, t } = best;
+  const { s, scales, sizes, shelves, depth, below } = best;
   const mw = main.w * s, mh = main.h * s;
   const place = [];
+  const total = (below ? mh : mw) + GAP + depth;
+  const start = ((below ? H : W) - total) / 2;
 
-  if (side === 'below') {
-    const blockH = rows * t, total = mh + GAP + blockH;
-    const top = (H - total) / 2;
-    place.push({ s, dx: (W - mw) / 2, dy: top });
-    cellsBelow(place, insets, cols, rows, t, W, top + mh + GAP);
+  if (below) {
+    place.push({ s, dx: (W - mw) / 2, dy: start });
+    let y = start + mh + GAP;
+    for (const sh of shelves) {
+      const rowW = sh.items.reduce((t, it) => t + sizes[it.i].w, 0) + PAD * (sh.items.length - 1);
+      const x0 = (W - rowW) / 2;
+      for (const it of sh.items) {
+        place[it.i + 1] = { s: scales[it.i], dx: x0 + it.at,
+                            dy: y + (sh.depth - sizes[it.i].h) / 2 };
+      }
+      y += sh.depth + PAD;
+    }
   } else {
-    const blockW = cols * t, total = blockW + GAP + mw;
-    const left = (W - total) / 2;
-    place.push({ s, dx: left + blockW + GAP, dy: (H - mh) / 2 });
-    cellsLeft(place, insets, cols, rows, t, H, left);
+    place.push({ s, dx: start + depth + GAP, dy: (H - mh) / 2 });
+    let x = start;
+    for (const sh of shelves) {
+      const colH = sh.items.reduce((t, it) => t + sizes[it.i].h, 0) + PAD * (sh.items.length - 1);
+      const y0 = (H - colH) / 2;
+      for (const it of sh.items) {
+        place[it.i + 1] = { s: scales[it.i], dx: x + (sh.depth - sizes[it.i].w) / 2,
+                            dy: y0 + it.at };
+      }
+      x += sh.depth + PAD;
+    }
   }
-  return { W, H, place, side };
-}
-
-// Cells are filled row by row, and a short final row is centred rather than
-// left hanging off one end.
-function cellsBelow(place, insets, cols, rows, t, W, y0) {
-  insets.forEach((p, i) => {
-    const row = Math.floor(i / cols), col = i % cols;
-    const inRow = Math.min(cols, insets.length - row * cols);
-    const x0 = (W - inRow * t) / 2 + col * t;
-    place.push(fitCell(p, x0, y0 + row * t, t));
-  });
-}
-
-function cellsLeft(place, insets, cols, rows, t, H, x0) {
-  const used = Math.ceil(insets.length / cols);
-  insets.forEach((p, i) => {
-    const row = Math.floor(i / cols), col = i % cols;
-    const y0 = (H - used * t) / 2 + row * t;
-    place.push(fitCell(p, x0 + col * t, y0, t));
-  });
-}
-
-function fitCell(panel, x, y, t) {
-  const s = Math.min(t / panel.w, t / panel.h) * 0.88;   // breathing room
-  return { s, dx: x + (t - panel.w * s) / 2, dy: y + (t - panel.h * s) / 2 };
+  return { W, H, place, side: below ? 'below' : 'left' };
 }
 
 /* ---- composing ----------------------------------------------------------
@@ -218,7 +237,7 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_GROUP, L_LABEL, L_NUDGE, L_HIT]
+  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_HIT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
 

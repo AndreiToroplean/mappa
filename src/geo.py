@@ -134,6 +134,20 @@ def bounds(polys):
 PANEL_SPAN = 1000.0
 
 
+def span_km(lonlat_polys):
+    """Roughly how many km across a panel really is, longest side.
+
+    Panels are normalised to the same local span, which throws real size away.
+    The layout needs it back to draw them at a consistent scale, so it is
+    measured here from the original coordinates.
+    """
+    xs = [x for poly in lonlat_polys for ring in poly for x, y in ring]
+    ys = [y for poly in lonlat_polys for ring in poly for x, y in ring]
+    mid = math.radians((min(ys) + max(ys)) / 2)
+    return max((max(xs) - min(xs)) * 111.32 * math.cos(mid),
+               (max(ys) - min(ys)) * 111.32)
+
+
 def normalise(polys, span=PANEL_SPAN):
     """Move a panel's geometry to its own origin and scale its longest side to
     span, returning the transformed polygons and the panel size.

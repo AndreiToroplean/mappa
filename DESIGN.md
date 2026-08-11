@@ -349,6 +349,29 @@ The five overseas départements are each their own région, so the grouping clue
 reveals the answer there. Kept anyway: one rule for every region beats an
 exception nobody can predict.
 
+## Inset scale
+
+Insets are drawn at the mainland's scale — equal kilometres per composed unit —
+then magnified only as far as they must be to stay hittable, capped at 3x.
+
+Filling equal cells was the first attempt and was wrong twice over: five insets
+of wildly different real size came out identical, and together they took half a
+phone screen for five départements out of 101.
+
+Albers USA is the precedent. Measured against known areas it draws Alaska at
+0.33 and Hawaii at 0.77 of true scale, so the convention is a *bounded*
+departure from truth rather than a free one. Here the departure runs the other
+way — magnifying the small ones — and is capped. Guyane, genuinely 39% of
+France's span, still reads as much the largest; Mayotte is boosted the full 3x
+and is still the smallest.
+
+Panels therefore carry a `km` figure, measured from the original coordinates,
+because normalising each panel to a common local span throws real size away and
+the layout needs it back.
+
+Insets are shelf-packed at their own sizes rather than placed in a grid, and the
+mainland's scale is found by binary search, since the insets' sizes depend on it.
+
 ## When it breaks on a browser you cannot open
 
 `00-crash.js` loads first and shows any thrown error in a band at the bottom of

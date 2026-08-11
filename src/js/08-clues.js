@@ -22,7 +22,7 @@ function clueTable(name) {
 
 /* The ladder, in fixed order. Each rung says whether it can be offered right
    now — the arrow only exists once there is a wrong guess to point away from,
-   so before the first miss the button skips straight to the capital. A miss
+   so before the first miss the button skips straight to the grouping. A miss
    makes the arrow available again, pointing from the new mistake, because that
    is new information and it is paid for like any other clue. */
 function rungs() {
@@ -30,10 +30,12 @@ function rungs() {
   return [
     { key: 'arrow', ok: !!(lastMiss && anchorAt[lastMiss]),
       show: () => nudge(lastMiss, current) },
+    { key: 'group', ok: !!info.group, show: () => showGroup(info.group) },
+    // Last, because it is the weakest: a name you either know or do not, which
+    // narrows nothing on the map by itself.
     { key: 'capital', ok: !!info.capital,
       show: () => { ticker.innerHTML =
         `<span class="hint">Capital</span> — <b>${info.capital}</b>`; } },
-    { key: 'group', ok: !!info.group, show: () => showGroup(info.group) },
   ];
 }
 

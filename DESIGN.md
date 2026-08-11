@@ -315,8 +315,21 @@ full-fifty runs that took real effort.
 
 ## Clues
 
-Two rungs, requested not given, in a fixed order: capital, then grouping. The
-ladder resets each turn; the tally does not reset until the run does.
+Three rungs, requested not given, in a fixed order: arrow, capital, grouping.
+Each rung says whether it can be offered yet — the arrow needs a wrong guess to
+point away from, so before the first miss the button skips it. A new miss
+re-opens that rung, since pointing from a different mistake is new information,
+and it is paid for like any other clue. The ladder resets each turn; the tally
+does not reset until the run does.
+
+The arrow starts where the centre-to-centre line crosses the border of the region
+that was hit, from the composed border index. A fixed offset from the centre was
+the first attempt and is wrong in both directions: still inside a large region,
+adrift from a small one.
+
+Its three distance bands are three *shapes*, not three widths. Width alone was
+tried and was useless — an arrow is never seen beside another one, so there is
+nothing to compare a thickness against.
 
 Ranking adds misses and clues into one figure, then time. Ranking misses first
 would make clues nearly free; adding them keeps "least help, then quickest"

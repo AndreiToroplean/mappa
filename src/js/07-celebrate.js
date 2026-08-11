@@ -159,19 +159,39 @@ function clearFlash() {
    something to recognise. Thickness carries a coarse sense of distance instead
    — near, middling, far — which is enough to tell "next door" from "other end
    of the country" without handing over the answer. */
-const NUDGE_START = 11;    // clear of the region's own label
 const NUDGE_LEN = 14;      // composed units, always the same
+const NUDGE_GAP = 2;       // clear of the border it starts from
 
 /* Three styles rather than three stroke widths. Width alone was the first
-   attempt and was useless: at this size the eye cannot compare two thicknesses
-   that are not side by side, so the bands were invisible. A chevron, a double
-   chevron and a solid head are told apart instantly and in isolation, which is
-   the only way they are ever seen. */
+   attempt and was useless: these are never seen side by side, so the eye has
+   nothing to compare a thickness against. A shape is identifiable on its own. */
 const NUDGE_BANDS = [
-  { limit: 130, width: 1.8, head: 'v' },        // next door
-  { limit: 330, width: 3.4, head: 'vv' },       // some way off
-  { limit: Infinity, width: 6.4, head: 'solid' },  // other end of the map
+  { limit: 130, width: 1.2, head: 'v', size: 3.6 },   // next door
+  { limit: 330, width: 3.0, head: 'v', size: 5.4 },   // some way off
+  { limit: Infinity, width: 8, head: 'solid' },       // other end of the map
 ];
+
+/* Where the line from a to b leaves the region around a. Walking the region's
+   own border is the only way to get this right: a fixed offset from the centre
+   either starts inside a large region or floats away from a small one. */
+function exitPoint(name, a, b) {
+  const rings = borders[name];
+  if (!rings) return null;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  let best = Infinity;
+  for (const r of rings) {
+    for (let i = 0; i + 3 < r.length; i += 2) {
+      const ex = r[i + 2] - r[i], ey = r[i + 3] - r[i + 1];
+      const den = dx * ey - dy * ex;
+      if (!den) continue;
+      const s = ((r[i] - a.x) * ey - (r[i + 1] - a.y) * ex) / den;
+      const u = ((r[i] - a.x) * dy - (r[i + 1] - a.y) * dx) / den;
+      if (s > 0.001 && s < best && u >= 0 && u <= 1) best = s;
+    }
+  }
+  if (!isFinite(best)) return null;
+  return { x: a.x + dx * best, y: a.y + dy * best };
+}
 
 function nudge(fromName, toName) {
   if (!L_NUDGE) return;
@@ -184,11 +204,13 @@ function nudge(fromName, toName) {
   const ux = dx / far, uy = dy / far;
   const band = NUDGE_BANDS.find(z => far < z.limit) || NUDGE_BANDS[2];
 
-  const x0 = a.x + ux * NUDGE_START, y0 = a.y + uy * NUDGE_START;
+  // on the axis between the two centres, starting at the border it leaves
+  const edge = exitPoint(fromName, a, b) || { x: a.x + ux * 9, y: a.y + uy * 9 };
+  const x0 = edge.x + ux * NUDGE_GAP, y0 = edge.y + uy * NUDGE_GAP;
   const x1 = x0 + ux * NUDGE_LEN, y1 = y0 + uy * NUDGE_LEN;
-  const px = -uy, py = ux;                        // perpendicular
-  const at = (t, s) => [(x1 + ux * t + px * s).toFixed(1),
-                        (y1 + uy * t + py * s).toFixed(1)];
+  const px = -uy, py = ux;
+  const at = (t, s) => (x1 + ux * t + px * s).toFixed(1) + ',' +
+                       (y1 + uy * t + py * s).toFixed(1);
 
   const shaft = document.createElementNS(NS, 'path');
   shaft.setAttribute('class', 'nudge');
@@ -197,20 +219,16 @@ function nudge(fromName, toName) {
   L_NUDGE.appendChild(shaft);
 
   if (band.head === 'solid') {
-    const hl = 9, hw = 5.6;
     const head = document.createElementNS(NS, 'path');
     head.setAttribute('class', 'nudgehead');
-    head.setAttribute('d', `M${at(hl, 0)}L${at(0, hw)}L${at(0, -hw)}Z`);
+    head.setAttribute('d', `M${at(10, 0)}L${at(0, 6.4)}L${at(0, -6.4)}Z`);
     L_NUDGE.appendChild(head);
   } else {
-    const back = band.head === 'vv' ? [0, -5.5] : [0];
-    for (const off of back) {
-      const v = document.createElementNS(NS, 'path');
-      v.setAttribute('class', 'nudge');
-      v.setAttribute('stroke-width', band.width);
-      v.setAttribute('d', `M${at(off - 4.5, 4.5)}L${at(off, 0)}L${at(off - 4.5, -4.5)}`);
-      L_NUDGE.appendChild(v);
-    }
+    const v = document.createElementNS(NS, 'path');
+    v.setAttribute('class', 'nudge');
+    v.setAttribute('stroke-width', band.width);
+    v.setAttribute('d', `M${at(-band.size, band.size)}L${at(0, 0)}L${at(-band.size, -band.size)}`);
+    L_NUDGE.appendChild(v);
   }
 }
 

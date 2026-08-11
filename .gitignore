@@ -4,3 +4,4 @@ package/
 package-fr/
 __pycache__/
 *.pyc
+package-clues/

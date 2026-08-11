@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Build the clue data: a capital and a grouping for every region.
+
+Downloaded rather than typed. These are exactly the facts a learner would take
+away, so a wrong prefecture for Ariege does not merely look sloppy, it teaches
+something false — worse than having no clue feature at all.
+
+Sources (fetch into package-clues/):
+  @etalab/decoupage-administratif   npm pack @etalab/decoupage-administratif
+      departements.json  region code and chefLieu per departement
+      communes.json      chefLieu code -> commune name
+      regions.json       region names
+  france-geojson                    regions-version-simplifiee.geojson
+  usa-states (npm)                  src/usa-states.ts, state capitals
+"""
+import json, re
+from geo import ROOT
+
+SRC = ROOT / 'package-clues'
+
+
+def french():
+    deps = {d['code']: d for d in json.loads((SRC / 'departements.json').read_text())}
+    regs = {r['code']: r for r in json.loads((SRC / 'regions.json').read_text())}
+    communes = {c['code']: c for c in json.loads((SRC / 'communes.json').read_text())}
+
+    ours = json.loads((ROOT / 'data' / 'fr.json').read_text())
+    code_of = ours['abbr']                      # name -> departement code
+
+    out = {}
+    for name, code in code_of.items():
+        d = deps.get(code)
+        assert d, f'no source record for departement {code}'
+        seat = communes.get(d.get('chefLieu'))
+        region = regs.get(d.get('region'))
+        assert seat, f'{code}: chefLieu {d.get("chefLieu")} not in communes'
+        assert region, f'{code}: region {d.get("region")} not in regions'
+        out[name] = {'capital': seat['nom'], 'group': region['nom']}
+    return out
+
+
+def american():
+    ts = (SRC / 'usa-states.ts').read_text()
+    # records look like: name: "X", ... capital: "Y",
+    pairs = re.findall(r'name:\s*"([^"]+)"(?:(?!name:).)*?capital:\s*"([^"]+)"',
+                       ts, re.S)
+    caps = dict(pairs)
+    ours = json.loads((ROOT / 'data' / 'us.json').read_text())
+    out = {}
+    for name in ours['abbr']:
+        assert name in caps, f'no capital found for {name}'
+        out[name] = {'capital': caps[name]}
+    return out
+
+
+for geo, build in (('fr', french), ('us', american)):
+    table = build()
+    ours = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+    assert set(table) == set(ours['abbr']), f'{geo}: clue table does not cover the map'
+    missing = [k for k, v in table.items() if not v.get('capital')]
+    assert not missing, f'{geo}: no capital for {missing[:3]}'
+    p = ROOT / 'data' / f'clues-{geo}.json'
+    p.write_text(json.dumps(table, separators=(',', ':'), ensure_ascii=False))
+    groups = {v['group'] for v in table.values() if v.get('group')}
+    print(f'wrote {p.name}: {len(table)} regions, '
+          f'{len(groups) if groups else "no"} grouping(s)')
+    for k in list(table)[:3]:
+        print(f'    {k}: {table[k]}')

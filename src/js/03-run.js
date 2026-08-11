@@ -9,7 +9,7 @@ const livesLeft = () => MODE.lives - errors;
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
 ['bar', 'promptLabel', 'target', 'lives', 'counterLabel', 'missCount', 'clue',
- 'pause', 'paused', 'resumeBtn', 'restartBtn', 'quitBtn',
+ 'pause', 'paused', 'resumeBtn', 'restartBtn', 'quitBtn', 'fsBtn',
  'progress', 'clock', 'ticker',
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'startBtn', 'clearNo', 'clearYes',

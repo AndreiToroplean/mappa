@@ -468,8 +468,21 @@ landscape the sidebar is the far side of the screen from both thumbs — exactly
 where an action button should not be. They are positioned over a third grid
 column that holds nothing: floating them over the map itself hid the
 départements underneath, and an empty column is the transparent sidebar that
-keeps the map clear of them. Coverage is 81% rather than the 98% a full-bleed map
-would give, which is what the rail costs.
+keeps the map clear of them.
+
+The column is the width of the buttons and no more, and both are flush to the
+same right edge so their borders line up. The clue button is a fixed width for
+that reason too: its label runs from Clue to Another clue to No more clues, and
+the edge must not shuffle when it does.
+
+## Full screen
+
+The address bar and status bar cost real map, and CSS cannot touch them. The
+Fullscreen API is the only lever and fires only from a user gesture, so it is a
+button in the menu, with the preference remembered — starting a run then
+re-enters full screen on the tap that starts it, which is also a gesture and so
+also allowed. Android Chrome supports it; iPhone Safari does not, and the button
+hides itself rather than sitting there doing nothing.
 
 The menu is a two-column grid in landscape, the board beside the rest rather than
 below it. As one column it ran off both ends of the screen. It scrolls if it

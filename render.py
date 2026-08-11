@@ -158,14 +158,14 @@ def app(geo, vw, vh, scale=2, practice=True):
             y += 44
         txt(14, vh - 58, 'Miss — that was', f_tick, MUTED)
         txt(14, vh - 44, 'Aveyron', f_tick, AMBER)
-        rail = 100
+        rail = 92
         box = (side + 8, 8, vw - side - rail - 8, vh - 16)
         _, cover = paint_map(dr, geo, box, scale)
         dr.line([(vw - rail) * scale, 0, (vw - rail) * scale, vh * scale],
                 fill=(30, 38, 52), width=scale)
-        pill(vw - 69, 12, 38, 38, 'II', MUTED)
+        pill(vw - 48, 12, 38, 38, 'II', MUTED)       # both flush right
         if practice:
-            pill(vw - 92, vh - 50, 84, 36, 'Clue')
+            pill(vw - 82, vh - 50, 72, 36, 'Clue')
     else:
         header, footer = 94, 52
         dr.rectangle([0, 0, vw * scale, header * scale], fill=PANEL)

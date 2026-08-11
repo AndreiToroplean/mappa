@@ -1,0 +1,13 @@
+Clue data sources
+-----------------
+French departement -> region and chef-lieu, and commune names:
+  @etalab/decoupage-administratif (npm), from French government open data
+  (INSEE / Etalab), Licence Ouverte. Attribution to Etalab required.
+
+French region outlines (for the grouping clue):
+  https://github.com/gregoiredavid/france-geojson, from IGN/Etalab open data.
+
+US state capitals:
+  usa-states (npm), MIT.
+
+Regenerate with src/build-clues.py; see its docstring for the fetch commands.

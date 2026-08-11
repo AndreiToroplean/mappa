@@ -1,0 +1,9 @@
+Water geometry
+--------------
+Ocean and lakes: Natural Earth 1:50m physical vectors, via
+https://github.com/nvkelso/natural-earth-vector — public domain.
+
+US state outlines in lon/lat, used only to recover the projection us-atlas was
+built with: Natural Earth 1:50m admin_1 states/provinces, same source.
+
+Reprojected and clipped by src/build-water.py.

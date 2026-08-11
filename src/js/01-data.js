@@ -21,7 +21,7 @@ const GEOS = {
     noun: 'state',
     all: 'All fifty',
     sub: 'A United States drill',
-  }, __US__, { clues: __CLUES_US__ }),
+  }, __US__, { clues: __CLUES_US__, water: __WATER_US__ }),
 
   fr: Object.assign({
     id: 'fr',
@@ -29,7 +29,7 @@ const GEOS = {
     noun: 'département',
     all: 'All 101',
     sub: 'Les départements de France',
-  }, __FR__, { clues: __CLUES_FR__ }),
+  }, __FR__, { clues: __CLUES_FR__, water: __WATER_FR__ }),
 };
 
 const DEFAULT_GEO = 'us';

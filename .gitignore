@@ -5,3 +5,4 @@ package-fr/
 __pycache__/
 *.pyc
 package-clues/
+package-water/

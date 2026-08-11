@@ -230,6 +230,12 @@ only the mode you are looking at.
 The switcher appears on both the intro and the end-of-run card, so a run can be
 followed by a different kind of run without a reload.
 
+## Water
+
+Ocean and lakes sit under the land in a darker blue, projected and clipped per
+panel by `src/build-water.py` and composed by the same transform as the regions.
+The map layout is unaffected by them. Sources in `data/LICENSE-water`.
+
 ## Clues
 
 Practice offers a clue ladder, always on request and never automatic. Three

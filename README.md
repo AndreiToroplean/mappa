@@ -232,9 +232,11 @@ followed by a different kind of run without a reload.
 
 ## Water
 
-Ocean and lakes sit under the land in a darker blue, projected and clipped per
-panel by `src/build-water.py` and composed by the same transform as the regions.
-The map layout is unaffected by them. Sources in `data/LICENSE-water`.
+Coasts get a blue halo just outside the shore, rather than a filled sea.
+`src/build-coast.py` decides which stretches of border have water on the far side
+by stepping outward along each segment's normal, and the halo is stroked under
+the land so it only ever shows seaward. Layout is unaffected; sources in
+`data/LICENSE-water`.
 
 ## Clues
 

@@ -93,3 +93,8 @@ function resetClues(wholeRun) {
   clearGroup();
   drawClueButton();
 }
+
+/* The button was rendered and relabelled from the start, but nothing was ever
+   bound to it — so it took the tap, showed the browser's own press highlight,
+   and did nothing. Exactly the shape of "the button doesn't work". */
+if (el.clue) el.clue.addEventListener('click', nextClue);

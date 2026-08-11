@@ -59,6 +59,10 @@
   path.state.miss{fill:var(--red);stroke:#FF9296;stroke-width:1;cursor:default}
   path.state.reveal{fill:var(--amber);stroke:#FFDFA6;stroke-width:1}
   circle.hit{fill:transparent;cursor:pointer}
+  /* The miss arrow. Amber rather than red: red is the colour of the mistake
+     itself, and this is the help. */
+  path.nudge{stroke:var(--amber);stroke-linecap:round;fill:none;opacity:.95}
+  path.nudgehead{fill:var(--amber);stroke:none;opacity:.95}
   text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
     text-anchor:middle;pointer-events:none;opacity:.85}
   text.label.wrong{fill:#FFE4E5;opacity:1;font-weight:600;

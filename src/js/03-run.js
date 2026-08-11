@@ -47,6 +47,7 @@ function resetRun() {
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawCounter();
   clearFlash();
+  clearNudge();
   document.body.classList.remove('won');
   el.bar.classList.remove('lost', 'won');
   el.target.classList.remove('lost', 'won');
@@ -100,6 +101,7 @@ function guess(name) {
 
   if (name === current) {
     clearFlash();     // a red name left over from a miss would read as wrong
+    clearNudge();
     setStatus(name, 'found');
     // the turn is over: clear this turn's misses, they count again next time
     REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });
@@ -111,6 +113,8 @@ function guess(name) {
   } else {
     setStatus(name, 'missed');
     flashMiss(name);
+    // only where the point is to learn; Trial is meant to be unforgiving
+    if (MODE.nudge) nudge(name, current);
     errors++;
     drawCounter();
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;

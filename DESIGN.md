@@ -475,6 +475,33 @@ same right edge so their borders line up. The clue button is a fixed width for
 that reason too: its label runs from Clue to Another clue to No more clues, and
 the edge must not shuffle when it does.
 
+## Water
+
+Ocean and lakes are drawn under everything as one flat colour, in each panel's
+local units, and composed by the same transform as the land — so they cannot
+drift from the coastline they outline.
+
+Flat colour is what makes it tractable: overlapping water is still water, so each
+sub-projection is clipped to its own box and none of them has to agree with the
+others about where they meet. Foreign land is simply absent from the ocean
+polygon, so Canada and Mexico stay land-coloured instead of turning into sea.
+
+**The US projection was recovered, not assumed.** us-atlas ships coordinates
+already run through d3's albersUsa, so there was no way to put ocean data into
+that space without reproducing it. `build-water.py` fits each of the three
+sub-projections against the stored geometry and asserts the residual: the lower
+48 come out at 2.8 units on a 1000-unit map. Fitting on bounding boxes rather
+than vertices matters — the two sources have different vertex counts, and pairing
+them by index pairs unrelated points and throws the regression out by 13 units.
+
+France needs no fitting, because we own that projection: the transform is
+recomputed exactly as `build-fr.py` derived it. Knowing beats fitting.
+
+Caveat worth remembering: the Alaska and Hawaii fits are exact by construction,
+being one region each, so their bounding boxes match but their internal scale is
+unverified. Their surrounding water could be slightly off without the assertion
+catching it.
+
 ## One pipe for everything on the map
 
 `compose()` ends by calling `redrawHints()`. Composed coordinates are baked into

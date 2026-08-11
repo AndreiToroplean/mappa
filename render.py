@@ -86,6 +86,22 @@ def paint_map(dr, geo, box, scale, frame=False):
         dr.rectangle([ox * scale, oy * scale,
                       (ox + L['W'] * s) * scale, (oy + L['H'] * s) * scale],
                      outline=(60, 48, 24), width=scale)
+    # water first, exactly as the game layers it
+    for piece in json.loads((ROOT / 'data' / f'water-{geo}.json').read_text()):
+        at = L['place'][piece['p']]
+        if not at:
+            continue
+        for part in piece['d'].split('M'):
+            if not part:
+                continue
+            ring = []
+            for q in part.rstrip('Z').split('L'):
+                a, b = q.split(',')
+                ring.append(((float(a) * at['s'] + at['dx']) * s + ox,
+                             (float(b) * at['s'] + at['dy']) * s + oy))
+            if len(ring) >= 3:
+                dr.polygon([(x * scale, y * scale) for x, y in ring], fill=(12, 26, 46))
+
     ink = []
     for r in regions:
         for ring in r['rings']:

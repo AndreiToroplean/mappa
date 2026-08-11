@@ -7,7 +7,7 @@ let labels = {};     // region name -> its abbreviation <text>
 // SVG paints in document order, so resolved states must physically move up the
 // stack or neighbours drawn later will clip their outlines.
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
-const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
+const L_WATER = layer(), L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
       L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
       L_NUDGE = layer(), L_HIT = layer();
 
@@ -16,6 +16,7 @@ const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
    is the pole of inaccessibility, so it is inside even for awkward shapes. */
 let anchorAt = {};
 let panelOf = {};    // region name -> which panel it is drawn on
+let waterRings = [], waterPaths = [];
 
 function setLabel(name, kind) {
   const t = labels[name];
@@ -282,10 +283,21 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_HIT]
+  [L_WATER, L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_HIT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
   panelOf = {};
+
+  /* Ocean and lakes, in panel-local units like everything else, so compose()
+     places them with the identical transform and they cannot drift from the
+     coastline. Flat colour under the land: overlapping water is still water. */
+  waterRings = (GEO.water || []).map(w => ({ panel: w.p, rings: parseRings(w.d) }));
+  waterPaths = waterRings.map(() => {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('class', 'water');
+    L_WATER.appendChild(p);
+    return p;
+  });
 
   REGIONS.forEach(r => {
     localRings[r.name] = parseRings(r.d);
@@ -347,6 +359,11 @@ function compose() {
     c.dataset.name = t.name;
     L_HIT.appendChild(c);
   });
+  waterRings.forEach((w, i) => {
+    const at = L.place[w.panel];
+    waterPaths[i].setAttribute('d', at ? pathFrom(composeRings(w.rings, at.s, at.dx, at.dy)) : '');
+  });
+
   // Anything else drawn in composed coordinates has to be rebuilt with them.
   redrawHints();
 }

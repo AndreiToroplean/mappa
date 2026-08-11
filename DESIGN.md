@@ -463,9 +463,18 @@ map was using 54% of its area. The chrome moves into a 240px sidebar, laid out
 with a grid whose header and footer both occupy the left column while the map
 spans the right. Map coverage goes to 98%.
 
-The pause and clue buttons leave the sidebar and float over the map at the right
-edge. In landscape the sidebar is the far side of the screen from both thumbs,
-which is exactly where an action button should not be.
+The pause and clue buttons leave the sidebar for the right edge, because in
+landscape the sidebar is the far side of the screen from both thumbs — exactly
+where an action button should not be. They are positioned over a third grid
+column that holds nothing: floating them over the map itself hid the
+départements underneath, and an empty column is the transparent sidebar that
+keeps the map clear of them. Coverage is 81% rather than the 98% a full-bleed map
+would give, which is what the rail costs.
+
+The menu is a two-column grid in landscape, the board beside the rest rather than
+below it. As one column it ran off both ends of the screen. It scrolls if it
+still does not fit, with the scrollbar hidden — a visible one was a complaint the
+last time this was tried.
 
 Portrait is untouched.
 

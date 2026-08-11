@@ -173,6 +173,8 @@
   .iconbtn svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .btnrow{display:flex;gap:10px;margin-top:22px}
+  /* same gap between the rows as within them */
+  #paused .btnrow{margin-top:10px}
   .btnrow button{margin-top:0;flex:1}
   button.ghost{background:transparent;color:var(--text);
     box-shadow:inset 0 0 0 1px var(--line)}
@@ -325,10 +327,14 @@
      because in landscape that is the corner the thumbs are already resting on —
      the sidebar is the far side of the screen from both of them. */
   @media (min-aspect-ratio: 13/10) and (max-height: 620px){
+    /* Three columns, and the third holds nothing. The buttons are positioned
+       over it, so reserving it is what keeps them off the map — floating them
+       over the map hid the départements underneath. An empty grid column is the
+       transparent sidebar. */
     body{display:grid;
-      grid-template-columns:min(240px, 32vw) 1fr;
+      grid-template-columns:min(220px, 30vw) 1fr 100px;
       grid-template-rows:auto 1fr;
-      grid-template-areas:"head map" "foot map"}
+      grid-template-areas:"head map rail" "foot map rail"}
     header{grid-area:head;flex-direction:column;align-items:stretch;
       height:auto;gap:12px;padding:12px 14px;position:static;
       border-bottom:none;border-right:1px solid var(--line)}
@@ -344,10 +350,26 @@
       border-top:none;border-right:1px solid var(--line);
       padding:0 14px 14px;line-height:1.45}
     #ticker{display:block}
-    body.playing .pausebtn{position:fixed;top:10px;right:10px;margin:0;
-      z-index:8;background:var(--panel)}
-    body.practice .cluebtn{position:fixed;bottom:12px;right:12px;margin:0;
-      z-index:8;background:var(--panel)}
+    body.playing .pausebtn{position:fixed;top:12px;right:31px;margin:0;z-index:8}
+    body.practice .cluebtn{position:fixed;bottom:14px;right:8px;margin:0;z-index:8}
+
+    /* The menu has to fit the landscape rectangle rather than a tall one: as a
+       single column it ran off both ends of the screen. The board moves beside
+       the rest instead of below it. */
+    .overlay{padding:12px}
+    .card{max-width:min(820px, 94vw);max-height:calc(100% - 24px);
+      overflow-y:auto;scrollbar-width:none;padding:20px 24px;
+      display:grid;grid-template-columns:1.05fr 1fr;column-gap:26px;
+      align-content:start}
+    .card::-webkit-scrollbar{display:none}
+    .card > *{grid-column:1;min-width:0}
+    .card > .board{grid-column:2;grid-row:1 / 100;border-top:none;
+      margin-top:0;padding-top:2px}
+    .card h2{margin-bottom:2px}
+    .rules{margin-bottom:12px}
+    /* the pause and confirm cards are short already, and read better as one
+       column */
+    .card.narrow{display:block;max-width:340px}
   }
 
   /* Narrow phones. 'North Carolina' and 'New Hampshire' are the widest

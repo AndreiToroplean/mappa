@@ -111,7 +111,7 @@
   .overlay{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;background:rgba(10,14,23,.92);
     display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
   .overlay[hidden]{display:none}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;
     padding:32px;width:100%;max-width:400px}
   .card h2{margin:0;font-size:26px;letter-spacing:-0.02em}
   .card .sub{font-family:var(--mono);font-size:12px;color:var(--muted);
@@ -148,11 +148,16 @@
     background-size:5px 5px, 5px 5px;background-repeat:no-repeat}
   .geoSel:focus-visible{outline:2px solid var(--foundline);outline-offset:2px}
   .modes{display:flex;gap:8px;margin:0 0 20px}
-  .fsbtn{width:auto;margin:0 0 18px;padding:7px 12px;font-size:12px;
-    border-radius:8px;background:transparent;color:var(--muted);
-    box-shadow:inset 0 0 0 1px var(--line);font-weight:500}
+  /* Icon only, on the title's line in whichever card it sits in. */
+  .fsbtn{position:absolute;top:20px;right:20px;width:34px;height:34px;margin:0;
+    padding:0;display:flex;align-items:center;justify-content:center;
+    border-radius:9px;background:transparent;color:var(--muted);
+    box-shadow:inset 0 0 0 1px var(--line)}
   .fsbtn:hover{filter:none;color:var(--text)}
+  .fsbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
   .fsbtn[hidden]{display:none}
+  .fsbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .modes button{margin:0;flex:1;padding:9px;font-size:13px;font-weight:500;
     border-radius:8px;background:transparent;color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line)}

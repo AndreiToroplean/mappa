@@ -229,9 +229,15 @@ function exitPoint(name, a, b) {
   return { x: a.x + dx * best, y: a.y + dy * best };
 }
 
+/* What is currently on screen, so it can be drawn again after the layout
+   changes. Composed coordinates are baked into the path data, so an arrow drawn
+   in portrait pointed at thin air once the map was recomposed for landscape. */
+let shownArrow = null;
+
 function nudge(fromName, toName) {
   if (!L_NUDGE || !canNudge(fromName, toName)) return;
   clearNudge();
+  shownArrow = { from: fromName, to: toName };
   const a = anchorAt[fromName], b = anchorAt[toName];
   if (!a || !b) return;
   const dx = b.x - a.x, dy = b.y - a.y;
@@ -269,5 +275,6 @@ function nudge(fromName, toName) {
 }
 
 function clearNudge() {
+  shownArrow = null;
   if (L_NUDGE) while (L_NUDGE.firstChild) L_NUDGE.removeChild(L_NUDGE.firstChild);
 }

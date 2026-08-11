@@ -475,6 +475,22 @@ same right edge so their borders line up. The clue button is a fixed width for
 that reason too: its label runs from Clue to Another clue to No more clues, and
 the edge must not shuffle when it does.
 
+## One pipe for everything on the map
+
+`compose()` ends by calling `redrawHints()`. Composed coordinates are baked into
+path data, so anything drawn from them and left on screen has to be rebuilt when
+the layout changes — a grouping outline or an arrow revealed in portrait pointed
+at thin air after a rotation, because the map moved and they did not.
+
+The fix is structural rather than a patch per hint: the hints remember *what*
+they are showing, never their coordinates, and `compose()` is the single place
+that turns what-is-showing into where-it-goes. Anything new drawn in composed
+coordinates and persisting across a layout change belongs in `redrawHints()`, or
+it will survive a resize in the wrong place.
+
+Checked by composing for portrait, drawing an arrow, recomposing for landscape,
+and asserting the tail moved and still sits beside the region it starts from.
+
 ## Full screen
 
 The address bar and status bar cost real map, and CSS cannot touch them. The

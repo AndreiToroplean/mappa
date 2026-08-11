@@ -347,4 +347,6 @@ function compose() {
     c.dataset.name = t.name;
     L_HIT.appendChild(c);
   });
+  // Anything else drawn in composed coordinates has to be rebuilt with them.
+  redrawHints();
 }

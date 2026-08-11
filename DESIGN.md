@@ -442,6 +442,33 @@ did nothing. None of the above is confirmed to be its cause — the SVGPoint bug
 would break taps on the map, not buttons in the menu. The crash band exists so
 the next report says what actually threw.
 
+## Looking at the app
+
+`render.py` has two views and one map painter shared between them, so they can
+never disagree about what the game would draw:
+
+    python3 render.py map fr 390 780     # the map area alone
+    python3 render.py app fr 780 390     # chrome, text, buttons, real map
+
+The app view exists because layout arguments that sound obvious in prose keep
+turning out wrong — a sidebar that reads well can still leave a button on the far
+side of the screen from the thumb, and a map can be a letterbox inside a
+letterbox without anyone noticing from the numbers. The landscape layout below
+was designed against that view before any CSS was written.
+
+## Landscape
+
+A phone on its side has the wrong shape for a stacked header, footer and map: the
+map was using 54% of its area. The chrome moves into a 240px sidebar, laid out
+with a grid whose header and footer both occupy the left column while the map
+spans the right. Map coverage goes to 98%.
+
+The pause and clue buttons leave the sidebar and float over the map at the right
+edge. In landscape the sidebar is the far side of the screen from both thumbs,
+which is exactly where an action button should not be.
+
+Portrait is untouched.
+
 ## Looking at the map
 
 `render.py <geo> <width> <height>` rasterises a geography exactly as the game

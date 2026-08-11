@@ -21,7 +21,7 @@ const GEOS = {
     noun: 'state',
     all: 'All fifty',
     sub: 'A United States drill',
-  }, __US__),
+  }, __US__, { clues: __CLUES_US__ }),
 
   fr: Object.assign({
     id: 'fr',
@@ -29,7 +29,7 @@ const GEOS = {
     noun: 'département',
     all: 'All 101',
     sub: 'Les départements de France',
-  }, __FR__),
+  }, __FR__, { clues: __CLUES_FR__ }),
 };
 
 const DEFAULT_GEO = 'us';
@@ -85,18 +85,21 @@ const MODES = {
     lives: Infinity,
     counter: 'Misses',
     nudge: true,          // point towards the answer after a miss
-    rule: 'No limit on misses. Fewest misses wins, then quickest.',
+    clues: true,          // offer the clue ladder
+    rule: 'No limit on misses, and clues on request. Least help wins, then quickest.',
     hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
               + 'Misses are counted, not fatal.',
-    empty: 'No runs yet. Every run here finishes, so the score is how few '
-         + 'misses it took.',
+    empty: 'No runs yet. Every run here finishes, so the score is how little '
+         + 'help it took.',
 
     /* Nothing can end a practice run early, so every entry is a completed set
        and the only axis left is misses. One entry per miss count: a cleaner
        run is a different achievement, a quicker one at the same count simply
        replaces it. */
     insert(board, entry) {
-      return replaceBy(board, entry, r => r.e === entry.e);
+      // bucketed on misses and clues together, matching how they are ranked
+      return replaceBy(board, entry,
+        r => errorsOf(r) === errorsOf(entry) && cluesOf(r) === cluesOf(entry));
     },
   },
 };

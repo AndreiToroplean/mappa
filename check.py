@@ -359,8 +359,21 @@ for (const g of ['us','fr']) for (const m of ['trial','practice']) {
   GEO = {id:g}; MODE = MODES[m]; keys.push(boardKey());
 }
 eq('board keys', keys, ['fifty:board2','fifty:practice1','fifty:fr:trial','fifty:fr:practice']);
+// clues count as help alongside misses, and bucket with them
+MODE = MODES.practice;
+eq('clues rank with misses', rankBoard([
+  {f:50,e:0,c:6,t:1000,d:1}, {f:50,e:2,c:0,t:9000,d:2}, {f:50,e:0,c:0,t:9999,d:3},
+]).map(r=>r.d), [3,2,1]);
+eq('same misses, fewer clues wins', rankBoard([
+  {f:50,e:1,c:3,t:100,d:1}, {f:50,e:1,c:0,t:900,d:2},
+]).map(r=>r.d), [2,1]);
+let bb = addEntry([{f:50,e:1,c:1,t:900,d:1}], {f:50,e:1,c:1,t:400,d:2});
+eq('same misses and clues replaces on time', [bb.kept, bb.board.length, bb.board[0].d], [true,1,2]);
+bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
+eq('different clue count is its own entry', bb.board.length, 2);
+eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
 eq('board keys are all distinct', new Set(keys).size, 4);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '10/10 pass'));
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '15/15 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

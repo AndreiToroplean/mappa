@@ -102,12 +102,18 @@ function showNote() {
    was cleaner. Displayed as blank, not as that number. */
 const errorsOf = r => typeof r.e === 'number' ? r.e
   : (Number.isFinite(MODE.lives) ? MODE.lives - 1 : Infinity);
+const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
 
 /* The one definition of "better": more found first, then fewer errors, then
    quicker. It serves both modes unchanged — every practice run is a completed
    set, so the first term is always a tie there and the ordering falls through
    to misses, then time, which is exactly what practice wants. */
-const better = (a, c) => c.f - a.f || errorsOf(a) - errorsOf(c) || a.t - c.t;
+/* Misses and clues are both help, so they add: "least help, then quickest" is
+   one sentence, and both numbers are shown so a row can still be read. Ranking
+   misses ahead of clues instead would make clues nearly free, which defeats
+   counting them. Trial has no clues, so there the sum is just the misses. */
+const helpOf = r => errorsOf(r) + cluesOf(r);
+const better = (a, c) => c.f - a.f || helpOf(a) - helpOf(c) || a.t - c.t;
 const rankBoard = b => b.sort(better);
 
 const addEntry = (board, entry) => MODE.insert(board, entry);
@@ -136,7 +142,12 @@ function missWords(e) {
 function rowParts(r) {
   const words = missWords(r.e);
   if (MODE.id === 'practice') {
-    return { tier: r.e === 0 ? 'full' : 'partial', tally: words, errs: '' };
+    const c = cluesOf(r);
+    return {
+      tier: r.e === 0 && c === 0 ? 'full' : 'partial',
+      tally: words,
+      errs: `<span class="errs${c ? '' : ' perfect'}">${c} clue${c === 1 ? '' : 's'}</span>`,
+    };
   }
   const cls = typeof r.e !== 'number' ? ' unknown' : r.e === 0 ? ' perfect' : '';
   return {
@@ -199,7 +210,7 @@ async function finish(won, lastClick) {
     won ? `Complete in ${fmt(ms)} · ${errors} ${errors === 1 ? 'miss' : 'misses'}`
         : `${found} of ${TOTAL} found · ${fmt(ms)}`;
 
-  const entry = { f: found, e: errors, t: ms, d: Date.now() };
+  const entry = { f: found, e: errors, c: cluesUsed, t: ms, d: Date.now() };
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);
   showBoards(res.board, res.kept ? entry.d : null);

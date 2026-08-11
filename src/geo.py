@@ -150,7 +150,7 @@ def normalise(polys, span=PANEL_SPAN):
     return out, (x1 - x0) * s, (y1 - y0) * s
 
 
-def emit(path, panels, regions, abbr, meta=None):
+def emit(path, panels, regions, abbr, groups=None, meta=None):
     """Write a geography: panels in local coordinates, and the regions in them.
 
     No view box and no placement — see normalise(). The game composes these
@@ -161,6 +161,8 @@ def emit(path, panels, regions, abbr, meta=None):
     for i, panel in enumerate(panels):
         assert any(r['p'] == i for r in regions), f'panel {i} has no regions'
     out = {'panels': panels, 'abbr': abbr, 'regions': regions}
+    if groups:
+        out['groups'] = groups
     if meta:
         out['meta'] = meta
     p = ROOT / 'data' / path

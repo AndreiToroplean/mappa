@@ -30,9 +30,12 @@ for token in ('__CSS__', '__JS__'):
     assert token in html, f'missing placeholder {token}'
 for g in GEOS:
     assert f'__{g.upper()}__' in js, f'missing placeholder __{g.upper()}__'
+    assert f'__CLUES_{g.upper()}__' in js, f'missing placeholder __CLUES_{g.upper()}__'
 
 html = html.replace('__CSS__', (SRC / 'style.css').read_text()).replace('__JS__', js)
+clues = {g: (ROOT / 'data' / f'clues-{g}.json').read_text() for g in GEOS}
 for g in GEOS:
+    html = html.replace(f'__CLUES_{g.upper()}__', clues[g])
     html = html.replace(f'__{g.upper()}__', data[g])
 
 out = ROOT / 'dist' / 'fifty.html'

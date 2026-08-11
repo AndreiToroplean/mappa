@@ -148,8 +148,14 @@
     background-size:5px 5px, 5px 5px;background-repeat:no-repeat}
   .geoSel:focus-visible{outline:2px solid var(--foundline);outline-offset:2px}
   .modes{display:flex;gap:8px;margin:0 0 20px}
-  /* Icon only, on the title's line in whichever card it sits in. */
-  .fsbtn{position:absolute;top:20px;right:20px;width:34px;height:34px;margin:0;
+  /* A real row rather than an absolutely-positioned button: the title takes the
+     space it needs and the icon sits at the end of the same line. Positioning it
+     over the card meant guessing where the title ended, and in the two-column
+     menu it landed on top of the board's own controls. */
+  .cardhead{display:flex;align-items:center;justify-content:space-between;
+    gap:14px;margin:0 0 6px}
+  .cardhead h2{margin:0}
+  .fsbtn{flex:none;width:34px;height:34px;margin:0;
     padding:0;display:flex;align-items:center;justify-content:center;
     border-radius:9px;background:transparent;color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line)}
@@ -379,9 +385,10 @@
       align-content:start}
     .card::-webkit-scrollbar{display:none}
     .card > *{grid-column:1;min-width:0}
-    .card > .board{grid-column:2;grid-row:1 / 100;border-top:none;
+    /* the title spans both columns, so the board starts on the row below it */
+    .card > .cardhead{grid-column:1 / -1;margin-bottom:14px}
+    .card > .board{grid-column:2;grid-row:2 / 100;border-top:none;
       margin-top:0;padding-top:2px}
-    .card h2{margin-bottom:2px}
     .rules{margin-bottom:12px}
     /* the pause and confirm cards are short already, and read better as one
        column */

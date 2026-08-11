@@ -71,13 +71,14 @@
   .hint{color:var(--amber);font-weight:600}
   /* Only in the mode that offers them. */
   .cluebtn{display:none}
-  body.practice .cluebtn{display:block;width:auto;flex:none;margin:0;
+  body.practice .cluebtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
     padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;
     color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);font-weight:600}
   body.practice .cluebtn:hover{filter:none;background:rgba(255,194,75,.12)}
   body.practice .cluebtn:disabled{color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line);background:transparent}
-  path.nudge{stroke:var(--amber);stroke-linecap:round;fill:none;opacity:.95}
+  path.nudge{stroke:var(--amber);stroke-linecap:round;stroke-linejoin:round;
+    fill:none;opacity:.95}
   path.nudgehead{fill:var(--amber);stroke:none;opacity:.95}
   text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
     text-anchor:middle;pointer-events:none;opacity:.85}

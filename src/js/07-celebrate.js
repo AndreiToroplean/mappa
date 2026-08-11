@@ -159,8 +159,19 @@ function clearFlash() {
    something to recognise. Thickness carries a coarse sense of distance instead
    — near, middling, far — which is enough to tell "next door" from "other end
    of the country" without handing over the answer. */
-const NUDGE_LEN = 34;          // composed units, always
-const NUDGE_BANDS = [[130, 2.2], [330, 4], [Infinity, 6.5]];
+const NUDGE_START = 11;    // clear of the region's own label
+const NUDGE_LEN = 14;      // composed units, always the same
+
+/* Three styles rather than three stroke widths. Width alone was the first
+   attempt and was useless: at this size the eye cannot compare two thicknesses
+   that are not side by side, so the bands were invisible. A chevron, a double
+   chevron and a solid head are told apart instantly and in isolation, which is
+   the only way they are ever seen. */
+const NUDGE_BANDS = [
+  { limit: 130, width: 1.8, head: 'v' },        // next door
+  { limit: 330, width: 3.4, head: 'vv' },       // some way off
+  { limit: Infinity, width: 6.4, head: 'solid' },  // other end of the map
+];
 
 function nudge(fromName, toName) {
   if (!L_NUDGE) return;
@@ -171,32 +182,36 @@ function nudge(fromName, toName) {
   const far = Math.sqrt(dx * dx + dy * dy);
   if (far < 1) return;
   const ux = dx / far, uy = dy / far;
+  const band = NUDGE_BANDS.find(z => far < z.limit) || NUDGE_BANDS[2];
 
-  let width = NUDGE_BANDS[NUDGE_BANDS.length - 1][1];
-  for (const [limit, w] of NUDGE_BANDS) {
-    if (far < limit) { width = w; break; }
-  }
-
-  // start clear of the region's own label so the two do not collide
-  const x0 = a.x + ux * 13, y0 = a.y + uy * 13;
+  const x0 = a.x + ux * NUDGE_START, y0 = a.y + uy * NUDGE_START;
   const x1 = x0 + ux * NUDGE_LEN, y1 = y0 + uy * NUDGE_LEN;
+  const px = -uy, py = ux;                        // perpendicular
+  const at = (t, s) => [(x1 + ux * t + px * s).toFixed(1),
+                        (y1 + uy * t + py * s).toFixed(1)];
 
   const shaft = document.createElementNS(NS, 'path');
-  shaft.setAttribute('d', `M${x0.toFixed(1)},${y0.toFixed(1)}L${x1.toFixed(1)},${y1.toFixed(1)}`);
   shaft.setAttribute('class', 'nudge');
-  shaft.setAttribute('stroke-width', width);
+  shaft.setAttribute('stroke-width', band.width);
+  shaft.setAttribute('d', `M${x0.toFixed(1)},${y0.toFixed(1)}L${x1.toFixed(1)},${y1.toFixed(1)}`);
   L_NUDGE.appendChild(shaft);
 
-  // a solid head, sized with the shaft
-  const hl = 7 + width * 1.6, hw = 3.4 + width * 1.1;
-  const px = -uy, py = ux;
-  const head = document.createElementNS(NS, 'path');
-  head.setAttribute('class', 'nudgehead');
-  head.setAttribute('d',
-    `M${(x1 + ux * hl).toFixed(1)},${(y1 + uy * hl).toFixed(1)}` +
-    `L${(x1 + px * hw).toFixed(1)},${(y1 + py * hw).toFixed(1)}` +
-    `L${(x1 - px * hw).toFixed(1)},${(y1 - py * hw).toFixed(1)}Z`);
-  L_NUDGE.appendChild(head);
+  if (band.head === 'solid') {
+    const hl = 9, hw = 5.6;
+    const head = document.createElementNS(NS, 'path');
+    head.setAttribute('class', 'nudgehead');
+    head.setAttribute('d', `M${at(hl, 0)}L${at(0, hw)}L${at(0, -hw)}Z`);
+    L_NUDGE.appendChild(head);
+  } else {
+    const back = band.head === 'vv' ? [0, -5.5] : [0];
+    for (const off of back) {
+      const v = document.createElementNS(NS, 'path');
+      v.setAttribute('class', 'nudge');
+      v.setAttribute('stroke-width', band.width);
+      v.setAttribute('d', `M${at(off - 4.5, 4.5)}L${at(off, 0)}L${at(off - 4.5, -4.5)}`);
+      L_NUDGE.appendChild(v);
+    }
+  }
 }
 
 function clearNudge() {

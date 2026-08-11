@@ -70,6 +70,15 @@
     paint-order:stroke;stroke:var(--ink);stroke-width:3.5px}
   .hint{color:var(--amber);font-weight:600}
   /* Only in the mode that offers them. */
+  /* Hiding the map is the point of the pause: a stopped clock with a visible
+     map is just free thinking time. */
+  body.paused svg{visibility:hidden}
+  .pausebtn{display:none}
+  body.playing .pausebtn{display:block;width:auto;flex:none;margin:0;
+    padding:7px 11px;font-size:11px;letter-spacing:.12em;border-radius:8px;
+    background:transparent;color:var(--muted);
+    box-shadow:inset 0 0 0 1px var(--line);font-weight:700}
+  body.playing .pausebtn:hover{filter:none;color:var(--text)}
   .cluebtn{display:none}
   body.practice .cluebtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
     padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;

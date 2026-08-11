@@ -165,11 +165,47 @@ const NUDGE_GAP = 2;       // clear of the border it starts from
 /* Three styles rather than three stroke widths. Width alone was the first
    attempt and was useless: these are never seen side by side, so the eye has
    nothing to compare a thickness against. A shape is identifiable on its own. */
-const NUDGE_BANDS = [
-  { limit: 130, width: 1.2, head: 'v', size: 3.6 },   // next door
-  { limit: 330, width: 3.0, head: 'v', size: 5.4 },   // some way off
-  { limit: Infinity, width: 8, head: 'solid' },       // other end of the map
-];
+const TOUCHING = 4;        // composed units; borders this close are shared
+
+/* Styles by relationship rather than by raw distance. The thin chevron means
+   "you are touching it", which is a different and more useful statement than
+   "you are close"; the middling one covers anything within half the country;
+   the solid head means the far half. Half the country is measured from the
+   mainland's own drawn span, so it follows the layout instead of being a
+   constant that quietly stops matching. */
+const NUDGE_STYLES = {
+  touching: { width: 1.2, head: 'v', size: 3.6 },
+  near: { width: 3.0, head: 'v', size: 5.4 },
+  far: { width: 8, head: 'solid' },
+};
+
+/* Are these two regions neighbours? Measured border to border, because the
+   distance between their centres says nothing about it — Paris and Essonne are
+   further apart than Paris and Hauts-de-Seine, and all three touch. */
+function touching(a, b) {
+  const ra = borders[a], rb = borders[b];
+  if (!ra || !rb) return false;
+  const limit = TOUCHING * TOUCHING;
+  for (const ring of ra) {
+    for (let i = 0; i < ring.length; i += 2) {
+      if (borderDist2(b, { x: ring[i], y: ring[i + 1] }, limit) < limit) return true;
+    }
+  }
+  return false;
+}
+
+/* An arrow across a gap that does not exist on the ground would be a lie: the
+   mainland and an inset are not one map, and neither are two insets. */
+function canNudge(from, to) {
+  return !!(anchorAt[from] && anchorAt[to] && panelOf[from] === panelOf[to]);
+}
+
+function bandFor(from, to, far) {
+  if (touching(from, to)) return NUDGE_STYLES.touching;
+  const main = GEO.panels[0], at = layoutNow && layoutNow.place[0];
+  const across = at ? Math.max(main.w, main.h) * at.s : 600;
+  return far < across / 2 ? NUDGE_STYLES.near : NUDGE_STYLES.far;
+}
 
 /* Where the line from a to b leaves the region around a. Walking the region's
    own border is the only way to get this right: a fixed offset from the centre
@@ -194,7 +230,7 @@ function exitPoint(name, a, b) {
 }
 
 function nudge(fromName, toName) {
-  if (!L_NUDGE) return;
+  if (!L_NUDGE || !canNudge(fromName, toName)) return;
   clearNudge();
   const a = anchorAt[fromName], b = anchorAt[toName];
   if (!a || !b) return;
@@ -202,7 +238,7 @@ function nudge(fromName, toName) {
   const far = Math.sqrt(dx * dx + dy * dy);
   if (far < 1) return;
   const ux = dx / far, uy = dy / far;
-  const band = NUDGE_BANDS.find(z => far < z.limit) || NUDGE_BANDS[2];
+  const band = bandFor(fromName, toName, far);
 
   // on the axis between the two centres, starting at the border it leaves
   const edge = exitPoint(fromName, a, b) || { x: a.x + ux * 9, y: a.y + uy * 9 };

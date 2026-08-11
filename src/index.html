@@ -35,7 +35,7 @@ __CSS__</style>
   <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
-<footer><span id="ticker">Pick a geography and press Start.</span><button id="clue" class="cluebtn">Clue</button></footer>
+<footer><button id="pause" class="pausebtn" aria-label="Pause">II</button><span id="ticker">Pick a geography and press Start.</span><button id="clue" class="cluebtn">Clue</button></footer>
 
 <div class="lens" id="lens" hidden>
   <div class="disc">
@@ -43,6 +43,20 @@ __CSS__</style>
     <div class="cross"></div>
   </div>
   <div class="cap" id="lensCap">—</div>
+</div>
+
+<div class="overlay" id="paused" hidden>
+  <div class="card narrow">
+    <h2>Paused</h2>
+    <div class="sub">The clock is stopped</div>
+    <p class="rules">The map is hidden while you are here, so a pause cannot buy
+      thinking time.</p>
+    <button id="resumeBtn">Resume</button>
+    <div class="btnrow">
+      <button class="ghost" id="restartBtn">Restart</button>
+      <button class="ghost" id="quitBtn">Main menu</button>
+    </div>
+  </div>
 </div>
 
 <div class="overlay" id="confirm" hidden>

@@ -2,6 +2,7 @@
 
 const PROBE = 'fifty:probe';
 const PREF_GEO = 'fifty:geo';
+const PREF_MODE = 'fifty:mode';
 
 /* Every geography-and-mode combination keeps its own board. Mixing them would
    be meaningless — a practice run cannot fail, and a departement is not a
@@ -235,8 +236,7 @@ addEventListener('keydown', e => {
 async function setMode(id) {
   if (!GEO || !MODES[id]) return;    // a tap can land before startup finishes
   MODE = MODES[id];
-  document.querySelectorAll('.modeBtn').forEach(b =>
-    b.classList.toggle('on', b.dataset.mode === id));
+  await kvSet(PREF_MODE, id);
   refreshCopy();
   try { showBoards(await loadBoard(), null); }
   catch (e) { reportCrash('board: ' + e.message); }
@@ -245,6 +245,10 @@ async function setMode(id) {
 /* Everything on the two cards that depends on which geography or mode is live.
    Kept in one place because these strings drifted out of step otherwise. */
 function refreshCopy() {
+  // The selected mode is part of the copy: it used to be set only by setMode(),
+  // so on a fresh load no button looked selected at all.
+  document.querySelectorAll('.modeBtn').forEach(b =>
+    b.classList.toggle('on', b.dataset.mode === MODE.id));
   document.querySelectorAll('.modeRule').forEach(n => { n.textContent = MODE.rule; });
   document.querySelectorAll('.clearLabel').forEach(n => {
     n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label}`;
@@ -304,9 +308,14 @@ el.startBtn.addEventListener('click', beginRun);
   // The geography is built first and separately from anything that can fail:
   // if reading the saved preference throws, the game should still start, just
   // without remembering the choice.
-  let saved = null;
-  try { saved = await kvGet(PREF_GEO); } catch (e) { reportCrash('storage: ' + e.message); }
-  loadGeography(GEOS[saved] ? saved : DEFAULT_GEO);
+  let savedGeo = null, savedMode = null;
+  try {
+    savedGeo = await kvGet(PREF_GEO);
+    savedMode = await kvGet(PREF_MODE);
+  } catch (e) { reportCrash('storage: ' + e.message); }
+  // Both choices are remembered. Trial is the default reading of "play".
+  MODE = MODES[savedMode] || MODES.trial;
+  loadGeography(GEOS[savedGeo] ? savedGeo : DEFAULT_GEO);
   refreshCopy();
   resetRun();
   el.intro.hidden = false;

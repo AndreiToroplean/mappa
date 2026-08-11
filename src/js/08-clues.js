@@ -13,36 +13,57 @@
    Every clue is counted and shown on the board, so a clean run stays worth
    more than an assisted one. */
 let cluesUsed = 0;     // for the whole run
-let clueStep = 0;      // how far up the ladder this turn has gone
+let given = new Set();  // which rungs this turn has already spent
+let lastMiss = null;    // the most recent wrong guess, if any
 
 function clueTable(name) {
   return (GEO.clues && GEO.clues[name]) || {};
 }
 
-function nextClue() {
-  if (!running || !MODE.clues || clueStep >= 2) return;
+/* The ladder, in fixed order. Each rung says whether it can be offered right
+   now — the arrow only exists once there is a wrong guess to point away from,
+   so before the first miss the button skips straight to the capital. A miss
+   makes the arrow available again, pointing from the new mistake, because that
+   is new information and it is paid for like any other clue. */
+function rungs() {
   const info = clueTable(current);
-  if (clueStep === 0 && info.capital) {
-    clueStep = 1;
-    cluesUsed++;
-    ticker.innerHTML = `<span class="hint">Capital</span> — <b>${info.capital}</b>`;
-  } else if (info.group) {
-    clueStep = 2;
-    cluesUsed++;
-    showGroup(info.group);
-  } else {
-    clueStep = 2;      // nothing left to offer for this region
-  }
+  return [
+    { key: 'arrow', ok: !!(lastMiss && anchorAt[lastMiss]),
+      show: () => nudge(lastMiss, current) },
+    { key: 'capital', ok: !!info.capital,
+      show: () => { ticker.innerHTML =
+        `<span class="hint">Capital</span> — <b>${info.capital}</b>`; } },
+    { key: 'group', ok: !!info.group, show: () => showGroup(info.group) },
+  ];
+}
+
+const nextRung = () => rungs().find(r => r.ok && !given.has(r.key));
+
+function nextClue() {
+  if (!running || !MODE.clues) return;
+  const rung = nextRung();
+  if (!rung) return;
+  rung.show();
+  given.add(rung.key);
+  cluesUsed++;
   drawClueButton();
 }
 
 function drawClueButton() {
   if (!el.clue) return;
-  const info = clueTable(current);
-  const rungs = (info.capital ? 1 : 0) + (info.group ? 1 : 0);
-  el.clue.disabled = !running || clueStep >= rungs;
-  el.clue.textContent = clueStep >= rungs ? 'No more clues'
-    : clueStep === 0 ? 'Clue' : 'Another clue';
+  const rung = running ? nextRung() : null;
+  el.clue.disabled = !rung;
+  el.clue.textContent = !rung ? 'No more clues'
+    : given.size === 0 ? 'Clue' : 'Another clue';
+}
+
+/* A wrong guess re-opens the arrow rung and takes down the old one, which was
+   aimed from a different mistake. */
+function missed(name) {
+  lastMiss = name;
+  given.delete('arrow');
+  clearNudge();
+  drawClueButton();
 }
 
 /* The grouping is drawn as its own outline, in the same amber the answer is
@@ -88,9 +109,11 @@ function clearGroup() {
 /* A new turn starts the ladder over; the tally does not reset until the run
    does. */
 function resetClues(wholeRun) {
-  clueStep = 0;
+  given = new Set();
+  lastMiss = null;
   if (wholeRun) cluesUsed = 0;
   clearGroup();
+  clearNudge();
   drawClueButton();
 }
 

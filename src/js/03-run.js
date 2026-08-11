@@ -116,8 +116,7 @@ function guess(name) {
   } else {
     setStatus(name, 'missed');
     flashMiss(name);
-    // only where the point is to learn; Trial is meant to be unforgiving
-    if (MODE.nudge) nudge(name, current);
+    if (MODE.clues) missed(name);   // opens the arrow rung; drawn only on request
     errors++;
     drawCounter();
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;

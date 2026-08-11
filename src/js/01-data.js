@@ -84,8 +84,7 @@ const MODES = {
     label: 'Practice',
     lives: Infinity,
     counter: 'Misses',
-    nudge: true,          // point towards the answer after a miss
-    clues: true,          // offer the clue ladder
+    clues: true,          // the clue ladder, arrow included
     rule: 'No limit on misses, and clues on request. Least help wins, then quickest.',
     hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
               + 'Misses are counted, not fatal.',

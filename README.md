@@ -232,12 +232,20 @@ followed by a different kind of run without a reload.
 
 ## Clues
 
-Practice offers a clue ladder, always on request and never automatic. Two rungs,
-in a fixed order:
+Practice offers a clue ladder, always on request and never automatic. Three
+rungs, in a fixed order:
 
-1. **The capital** — the *chef-lieu* or state capital, named in the ticker.
-2. **The grouping** — the French *région* or US census division, outlined on the
+1. **The arrow** — only once there is a wrong guess to point away from. Before
+   the first miss the button skips this and offers the capital instead. A fresh
+   miss re-opens it, aimed from the new mistake.
+2. **The capital** — the *chef-lieu* or state capital, named in the ticker.
+3. **The grouping** — the French *région* or US census division, outlined on the
    map in amber with its name.
+
+The arrow sits on the line between the two regions' centres and starts at the
+border of the one you hit, found by intersecting that line with the region's own
+outline. A fixed offset from the centre would start inside a large region and
+float away from a small one.
 
 Amber is the colour of help throughout: the revealed answer, the miss arrow and
 the grouping outline all use it.
@@ -247,9 +255,9 @@ add into one help figure, then time — ranking misses ahead of clues would make
 clues nearly free, which defeats counting them. Both numbers stay visible so a
 row can still be read.
 
-A miss in Practice also draws a short arrow beside the region you hit, pointing
-at the one you wanted. Fixed length, with thickness in three coarse bands, so it
-gives a direction and a rough sense of distance without handing over the answer.
+The arrow is a fixed length, so it never gives the distance away. Three styles
+carry a coarse sense of it instead: a thin chevron for next door, a heavier one
+for some way off, a thick solid head for the other end of the map.
 
 ### Where the data comes from
 

@@ -70,8 +70,11 @@ function missed(name) {
 
 /* The grouping is drawn as its own outline, in the same amber the answer is
    revealed in — amber is the colour of help throughout. */
+let shownGroup = null;
+
 function showGroup(name) {
   clearGroup();
+  shownGroup = name;
   const g = GEO.groups && GEO.groups[name];
   if (!g || !layoutNow) return;
   const at = layoutNow.place[g.p];
@@ -105,7 +108,18 @@ function showGroup(name) {
 }
 
 function clearGroup() {
+  shownGroup = null;
   if (L_GROUP) while (L_GROUP.firstChild) L_GROUP.removeChild(L_GROUP.firstChild);
+}
+
+/* Called by compose(), so everything on the map goes through one pipe and is
+   rebuilt together. Anything drawn in composed coordinates and remembered
+   between layouts belongs here, or it will survive a resize in the wrong
+   place. */
+function redrawHints() {
+  const g = shownGroup, a = shownArrow;
+  if (g) showGroup(g);
+  if (a) nudge(a.from, a.to);
 }
 
 /* A new turn starts the ladder over; the tally does not reset until the run

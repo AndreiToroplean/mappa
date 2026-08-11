@@ -3,7 +3,6 @@
 const PROBE = 'fifty:probe';
 const PREF_GEO = 'fifty:geo';
 const PREF_MODE = 'fifty:mode';
-const PREF_FULL = 'fifty:fullscreen';
 
 /* Every geography-and-mode combination keeps its own board. Mixing them would
    be meaningless — a practice run cannot fail, and a departement is not a
@@ -328,7 +327,6 @@ el.startBtn.addEventListener('click', beginRun);
   } catch (e) { reportCrash('storage: ' + e.message); }
   // Both choices are remembered. Trial is the default reading of "play".
   MODE = MODES[savedMode] || MODES.trial;
-  try { wantFull = !!(await kvGet(PREF_FULL)); } catch (e) {}
   drawFsButton();
   loadGeography(GEOS[savedGeo] ? savedGeo : DEFAULT_GEO);
   refreshCopy();

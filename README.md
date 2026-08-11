@@ -269,10 +269,10 @@ across a gap that does not exist on the ground would be a lie.
 
 ## Full screen
 
-A button in the menu, since the Fullscreen API only fires from a user gesture.
-The choice is remembered, and starting a run re-enters full screen on the tap
-that starts it. Android Chrome supports this; iPhone Safari does not, and the
-button hides itself there. For a permanent answer on either, Chrome's "Add to
+An icon on the title line of the menu and of the pause card, since the
+Fullscreen API only fires from a user gesture. It is never entered on your
+behalf. Android Chrome supports this; iPhone Safari does not, and the button
+hides itself there. For a permanent answer on either, Chrome's "Add to
 Home screen" runs the page with no browser chrome at all.
 
 ## Pausing

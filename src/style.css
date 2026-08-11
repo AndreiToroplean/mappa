@@ -148,6 +148,11 @@
     background-size:5px 5px, 5px 5px;background-repeat:no-repeat}
   .geoSel:focus-visible{outline:2px solid var(--foundline);outline-offset:2px}
   .modes{display:flex;gap:8px;margin:0 0 20px}
+  .fsbtn{width:auto;margin:0 0 18px;padding:7px 12px;font-size:12px;
+    border-radius:8px;background:transparent;color:var(--muted);
+    box-shadow:inset 0 0 0 1px var(--line);font-weight:500}
+  .fsbtn:hover{filter:none;color:var(--text)}
+  .fsbtn[hidden]{display:none}
   .modes button{margin:0;flex:1;padding:9px;font-size:13px;font-weight:500;
     border-radius:8px;background:transparent;color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line)}
@@ -332,7 +337,7 @@
        over the map hid the départements underneath. An empty grid column is the
        transparent sidebar. */
     body{display:grid;
-      grid-template-columns:min(220px, 30vw) 1fr 100px;
+      grid-template-columns:min(220px, 30vw) 1fr 92px;
       grid-template-rows:auto 1fr;
       grid-template-areas:"head map rail" "foot map rail"}
     header{grid-area:head;flex-direction:column;align-items:stretch;
@@ -350,8 +355,14 @@
       border-top:none;border-right:1px solid var(--line);
       padding:0 14px 14px;line-height:1.45}
     #ticker{display:block}
-    body.playing .pausebtn{position:fixed;top:12px;right:31px;margin:0;z-index:8}
-    body.practice .cluebtn{position:fixed;bottom:14px;right:8px;margin:0;z-index:8}
+    /* Both flush to the same right edge, so their borders line up whatever the
+       label says. The clue button is a fixed width for the same reason: its
+       text changes from Clue to Another clue to No more clues, and the column
+       must not shuffle when it does. */
+    body.playing .pausebtn{position:fixed;top:12px;right:10px;margin:0;z-index:8}
+    body.practice .cluebtn{position:fixed;bottom:14px;right:10px;margin:0;
+      z-index:8;width:72px;padding:7px 4px;font-size:11px;line-height:1.25;
+      white-space:normal}
 
     /* The menu has to fit the landscape rectangle rather than a tall one: as a
        single column it ran off both ends of the screen. The board moves beside

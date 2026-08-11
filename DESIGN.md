@@ -313,6 +313,29 @@ full-fifty runs that took real effort.
   Only full runs really contend on it, since anything short of the full set
   ended by running out of lives and therefore has exactly that many errors.
 
+## Clues
+
+Two rungs, requested not given, in a fixed order: capital, then grouping. The
+ladder resets each turn; the tally does not reset until the run does.
+
+Ranking adds misses and clues into one figure, then time. Ranking misses first
+would make clues nearly free; adding them keeps "least help, then quickest"
+explainable in a sentence, and both numbers are displayed so a row is still
+readable. Practice buckets entries on the pair, so one clue and one miss is a
+different achievement from two misses.
+
+Grouping outlines come from different places by necessity. The US dissolves them
+from TopoJSON arcs, which is exact because neighbours share arc indices and an
+interior arc is used twice. France cannot: each département was simplified on its
+own, so a shared border is two slightly different polylines and no edge matching
+cancels them. France therefore uses the régions' own geometry, projected with the
+mainland's transform. Checked by alignment against members — exact for the US,
+0.6 units for Île-de-France.
+
+The five overseas départements are each their own région, so the grouping clue
+reveals the answer there. Kept anyway: one rule for every region beats an
+exception nobody can predict.
+
 ## When it breaks on a browser you cannot open
 
 `00-crash.js` loads first and shows any thrown error in a band at the bottom of

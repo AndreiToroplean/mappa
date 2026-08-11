@@ -230,6 +230,48 @@ only the mode you are looking at.
 The switcher appears on both the intro and the end-of-run card, so a run can be
 followed by a different kind of run without a reload.
 
+## Clues
+
+Practice offers a clue ladder, always on request and never automatic. Two rungs,
+in a fixed order:
+
+1. **The capital** — the *chef-lieu* or state capital, named in the ticker.
+2. **The grouping** — the French *région* or US census division, outlined on the
+   map in amber with its name.
+
+Amber is the colour of help throughout: the revealed answer, the miss arrow and
+the grouping outline all use it.
+
+Clues are counted for the run and shown on the Practice board. Misses and clues
+add into one help figure, then time — ranking misses ahead of clues would make
+clues nearly free, which defeats counting them. Both numbers stay visible so a
+row can still be read.
+
+A miss in Practice also draws a short arrow beside the region you hit, pointing
+at the one you wanted. Fixed length, with thickness in three coarse bands, so it
+gives a direction and a rough sense of distance without handing over the answer.
+
+### Where the data comes from
+
+| fact | source |
+|---|---|
+| French chef-lieu, région | `@etalab/decoupage-administratif` (INSEE/Etalab) |
+| French région outlines | france-geojson (IGN/Etalab) |
+| US state capitals | `usa-states` (npm) |
+| US census divisions | cphalpert/census-regions |
+
+Downloaded rather than typed: these are the facts a learner takes away, so a
+wrong préfecture would teach something false. `src/build-clues.py` asserts every
+region has a capital and a grouping, and that every grouping named has geometry.
+
+Grouping outlines are built differently per geography, because the data differs.
+For the US they are dissolved exactly from the TopoJSON arcs — neighbours share
+arc indices, so an interior arc is used twice and drops out. That cannot work on
+the French data, where each département was simplified independently and a shared
+border became two slightly different polylines, so the régions are taken as their
+own geometry and projected identically. Verified by alignment: New England's
+outline matches its members exactly, Île-de-France within 0.6 units.
+
 ## Leaderboard
 
 Three storage backends, tried in order:

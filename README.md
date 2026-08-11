@@ -232,11 +232,9 @@ followed by a different kind of run without a reload.
 
 ## Water
 
-Coasts get a blue halo just outside the shore, rather than a filled sea.
-`src/build-coast.py` decides which stretches of border have water on the far side
-by stepping outward along each segment's normal, and the halo is stroked under
-the land so it only ever shows seaward. Layout is unaffected; sources in
-`data/LICENSE-water`.
+Not in the game. Two attempts are parked on branch `water-wip`; see DESIGN.md for
+what failed. `src/build-coast.py` stays on master because it holds the recovered
+albersUsa transform, which anything aligning to the US map will need.
 
 ## Clues
 

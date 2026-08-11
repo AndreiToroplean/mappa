@@ -7,7 +7,7 @@ let labels = {};     // region name -> its abbreviation <text>
 // SVG paints in document order, so resolved states must physically move up the
 // stack or neighbours drawn later will clip their outlines.
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
-const L_WATER = layer(), L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
+const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
       L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
       L_NUDGE = layer(), L_HIT = layer();
 
@@ -16,12 +16,6 @@ const L_WATER = layer(), L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
    is the pole of inaccessibility, so it is inside even for awkward shapes. */
 let anchorAt = {};
 let panelOf = {};    // region name -> which panel it is drawn on
-let waterRings = [], waterPaths = [];
-
-/* Widest first, so the faint outer band sits beneath the brighter inner one.
-   The dashed band is the wave hint — short dashes along the shore, most of each
-   dash hidden by land, which is enough to read as movement without a texture. */
-const WATER_BANDS = ['sea sea4', 'sea sea3', 'sea sea2', 'sea sea1', 'seawave'];
 
 function setLabel(name, kind) {
   const t = labels[name];
@@ -288,28 +282,10 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_WATER, L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_HIT]
+  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_HIT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
   panelOf = {};
-
-  /* Coastal stretches of border, in panel-local units like everything else, so
-     compose() places them with the identical transform and they cannot drift
-     from the coast they trace.
-
-     Each is stroked several times, wide to narrow, in a layer *under* the land.
-     That is what makes it cheap: a stroke straddles the line it follows, and the
-     land drawn on top hides the inland half, so what is left is a halo on the
-     seaward side only. No clipping, no bounding box to respect, and the haloes
-     of neighbouring panels may overlap freely — which is why nothing gets cut
-     off at a panel edge any more. */
-  waterRings = (GEO.coast || []).map(w => ({ panel: w.p, rings: parseRings(w.d) }));
-  waterPaths = waterRings.map(() => WATER_BANDS.map(cls => {
-    const p = document.createElementNS(NS, 'path');
-    p.setAttribute('class', cls);
-    L_WATER.appendChild(p);
-    return p;
-  }));
 
   REGIONS.forEach(r => {
     localRings[r.name] = parseRings(r.d);
@@ -371,13 +347,6 @@ function compose() {
     c.dataset.name = t.name;
     L_HIT.appendChild(c);
   });
-  waterRings.forEach((w, i) => {
-    const at = L.place[w.panel];
-    // open polylines, so pathFrom's closing Z would join the two ends
-    const d = at ? pathFrom(composeRings(w.rings, at.s, at.dx, at.dy)).replace(/Z/g, '') : '';
-    waterPaths[i].forEach(p => p.setAttribute('d', d));
-  });
-
   // Anything else drawn in composed coordinates has to be rebuilt with them.
   redrawHints();
 }

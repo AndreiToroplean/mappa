@@ -269,7 +269,8 @@ across a gap that does not exist on the ground would be a lie.
 
 ## Pausing
 
-A pause button appears in the footer during a run. It stops the clock and hides
+A pause button sits at the top right of the header during a run — the corner a
+thumb reaches without regripping. It stops the clock and hides
 the map, which is the point: a stopped clock over a visible map is unlimited
 thinking time, and would quietly make every leaderboard entry meaningless. From
 there you can resume, restart, or go back to the main menu. Escape toggles it.

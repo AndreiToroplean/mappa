@@ -377,6 +377,21 @@ the layout so it cannot fall out of step. Beyond that, the solid head.
 The rung is unavailable when the two regions sit on different panels. An arrow
 between the mainland and an inset would point across a gap that does not exist.
 
+## Inset packing
+
+Bottom-left packing against a skyline, at whichever of five candidate widths
+gives the tightest bounding box.
+
+Both simpler rules were tried and both were visibly wrong. A single shelf made
+the block as deep as Guyane, the tallest, and left the four small insets floating
+in a band of empty space beside it. Packing at full width then minimised depth,
+which laid those four in one long row and left the space beside Guyane empty —
+minimal depth is not the same as tidy. Scoring candidates on bounding area
+instead lets the small ones stack next to Guyane, which is how an atlas sets
+them, and took a phone from 82% to 90% ink coverage.
+
+Five insets, five candidate widths: cheap enough to just try them all.
+
 ## Inset scale
 
 Insets are drawn at the mainland's scale — equal kilometres per composed unit —

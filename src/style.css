@@ -11,9 +11,19 @@
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
     -webkit-touch-callout:none;                /* long-press context menu */
     -webkit-user-select:none;user-select:none} /* stray text selection on labels */
-  /* Sea and lakes: a shade off the background, enough to read a coastline
-     without competing with the land. Never in hit testing. */
-  path.water{fill:#0C1A2E;stroke:none;pointer-events:none}
+  /* The sea, as a halo outside the coast rather than a filled body of water.
+     Filled polygons needed ocean geometry to line up with the coastline at every
+     scale, and it never did: the low-resolution outlines left visible facets
+     around the small islands and hard rectangular cuts at the panel edges. This
+     is symbolic and local to the shore, so neither can happen. */
+  path.sea{fill:none;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+  path.sea4{stroke:#12304F;stroke-width:19}
+  path.sea3{stroke:#173C63;stroke-width:13}
+  path.sea2{stroke:#1D4B79;stroke-width:8}
+  path.sea1{stroke:#26608F;stroke-width:3.4}
+  /* tiny dashes, most of each one hidden by the land: waves, cheaply */
+  path.seawave{fill:none;stroke:#3E82B8;stroke-width:11;opacity:.5;
+    stroke-dasharray:1.6 7;stroke-linecap:butt;pointer-events:none}
   svg,path.state,circle.hit{touch-action:none}
   path.state:focus,circle.hit:focus{outline:none}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--sans)}

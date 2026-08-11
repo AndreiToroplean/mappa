@@ -477,6 +477,36 @@ the edge must not shuffle when it does.
 
 ## Water
 
+Not a body of water: a halo just outside the shore. Filled ocean polygons were
+tried first and failed on their own terms — the low-resolution outlines left
+visible facets around the small islands, the clip boxes cut hard rectangles at
+panel edges, and Hawaii's water covered Mexico.
+
+What ships is a list of *coastal border stretches*, found at build time from the
+game's own geometry, so there is nothing to line up and nothing to cut. For each
+border segment, step outward along its normal: the first thing hit decides.
+Sibling land means an interior border, water means a coast, neither within reach
+means a foreign land border and is left unmarked. Following the normal is what
+lets the threshold be generous — 42 units — because anything found that way is
+genuinely across *this* border, which is why the coarse ocean data around the
+overseas islands stops mattering.
+
+Each stretch is stroked four times, wide to narrow, plus a dashed pass for wave
+hints, in a layer *under* the land. A stroke straddles its line and the land hides
+the inland half, so what remains is a seaward halo. No clipping, no bounding box,
+and neighbouring panels' haloes may overlap freely — which is why nothing is cut
+off at a panel edge any more.
+
+Two traps, both of which produced plausible-looking output:
+
+- Natural Earth's ocean is one polygon covering the globe with continents punched
+  out as holes. A rasteriser filling each ring independently turns that into
+  "everywhere is water", which marked the Canadian border as coastline. Land is
+  the honest primitive: water is what is left once the lakes are added back.
+- Masks are rasterised per panel rather than tested against polygons, because
+  point-in-polygon against a 1.6MB outline for every border segment of 101
+  régions is not a thing that finishes.
+
 Ocean and lakes are drawn under everything as one flat colour, in each panel's
 local units, and composed by the same transform as the land — so they cannot
 drift from the coastline they outline.

@@ -31,14 +31,14 @@ for token in ('__CSS__', '__JS__'):
 for g in GEOS:
     assert f'__{g.upper()}__' in js, f'missing placeholder __{g.upper()}__'
     assert f'__CLUES_{g.upper()}__' in js, f'missing placeholder __CLUES_{g.upper()}__'
-    assert f'__WATER_{g.upper()}__' in js, f'missing placeholder __WATER_{g.upper()}__'
+    assert f'__COAST_{g.upper()}__' in js, f'missing placeholder __COAST_{g.upper()}__'
 
 html = html.replace('__CSS__', (SRC / 'style.css').read_text()).replace('__JS__', js)
 clues = {g: (ROOT / 'data' / f'clues-{g}.json').read_text() for g in GEOS}
-water = {g: (ROOT / 'data' / f'water-{g}.json').read_text() for g in GEOS}
+coast = {g: (ROOT / 'data' / f'coast-{g}.json').read_text() for g in GEOS}
 for g in GEOS:
     html = html.replace(f'__CLUES_{g.upper()}__', clues[g])
-    html = html.replace(f'__WATER_{g.upper()}__', water[g])
+    html = html.replace(f'__COAST_{g.upper()}__', coast[g])
     html = html.replace(f'__{g.upper()}__', data[g])
 
 out = ROOT / 'dist' / 'fifty.html'

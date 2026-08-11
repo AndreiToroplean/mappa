@@ -18,6 +18,11 @@ let anchorAt = {};
 let panelOf = {};    // region name -> which panel it is drawn on
 let waterRings = [], waterPaths = [];
 
+/* Widest first, so the faint outer band sits beneath the brighter inner one.
+   The dashed band is the wave hint — short dashes along the shore, most of each
+   dash hidden by land, which is enough to read as movement without a texture. */
+const WATER_BANDS = ['sea sea4', 'sea sea3', 'sea sea2', 'sea sea1', 'seawave'];
+
 function setLabel(name, kind) {
   const t = labels[name];
   if (kind === null) { t.style.display = 'none'; return; }
@@ -288,16 +293,23 @@ function buildMap() {
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
   panelOf = {};
 
-  /* Ocean and lakes, in panel-local units like everything else, so compose()
-     places them with the identical transform and they cannot drift from the
-     coastline. Flat colour under the land: overlapping water is still water. */
-  waterRings = (GEO.water || []).map(w => ({ panel: w.p, rings: parseRings(w.d) }));
-  waterPaths = waterRings.map(() => {
+  /* Coastal stretches of border, in panel-local units like everything else, so
+     compose() places them with the identical transform and they cannot drift
+     from the coast they trace.
+
+     Each is stroked several times, wide to narrow, in a layer *under* the land.
+     That is what makes it cheap: a stroke straddles the line it follows, and the
+     land drawn on top hides the inland half, so what is left is a halo on the
+     seaward side only. No clipping, no bounding box to respect, and the haloes
+     of neighbouring panels may overlap freely — which is why nothing gets cut
+     off at a panel edge any more. */
+  waterRings = (GEO.coast || []).map(w => ({ panel: w.p, rings: parseRings(w.d) }));
+  waterPaths = waterRings.map(() => WATER_BANDS.map(cls => {
     const p = document.createElementNS(NS, 'path');
-    p.setAttribute('class', 'water');
+    p.setAttribute('class', cls);
     L_WATER.appendChild(p);
     return p;
-  });
+  }));
 
   REGIONS.forEach(r => {
     localRings[r.name] = parseRings(r.d);
@@ -361,7 +373,9 @@ function compose() {
   });
   waterRings.forEach((w, i) => {
     const at = L.place[w.panel];
-    waterPaths[i].setAttribute('d', at ? pathFrom(composeRings(w.rings, at.s, at.dx, at.dy)) : '');
+    // open polylines, so pathFrom's closing Z would join the two ends
+    const d = at ? pathFrom(composeRings(w.rings, at.s, at.dx, at.dy)).replace(/Z/g, '') : '';
+    waterPaths[i].forEach(p => p.setAttribute('d', d));
   });
 
   // Anything else drawn in composed coordinates has to be rebuilt with them.

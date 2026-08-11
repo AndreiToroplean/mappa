@@ -9,6 +9,7 @@ const livesLeft = () => MODE.lives - errors;
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
 ['bar', 'promptLabel', 'target', 'lives', 'counterLabel', 'missCount', 'clue',
+ 'pause', 'paused', 'resumeBtn', 'restartBtn', 'quitBtn',
  'progress', 'clock', 'ticker',
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'startBtn', 'clearNo', 'clearYes',
@@ -81,6 +82,7 @@ function beginRun() {
   resetRun();
   countdown(() => {
     running = true;
+    document.body.classList.add('playing');
     t0 = Date.now();
     tick();
     next();
@@ -99,7 +101,7 @@ function next() {
 }
 
 function guess(name) {
-  if (!running || !selectable(name)) return;
+  if (!running || paused || !selectable(name)) return;
 
   if (name === current) {
     clearFlash();     // a red name left over from a miss would read as wrong

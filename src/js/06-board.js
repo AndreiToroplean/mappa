@@ -177,6 +177,7 @@ function renderBoard(target, board, mine) {
 
 async function finish(won, lastClick) {
   running = false;
+  document.body.classList.remove('playing');
   closeLens(false);
   cancelAnimationFrame(raf);
   const ms = Date.now() - t0;

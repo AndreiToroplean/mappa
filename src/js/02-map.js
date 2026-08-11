@@ -15,6 +15,7 @@ const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
    region to another and the anchor is the most sensible "middle" we have — it
    is the pole of inaccessibility, so it is inside even for awkward shapes. */
 let anchorAt = {};
+let panelOf = {};    // region name -> which panel it is drawn on
 
 function setLabel(name, kind) {
   const t = labels[name];
@@ -240,9 +241,11 @@ function buildMap() {
   [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_HIT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
+  panelOf = {};
 
   REGIONS.forEach(r => {
     localRings[r.name] = parseRings(r.d);
+    panelOf[r.name] = r.panel;
 
     const p = document.createElementNS(NS, 'path');
     p.setAttribute('class', 'state');

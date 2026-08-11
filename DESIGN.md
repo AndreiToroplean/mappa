@@ -349,6 +349,34 @@ The five overseas départements are each their own région, so the grouping clue
 reveals the answer there. Kept anyway: one rule for every region beats an
 exception nobody can predict.
 
+## Pausing
+
+The clock is derived from `t0` rather than accumulated, so resuming only has to
+push `t0` forward by the length of the pause — no drift, nothing to reconcile.
+
+The map is hidden while paused. That is the feature, not a nicety: a stopped
+clock over a visible map is free thinking time, which would make Trial times and
+Practice scores incomparable. `guess()` also refuses while paused, since the tap
+targets are still there under a hidden map.
+
+Leaving a pause in either direction has to clear the paused class explicitly, or
+the map stays invisible behind whatever screen comes next.
+
+## Arrow bands
+
+By relationship, not raw distance. "You are touching it" is a different and more
+useful statement than "you are close", so the thin chevron means a shared border,
+measured border-to-border — the distance between centres says nothing about it,
+since Paris and Essonne are further apart than Paris and Hauts-de-Seine and all
+three touch. `borderDist2`'s ceiling makes that test cheap enough to run per
+border point.
+
+The middling band is anything within half the mainland's drawn span, taken from
+the layout so it cannot fall out of step. Beyond that, the solid head.
+
+The rung is unavailable when the two regions sit on different panels. An arrow
+between the mainland and an inset would point across a gap that does not exist.
+
 ## Inset scale
 
 Insets are drawn at the mainland's scale — equal kilometres per composed unit —

@@ -28,7 +28,7 @@ function clueTable(name) {
 function rungs() {
   const info = clueTable(current);
   return [
-    { key: 'arrow', ok: !!(lastMiss && anchorAt[lastMiss]),
+    { key: 'arrow', ok: !!(lastMiss && canNudge(lastMiss, current)),
       show: () => nudge(lastMiss, current) },
     { key: 'group', ok: !!info.group, show: () => showGroup(info.group) },
     // Last, because it is the weakest: a name you either know or do not, which

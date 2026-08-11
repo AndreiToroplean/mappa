@@ -258,8 +258,21 @@ clues nearly free, which defeats counting them. Both numbers stay visible so a
 row can still be read.
 
 The arrow is a fixed length, so it never gives the distance away. Three styles
-carry a coarse sense of it instead: a thin chevron for next door, a heavier one
-for some way off, a thick solid head for the other end of the map.
+carry the relationship instead: a thin chevron when the two regions actually
+share a border, a heavier one within half the country, a thick solid head beyond
+that. Half the country comes from the mainland's own drawn span, so it follows
+the layout rather than being a constant that stops matching.
+
+The rung is skipped entirely when the two regions are not on the same landmass —
+one on the mainland and one in an inset, or two different insets — since an arrow
+across a gap that does not exist on the ground would be a lie.
+
+## Pausing
+
+A pause button appears in the footer during a run. It stops the clock and hides
+the map, which is the point: a stopped clock over a visible map is unlimited
+thinking time, and would quietly make every leaderboard entry meaningless. From
+there you can resume, restart, or go back to the main menu. Escape toggles it.
 
 ### Where the data comes from
 

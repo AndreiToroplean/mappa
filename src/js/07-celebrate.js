@@ -146,3 +146,59 @@ function clearFlash() {
   clearTimeout(flashTimer);
   if (flashBox) flashBox.hidden = true;
 }
+
+
+/* ---- pointing the way ---------------------------------------------------
+   Practice exists to be learned from, and a wrong guess on an unfamiliar map
+   teaches nothing on its own: 100 départements minus one is still 100. After a
+   miss, a short arrow appears beside the region that was hit, aimed at the one
+   that was wanted.
+
+   Its length is fixed on purpose. A proportional arrow would give the distance
+   away exactly, which turns the map into a solved equation rather than
+   something to recognise. Thickness carries a coarse sense of distance instead
+   — near, middling, far — which is enough to tell "next door" from "other end
+   of the country" without handing over the answer. */
+const NUDGE_LEN = 34;          // composed units, always
+const NUDGE_BANDS = [[130, 2.2], [330, 4], [Infinity, 6.5]];
+
+function nudge(fromName, toName) {
+  if (!L_NUDGE) return;
+  clearNudge();
+  const a = anchorAt[fromName], b = anchorAt[toName];
+  if (!a || !b) return;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const far = Math.sqrt(dx * dx + dy * dy);
+  if (far < 1) return;
+  const ux = dx / far, uy = dy / far;
+
+  let width = NUDGE_BANDS[NUDGE_BANDS.length - 1][1];
+  for (const [limit, w] of NUDGE_BANDS) {
+    if (far < limit) { width = w; break; }
+  }
+
+  // start clear of the region's own label so the two do not collide
+  const x0 = a.x + ux * 13, y0 = a.y + uy * 13;
+  const x1 = x0 + ux * NUDGE_LEN, y1 = y0 + uy * NUDGE_LEN;
+
+  const shaft = document.createElementNS(NS, 'path');
+  shaft.setAttribute('d', `M${x0.toFixed(1)},${y0.toFixed(1)}L${x1.toFixed(1)},${y1.toFixed(1)}`);
+  shaft.setAttribute('class', 'nudge');
+  shaft.setAttribute('stroke-width', width);
+  L_NUDGE.appendChild(shaft);
+
+  // a solid head, sized with the shaft
+  const hl = 7 + width * 1.6, hw = 3.4 + width * 1.1;
+  const px = -uy, py = ux;
+  const head = document.createElementNS(NS, 'path');
+  head.setAttribute('class', 'nudgehead');
+  head.setAttribute('d',
+    `M${(x1 + ux * hl).toFixed(1)},${(y1 + uy * hl).toFixed(1)}` +
+    `L${(x1 + px * hw).toFixed(1)},${(y1 + py * hw).toFixed(1)}` +
+    `L${(x1 - px * hw).toFixed(1)},${(y1 - py * hw).toFixed(1)}Z`);
+  L_NUDGE.appendChild(head);
+}
+
+function clearNudge() {
+  if (L_NUDGE) while (L_NUDGE.firstChild) L_NUDGE.removeChild(L_NUDGE.firstChild);
+}

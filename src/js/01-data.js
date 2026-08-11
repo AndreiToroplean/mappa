@@ -84,6 +84,7 @@ const MODES = {
     label: 'Practice',
     lives: Infinity,
     counter: 'Misses',
+    nudge: true,          // point towards the answer after a miss
     rule: 'No limit on misses. Fewest misses wins, then quickest.',
     hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
               + 'Misses are counted, not fatal.',

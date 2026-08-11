@@ -8,7 +8,12 @@ let labels = {};     // region name -> its abbreviation <text>
 // stack or neighbours drawn later will clip their outlines.
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
 const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
-      L_ANSWER = layer(), L_LABEL = layer(), L_HIT = layer();
+      L_ANSWER = layer(), L_LABEL = layer(), L_NUDGE = layer(), L_HIT = layer();
+
+/* Composed label anchors, kept because the nudge arrow needs to point from one
+   region to another and the anchor is the most sensible "middle" we have — it
+   is the pole of inaccessibility, so it is inside even for awkward shapes. */
+let anchorAt = {};
 
 function setLabel(name, kind) {
   const t = labels[name];
@@ -212,9 +217,9 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_HIT]
+  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_NUDGE, L_HIT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
-  shapes = {}; labels = {}; statusOf = {}; localRings = {};
+  shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
 
   REGIONS.forEach(r => {
     localRings[r.name] = parseRings(r.d);
@@ -257,6 +262,7 @@ function compose() {
     const lx = r.anchor[0] * at.s + at.dx, ly = r.anchor[1] * at.s + at.dy;
     labels[r.name].setAttribute('x', lx);
     labels[r.name].setAttribute('y', ly + 4);
+    anchorAt[r.name] = { x: lx, y: ly };
     if (lensPaths[r.name]) lensPaths[r.name].setAttribute('d', shapes[r.name].getAttribute('d'));
 
     const rad = r.radius * at.s;

@@ -86,26 +86,6 @@ def paint_map(dr, geo, box, scale, frame=False):
         dr.rectangle([ox * scale, oy * scale,
                       (ox + L['W'] * s) * scale, (oy + L['H'] * s) * scale],
                      outline=(60, 48, 24), width=scale)
-    # the coastal haloes, widest first, exactly as the game layers them
-    BANDS = ((19, (18, 48, 79)), (13, (23, 60, 99)), (8, (29, 75, 121)), (3.4, (38, 96, 143)))
-    coast = json.loads((ROOT / 'data' / f'coast-{geo}.json').read_text())
-    for width, colour in BANDS:
-        for piece in coast:
-            at = L['place'][piece['p']]
-            if not at:
-                continue
-            for part in piece['d'].split('M'):
-                if not part:
-                    continue
-                line = []
-                for q in part.rstrip('Z').split('L'):
-                    a, b = q.split(',')
-                    line.append((((float(a) * at['s'] + at['dx']) * s + ox) * scale,
-                                 ((float(b) * at['s'] + at['dy']) * s + oy) * scale))
-                if len(line) >= 2:
-                    dr.line(line, fill=colour, width=max(1, int(width * s * scale)),
-                            joint='curve')
-
     ink = []
     for r in regions:
         for ring in r['rings']:

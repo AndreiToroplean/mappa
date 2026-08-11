@@ -1,10 +1,11 @@
 Coastline detection data
 ------------------------
+Not currently used by the game — see the water section of DESIGN.md and branch
+water-wip. Kept because src/build-coast.py needs it, and that script holds the
+recovered albersUsa transform.
+
 Land and lakes: Natural Earth 1:50m physical vectors, via
-https://github.com/nvkelso/natural-earth-vector - public domain.
+https://github.com/nvkelso/natural-earth-vector — public domain.
 
 US state outlines in lon/lat, used only to recover the projection us-atlas was
 built with: Natural Earth 1:50m admin_1 states/provinces, same source.
-
-Used by src/build-coast.py to decide which stretches of border have water on the
-far side. No water geometry ships in the game; only the coastal borders do.

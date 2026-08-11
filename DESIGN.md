@@ -442,6 +442,36 @@ did nothing. None of the above is confirmed to be its cause — the SVGPoint bug
 would break taps on the map, not buttons in the menu. The crash band exists so
 the next report says what actually threw.
 
+## Water: parked on branch `water-wip`
+
+Two attempts shipped and both were wrong, so visible water is off master. The
+work is preserved on `water-wip` (`git log water-wip`), which has both.
+
+What failed, so it is not tried a third time the same way:
+
+- **Filled ocean polygons.** Natural Earth's outlines are too coarse next to the
+  overseas départements, leaving visible facets; the per-panel clip boxes cut
+  hard rectangles at panel edges; and Hawaii's water covered Mexico.
+- **A halo along coastal borders**, found by stepping outward along each border
+  segment's normal. Better in principle — nothing to line up, nothing to clip —
+  and it worked on the US, but it was not verified on France before shipping and
+  is not right there.
+
+What is worth keeping from it, and why it stayed:
+
+`src/build-coast.py` holds the projection recovery. us-atlas ships coordinates
+already run through d3's albersUsa, so anything new that has to align with the US
+map needs that transform back. The script fits each of the three sub-projections
+against the stored geometry and asserts the residual — the lower 48 land at 2.8
+units on a 1000-unit map. Fitting on bounding boxes rather than vertices is
+load-bearing: the sources have different vertex counts, and pairing by index
+threw it out by 13 units. France needs no fit, since we own that projection and
+recompute its transform exactly.
+
+Also worth remembering: Natural Earth's ocean is one polygon covering the globe
+with continents punched out as holes, so a rasteriser that fills each ring
+independently makes everywhere water. Land is the honest primitive.
+
 ## Looking at the app
 
 `render.py` has two views and one map painter shared between them, so they can
@@ -474,63 +504,6 @@ The column is the width of the buttons and no more, and both are flush to the
 same right edge so their borders line up. The clue button is a fixed width for
 that reason too: its label runs from Clue to Another clue to No more clues, and
 the edge must not shuffle when it does.
-
-## Water
-
-Not a body of water: a halo just outside the shore. Filled ocean polygons were
-tried first and failed on their own terms — the low-resolution outlines left
-visible facets around the small islands, the clip boxes cut hard rectangles at
-panel edges, and Hawaii's water covered Mexico.
-
-What ships is a list of *coastal border stretches*, found at build time from the
-game's own geometry, so there is nothing to line up and nothing to cut. For each
-border segment, step outward along its normal: the first thing hit decides.
-Sibling land means an interior border, water means a coast, neither within reach
-means a foreign land border and is left unmarked. Following the normal is what
-lets the threshold be generous — 42 units — because anything found that way is
-genuinely across *this* border, which is why the coarse ocean data around the
-overseas islands stops mattering.
-
-Each stretch is stroked four times, wide to narrow, plus a dashed pass for wave
-hints, in a layer *under* the land. A stroke straddles its line and the land hides
-the inland half, so what remains is a seaward halo. No clipping, no bounding box,
-and neighbouring panels' haloes may overlap freely — which is why nothing is cut
-off at a panel edge any more.
-
-Two traps, both of which produced plausible-looking output:
-
-- Natural Earth's ocean is one polygon covering the globe with continents punched
-  out as holes. A rasteriser filling each ring independently turns that into
-  "everywhere is water", which marked the Canadian border as coastline. Land is
-  the honest primitive: water is what is left once the lakes are added back.
-- Masks are rasterised per panel rather than tested against polygons, because
-  point-in-polygon against a 1.6MB outline for every border segment of 101
-  régions is not a thing that finishes.
-
-Ocean and lakes are drawn under everything as one flat colour, in each panel's
-local units, and composed by the same transform as the land — so they cannot
-drift from the coastline they outline.
-
-Flat colour is what makes it tractable: overlapping water is still water, so each
-sub-projection is clipped to its own box and none of them has to agree with the
-others about where they meet. Foreign land is simply absent from the ocean
-polygon, so Canada and Mexico stay land-coloured instead of turning into sea.
-
-**The US projection was recovered, not assumed.** us-atlas ships coordinates
-already run through d3's albersUsa, so there was no way to put ocean data into
-that space without reproducing it. `build-water.py` fits each of the three
-sub-projections against the stored geometry and asserts the residual: the lower
-48 come out at 2.8 units on a 1000-unit map. Fitting on bounding boxes rather
-than vertices matters — the two sources have different vertex counts, and pairing
-them by index pairs unrelated points and throws the regression out by 13 units.
-
-France needs no fitting, because we own that projection: the transform is
-recomputed exactly as `build-fr.py` derived it. Knowing beats fitting.
-
-Caveat worth remembering: the Alaska and Hawaii fits are exact by construction,
-being one region each, so their bounding boxes match but their internal scale is
-unverified. Their surrounding water could be slightly off without the assertion
-catching it.
 
 ## One pipe for everything on the map
 

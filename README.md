@@ -13,11 +13,14 @@ no dependencies at runtime, no ads. It works offline.
 
 Entirely vibe coded, with Claude Opus 5. I have not read the code.
 
-I wanted a game I would actually want to play. Finding one on mobile turned out
-to be harder than having one built — what exists is buried in ads.
+Two reasons. One was wanting a geography drill I'd enjoy on my phone. I didn't
+survey the stores properly, so this is an impression rather than a finding: what I
+came across was ad-supported, which is a normal way to fund a game but not what I
+wanted for myself.
 
-And I wanted a feel for vibe coding. As an experienced developer I don't think
-it's the way forward for me, but I'd rather know where it fits my process than
+The other was to get first-hand experience of vibe coding and see whether there
+are places for it in my own workflow. I'm an experienced developer and not looking
+to change how I work; I'd rather find out where it's a match for a task than
 guess.
 
 ## Build

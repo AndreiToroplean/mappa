@@ -264,7 +264,6 @@ function refreshCopy() {
   document.querySelectorAll('.clearLabel').forEach(n => {
     n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label}`;
   });
-  document.querySelectorAll('.geoSub').forEach(n => { n.textContent = GEO.sub; });
   document.querySelectorAll('.geoNoun').forEach(n => { n.textContent = GEO.noun; });
   document.querySelectorAll('.geoSel').forEach(s => { s.value = GEO.id; });
   /* "Alpes-de-Haute-Provence" is 23 characters against "North Carolina"'s 14,

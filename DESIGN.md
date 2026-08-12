@@ -555,6 +555,12 @@ room, and four lines of prose was the cheapest thing on the card to give up.
 
 `MODE.rule` is gone with it rather than left unused.
 
+The tagline under the title is a fixed *A geography drill* for the same reason it
+is short: it used to be per-geography copy, so choosing France resized the line
+that sits directly above the switcher you had just used. A tagline that names the
+geography is also redundant with the switcher two lines below it saying the same
+thing. `GEO.sub` is deleted, not orphaned.
+
 ## The menu is sized by the window, not by its contents
 
 Every switch on the menu changed the size of the menu. The rules paragraph is a

@@ -346,5 +346,7 @@ post.
 
 ## Licence
 
-Map data is us-atlas, ISC licence, derived from US Census Bureau public domain
-boundary files. See `data/LICENSE-us-atlas`.
+Code and documentation are MIT; see `LICENSE`. Map and clue data are third-party
+and keep their own terms — us-atlas under ISC, the French geometry and clue facts
+under the Licence Ouverte with attribution to IGN and Etalab. `LICENSE` summarises
+which file came from where; `data/LICENSE-*` are the originals.

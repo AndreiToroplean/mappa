@@ -545,15 +545,33 @@ your time was the score, which stopped being true when errors and then clues
 entered the ranking — and stale instructions are worse than none, because they
 are read as authoritative.
 
-The other two were not needed either. Both are already taught in the ticker at the
-top of the first run, by `MODE.hint()`, where they arrive at the moment they are
-useful rather than in a paragraph nobody reads twice. So the menu keeps one
-sentence and drops the rest.
+The other two were not needed either. Press-and-hold is taught in the ticker at
+the top of the first run, where it arrives at the moment it is useful rather than
+in a paragraph nobody reads twice. What ends a run is on the header all run long,
+in the column that counts lives or misses by name. So the menu keeps one sentence
+and drops the rest.
 
 The space matters, not just the tidiness: in landscape the menu is fighting for
 room, and four lines of prose was the cheapest thing on the card to give up.
 
 `MODE.rule` is gone with it rather than left unused.
+
+The same pass took the rest of the mode-adapted prose out of the game. The empty
+leaderboard said *No runs yet* and then a sentence per mode explaining how that
+mode scores; it now says only the part that answers the question the blank space
+raises. The ticker's opening line dropped its per-mode tail for the same reason.
+`MODE.empty` and `MODE.hint` are both deleted.
+
+The rule this leaves: copy is adapted to the mode only where the mode changes what
+the words *mean*, not where it changes what they could explain. The header's
+Lives/Misses column qualifies — it is a live number and needs the right name. The
+clear-board confirmation qualifies — it names which of the two boards is about to
+be destroyed. A paragraph restating the scoring does not.
+
+Kept deliberately: the storage note under each board. It reads as the same kind of
+copy but is not — it varies by backend, not by mode, and it answers whether the
+scores you are looking at will still be there tomorrow. A board that silently
+forgets is worse than one that says up front that it will.
 
 The tagline under the title is a fixed *A geography drill* for the same reason it
 is short: it used to be per-geography copy, so choosing France resized the line

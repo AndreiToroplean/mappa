@@ -58,7 +58,11 @@ function resetRun() {
   el.progress.textContent = '0/' + TOTAL;
   el.target.textContent = 'Get ready';
   clock.textContent = '0:00.0';
-  ticker.textContent = MODE.hint();
+  /* The one thing the menu no longer says, delivered where it is about to be
+     useful. Not adapted to the mode: what the mode does to a miss is already on
+     the header, in the column that counts lives or misses by name. */
+  ticker.textContent = `Click the ${GEO.noun} named above, `
+    + 'or press and hold to zoom.';
   overlay.hidden = true;
   el.intro.hidden = true;
 }

@@ -172,7 +172,7 @@ function renderBoard(target, board, mine) {
             <span class="time">${fmt(r.t)}</span>
           </div>`;
       }).join('')
-    : `<div class="empty">${MODE.empty}</div>`;
+    : '<div class="empty">No runs yet.</div>';
 }
 
 async function finish(won, lastClick) {

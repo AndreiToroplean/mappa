@@ -7,7 +7,7 @@ modes: Trial, where three misses ends the run, and Practice, where nothing does
 and clues are there if you ask. One self-contained HTML file: no network calls,
 no dependencies at runtime, no ads. It works offline.
 
-**[Play](https://USER.github.io/fifty/)** · [beta](https://USER.github.io/fifty/beta/)
+**[Play](https://andreitoroplean.github.io/fifty/)** · [beta](https://andreitoroplean.github.io/fifty/beta/)
 
 ## How it was made
 

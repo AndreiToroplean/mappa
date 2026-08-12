@@ -32,5 +32,6 @@ were tried and thrown away.
 
 ## Licence
 
-Code is MIT. The map and clue data keep their own licences and require
-attribution; see `data/`.
+None yet, so the code is under default copyright — readable and forkable on
+GitHub, not reusable elsewhere. The map and clue data are third-party and keep
+their own terms; see `ATTRIBUTION.md`.

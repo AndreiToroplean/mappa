@@ -10,4 +10,9 @@ French region outlines (for the grouping clue):
 US state capitals:
   usa-states (npm), MIT.
 
+US census divisions:
+  https://github.com/cphalpert/census-regions (census.csv). The repository
+  states no licence. The classification is US Census Bureau work and so in the
+  public domain; only the convenience CSV is that repository's.
+
 Regenerate with src/build-clues.py; see its docstring for the fetch commands.

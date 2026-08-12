@@ -346,7 +346,8 @@ post.
 
 ## Licence
 
-Code and documentation are MIT; see `LICENSE`. Map and clue data are third-party
-and keep their own terms — us-atlas under ISC, the French geometry and clue facts
-under the Licence Ouverte with attribution to IGN and Etalab. `LICENSE` summarises
-which file came from where; `data/LICENSE-*` are the originals.
+The code has no licence yet; see `ATTRIBUTION.md`. Map and clue data are
+third-party and keep their own terms — us-atlas under ISC, the French geometry and
+clue facts under the Licence Ouverte with attribution to IGN and Etalab.
+`ATTRIBUTION.md` summarises which file came from where; `data/LICENSE-*` are the
+originals.

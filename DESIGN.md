@@ -1,7 +1,7 @@
 # Design notes
 
 Why this project is the way it is — the reasoning that is not recoverable from
-reading the code, and the mistakes that produced it. `README.md` covers what the
+reading the code, and the mistakes that produced it. `ARCHITECTURE.md` covers what the
 thing is and how to build it; this file covers why.
 
 Written and kept up to date across the sessions that built it. If you change a

@@ -113,8 +113,11 @@ def render(geo, vw, vh, scale=2):
     out = pathlib.Path(f'/tmp/render-{geo}-{vw}x{vh}.png')
     img.save(out)
     print(f'{out}')
+    panels = json.loads((ROOT / 'data' / f'{geo}.json').read_text())['panels']
+    pinned = sum(1 for p in panels if p.get('fix'))
     print(f'  map area {box[2]:.0f}x{box[3]:.0f}px  frame {L["W"]:.0f}x{L["H"]:.0f} units'
-          f'  insets {L.get("side", "none")}')
+          f'  insets {L.get("side", "none")}'
+          + (f', {pinned} fixed' if pinned else ''))
     print(f'  ink covers {cover*100:.0f}% of the map area')
     return out
 

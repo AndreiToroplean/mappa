@@ -164,16 +164,54 @@ def normalise(polys, span=PANEL_SPAN):
     return out, (x1 - x0) * s, (y1 - y0) * s
 
 
+def pin(polys, host_origin=(0.0, 0.0)):
+    """Move a panel to its own origin without rescaling it, for a *fixed* panel.
+
+    A fixed panel is one whose place in the frame was decided by a cartographer
+    rather than by the layout engine: Alaska and Hawaii sit where Albers USA puts
+    them, and that arrangement is worth keeping. It is still a separate panel,
+    because the game asks which panel two regions are on to decide whether a line
+    between them means anything on the ground.
+
+    So the geometry is shifted to a local origin like any other panel, but *not*
+    scaled: the returned `fix` maps it back into the host panel's coordinates as
+    p * s + (x, y), with s == 1. Keeping the scale at 1 is deliberate — the same
+    simplification tolerance then means the same thing as it did when this
+    geometry was part of the host, so splitting a panel out cannot move a single
+    point of it.
+    """
+    x0, y0, x1, y1 = bounds(polys)
+    # Shift by a whole tenth, the grid the coordinates are rounded to. An
+    # arbitrary offset would round twice — once into the host's space and again
+    # into the panel's — and move points by up to a tenth of a unit. On the grid,
+    # subtracting the offset and adding it back is exact, so a region's composed
+    # geometry is bit-for-bit what it was before the panel was split out.
+    dx = math.floor(x0 * 10) / 10
+    dy = math.floor(y0 * 10) / 10
+    out = [[[(x - dx, y - dy) for x, y in ring] for ring in poly]
+           for poly in polys]
+    return out, {'w': round(x1 - dx, 1), 'h': round(y1 - dy, 1),
+                 'fix': {'x': round(dx - host_origin[0], 1),
+                         'y': round(dy - host_origin[1], 1), 's': 1}}
+
+
 def emit(path, panels, regions, abbr, groups=None, meta=None):
     """Write a geography: panels in local coordinates, and the regions in them.
 
     No view box and no placement — see normalise(). The game composes these
     into one flat coordinate space once it knows the shape of the screen.
+
+    A panel carrying `fix` is placed relative to panel 0 instead of being laid
+    out; see pin(). Only laid-out panels need `km`, which is what the layout
+    scales them against.
     """
     regions.sort(key=lambda r: r['n'])
     assert set(abbr) == {r['n'] for r in regions}, 'abbreviations do not match'
     for i, panel in enumerate(panels):
         assert any(r['p'] == i for r in regions), f'panel {i} has no regions'
+        if i and not panel.get('fix'):
+            assert panel.get('km'), f'panel {i} is laid out and needs km'
+    assert not panels[0].get('fix'), 'panel 0 is the host and cannot be fixed'
     out = {'panels': panels, 'abbr': abbr, 'regions': regions}
     if groups:
         out['groups'] = groups
@@ -187,5 +225,7 @@ def emit(path, panels, regions, abbr, groups=None, meta=None):
           f'{len(panels)} panel(s), {pts:,} points)')
     for i, panel in enumerate(panels):
         n = sum(1 for r in regions if r['p'] == i)
+        how = ('fixed at %.0f,%.0f' % (panel['fix']['x'], panel['fix']['y'])
+               if panel.get('fix') else 'laid out')
         print(f"    panel {i} {panel['id']:<12} {panel['w']:.0f}x{panel['h']:.0f} "
-              f"local units, {n} region(s)")
+              f"local units, {n} region(s), {how}")

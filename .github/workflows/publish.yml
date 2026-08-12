@@ -1,0 +1,96 @@
+name: Build and publish
+
+# Two channels on one Pages site: a tag publishes stable at the root, a push to
+# the default branch publishes beta under /beta/. Both build from the commit that
+# triggered them, so beta is always what master says and stable is always what
+# the tag says.
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write        # the publish step pushes to gh-pages
+
+# Serialised rather than cancelled: tagging a commit that is already building
+# beta fires both, and the second must not abandon the first half-published.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # The harness gates everything below it. It covers resolve(), settle(),
+      # distanceTo(), the mode and board policies and the layout invariants for
+      # both geographies, and it needs no browser — so there is no reason for a
+      # build that fails it to reach either channel.
+      - name: Regression harness
+        run: python3 check.py
+
+      - name: Build
+        run: python3 src/make.py
+
+      - name: Check the artifact is self-contained
+        run: |
+          set -eu
+          # The whole point of the file is that it works offline. A stray src=
+          # or href= to somewhere else would only show up as a broken page.
+          if grep -Eo '(src|href)="[^"]*"' dist/fifty.html \
+             | grep -Ev '="(#|data:)' ; then
+            echo "::error::dist/fifty.html references something external"
+            exit 1
+          fi
+          echo "no external references"
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: fifty
+          path: dist/fifty.html
+
+      # Pushed to a gh-pages branch by hand rather than with actions/deploy-pages,
+      # because that action's artifact replaces the entire site: publishing beta
+      # would delete stable and the other way round. Writing into one directory of
+      # a branch leaves the other channel alone.
+      - name: Publish
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          if [ "$GITHUB_REF_TYPE" = tag ]; then DIR=.; else DIR=beta; fi
+          URL="https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY"
+
+          # gh-pages does not exist until the first publish
+          git clone --depth 1 --branch gh-pages "$URL" site 2>/dev/null || {
+            rm -rf site
+            mkdir site
+            git -C site init -q
+            git -C site checkout -q -b gh-pages
+          }
+
+          mkdir -p "site/$DIR"
+          cp dist/fifty.html "site/$DIR/index.html"
+          touch site/.nojekyll        # serve the files as they are
+
+          cd site
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --quiet --cached; then
+            echo "identical to what is already published; nothing to do"
+            exit 0
+          fi
+          git commit -q -m "Publish $GITHUB_REF_NAME to /$DIR"
+          git push -q "$URL" gh-pages
+          echo "published $GITHUB_REF_NAME to /$DIR"

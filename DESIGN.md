@@ -563,10 +563,10 @@ not; the board grows from a one-line note to six rows over a few sessions. All o
 it fed back into the card's height, so choosing a mode moved Start out from under
 the thumb that was reaching for it.
 
-The card's height is now `min(760px, 100%)` in portrait and the window less its
-padding in landscape. 760 is a little above the tallest the contents get, so a
-roomy screen shows no scrollbar; the cap keeps the card from becoming a full-
-height slab on a tall monitor.
+The card's height is now `min(660px, 100%)` in portrait and the window less its
+padding in landscape. 660 is a little above the tallest the contents get once the
+explanation is one line, so a roomy screen shows no scrollbar; the cap keeps the
+card from becoming a full-height slab on a tall monitor.
 
 The board is the only child allowed to flex, which is the point rather than a
 detail: it means there is exactly one place where variation can go, so nothing
@@ -579,8 +579,12 @@ every one of those numbers is a guess about how text wraps at a width you do not
 control, and it has to be re-guessed whenever the copy changes. A window-derived
 height needs no such guess.
 
-The end-of-run card has the same switchers and the same problem, and is
-untouched.
+The end-of-run card carries the same switchers and the same board, and gets the
+same treatment from the same rules — they are keyed on a `menu` class rather than
+on either card's id. That is not only for consistency: it is the same card in two
+states, and sharing one height means going menu -> run -> end card and back moves
+nothing on screen but the words. The pause and confirm cards are not menus and
+keep their content-sized height, which is right for a card holding two buttons.
 
 ## Looking at the map
 

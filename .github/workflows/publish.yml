@@ -25,6 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # make.py stamps the version from `git describe`, which needs the tags
+          # and the commits between them. The default shallow clone has neither,
+          # and would silently stamp a bare hash instead.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:

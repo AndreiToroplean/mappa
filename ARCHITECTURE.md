@@ -344,6 +344,18 @@ previous 31-state run but never competes with your 12-state one. Full runs are
 the exception: up to five coexist, ranked purely on time. Zero-state runs don't
 post.
 
+## Version stamp
+
+`make.py` stamps `git describe --tags --always --dirty` into the menu's tagline
+row. That distinguishes the two published channels without anything to keep in
+step by hand: on a tagged commit it is the tag exactly, so stable reads `v1.0.0`,
+and anywhere past one it gains a count and a hash, so beta reads
+`v1.0.0-3-g7de86d4`.
+
+`FIFTY_VERSION` overrides it, for building outside a checkout. With neither, it is
+`unreleased`. CI checks out with `fetch-depth: 0`, because a shallow clone has no
+tags and would stamp a bare hash without failing.
+
 ## Licence
 
 The code has no licence yet; see `ATTRIBUTION.md`. Map and clue data are

@@ -57,9 +57,6 @@ const MODES = {
     label: 'Trial',
     lives: 3,
     counter: 'Lives',       // what the header's third column is counting
-    hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
-              + 'Three misses ends the run.',
-    empty: 'No runs yet. Every run posts a time for however far you get.',
 
     /* Sub-full runs keep one entry per tally, so a best 31 replaces a previous
        31 without competing with a 12. Full runs are the exception: up to five
@@ -82,10 +79,6 @@ const MODES = {
     lives: Infinity,
     counter: 'Misses',
     clues: true,          // the clue ladder, arrow included
-    hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
-              + 'Misses are counted, not fatal.',
-    empty: 'No runs yet. Every run here finishes, so the score is how little '
-         + 'help it took.',
 
     /* Nothing can end a practice run early, so every entry is a completed set
        and the only axis left is misses. One entry per miss count: a cleaner

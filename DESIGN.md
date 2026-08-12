@@ -537,6 +537,33 @@ last time this was tried.
 
 Portrait is untouched.
 
+## The menu is sized by the window, not by its contents
+
+Every switch on the menu changed the size of the menu. The rules paragraph is a
+line longer in Practice than in Trial; `département` wraps where `state` does
+not; the board grows from a one-line note to six rows over a few sessions. All of
+it fed back into the card's height, so choosing a mode moved Start out from under
+the thumb that was reaching for it.
+
+The card's height is now `min(760px, 100%)` in portrait and the window less its
+padding in landscape. 760 is a little above the tallest the contents get, so a
+roomy screen shows no scrollbar; the cap keeps the card from becoming a full-
+height slab on a tall monitor.
+
+The board is the only child allowed to flex, which is the point rather than a
+detail: it means there is exactly one place where variation can go, so nothing
+above it can move no matter what changes below. When it runs out of room it
+scrolls, with the scrollbar hidden, matching what the landscape card already did.
+
+Deliberately not done: reserving a fixed height for each varying piece — a
+min-height on the rules, another on the board. That pins the same things, but
+every one of those numbers is a guess about how text wraps at a width you do not
+control, and it has to be re-guessed whenever the copy changes. A window-derived
+height needs no such guess.
+
+The end-of-run card has the same switchers and the same problem, and is
+untouched.
+
 ## Looking at the map
 
 `render.py <geo> <width> <height>` rasterises a geography exactly as the game

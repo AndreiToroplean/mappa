@@ -143,6 +143,12 @@ Layout is pinned: header and footer have fixed heights, stat columns have
 reserved widths, and the prompt ellipsises rather than wraps. Any of these
 flexing would resize the map mid-run.
 
+The main menu is pinned the same way, for the same reason. Its height comes from
+the window — `min(760px, 100%)`, or the full height less the padding in
+landscape — rather than from its contents, which change size whenever you touch
+the mode or geography switcher. The leaderboard is the only part that flexes, so
+it absorbs all of the variation and scrolls if the window is too short.
+
 Under 600px the header stacks into two rows — the state name on its own
 full-width line, the three stats beneath it — because one 360px row could not
 hold a long name and three stat columns at once, and the name was the thing

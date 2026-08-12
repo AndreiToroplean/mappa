@@ -206,6 +206,26 @@
     color:var(--muted);margin-top:12px;line-height:1.45}
   .storenote.warn{color:var(--amber)}
 
+  /* The menu's height comes from the window, not from what is in it. Almost
+     everything on the card changes size: the rules paragraph runs a line longer
+     in Practice, 'département' wraps where 'state' does not, and the board goes
+     from a one-line note to six rows as you play. Every one of those used to
+     resize the card, so picking a mode or a geography made the whole panel jump
+     — and jump under a thumb that is already on its way to Start.
+
+     The board is the one part allowed to flex, so all of that variation is
+     absorbed in a single place and nothing above it ever moves. It scrolls when
+     the window is too short to hold the rows, which is the same trade the
+     landscape card already makes. */
+  #intro .card{height:min(760px, 100%);display:flex;flex-direction:column}
+  #intro .card > *{flex:none}
+  #intro .card > .board{flex:1 1 auto;min-height:0;
+    display:flex;flex-direction:column}
+  #intro .board > .bhead,#intro .board > .storenote{flex:none}
+  #intro #introBoard{flex:1 1 auto;min-height:0;
+    overflow-y:auto;scrollbar-width:none}
+  #intro #introBoard::-webkit-scrollbar{display:none}
+
   /* Press-and-hold magnifier. Never in hit testing itself — aiming is done
      against the real map underneath, so the disc can float over the finger
      without ever intercepting what it is pointing at. */
@@ -398,6 +418,11 @@
     /* the pause and confirm cards are short already, and read better as one
        column */
     .card.narrow{display:block;max-width:340px}
+    /* The same rule in landscape, but the card stays a grid: the height is the
+       window's, and the board column takes the slack. Restated here because the
+       portrait rule is more specific than the grid one above it. */
+    #intro .card{display:grid;height:calc(100% - 24px)}
+    #intro .card > .board{display:flex;flex-direction:column;min-height:0}
   }
 
   /* Narrow phones. 'North Carolina' and 'New Hampshire' are the widest

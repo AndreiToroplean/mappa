@@ -151,7 +151,12 @@
       linear-gradient(135deg,var(--muted) 50%,transparent 50%);
     background-position:calc(100% - 17px) 19px, calc(100% - 12px) 19px;
     background-size:5px 5px, 5px 5px;background-repeat:no-repeat}
-  .geoSel:focus-visible{outline:2px solid var(--foundline);outline-offset:2px}
+  /* No focus ring on the select. Chrome counts a click on a <select> as
+     focus-visible, so choosing a geography with a mouse left a green ring around
+     the control afterwards — reading as an error or a pending state on a
+     dropdown that had just done its job. The buttons keep theirs, where a click
+     is not treated the same way. */
+  .geoSel:focus-visible{outline:none}
   .modes{display:flex;gap:8px;margin:0 0 20px}
   /* A real row rather than an absolutely-positioned button: the title takes the
      space it needs and the icon sits at the end of the same line. Positioning it

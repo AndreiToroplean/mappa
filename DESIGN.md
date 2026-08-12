@@ -537,6 +537,24 @@ last time this was tried.
 
 Portrait is untouched.
 
+## The menu says one thing
+
+The menu used to explain three: what you do, that press-and-hold opens a
+magnifier, and what ended a run. The last of those had gone stale — it still said
+your time was the score, which stopped being true when errors and then clues
+entered the ranking — and stale instructions are worse than none, because they
+are read as authoritative.
+
+The other two were not needed either. Both are already taught in the ticker at the
+top of the first run, by `MODE.hint()`, where they arrive at the moment they are
+useful rather than in a paragraph nobody reads twice. So the menu keeps one
+sentence and drops the rest.
+
+The space matters, not just the tidiness: in landscape the menu is fighting for
+room, and four lines of prose was the cheapest thing on the card to give up.
+
+`MODE.rule` is gone with it rather than left unused.
+
 ## The menu is sized by the window, not by its contents
 
 Every switch on the menu changed the size of the menu. The rules paragraph is a

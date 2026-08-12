@@ -59,7 +59,6 @@ const MODES = {
     label: 'Trial',
     lives: 3,
     counter: 'Lives',       // what the header's third column is counting
-    rule: 'Three misses ends the run. Your time is the score.',
     hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
               + 'Three misses ends the run.',
     empty: 'No runs yet. Every run posts a time for however far you get.',
@@ -85,7 +84,6 @@ const MODES = {
     lives: Infinity,
     counter: 'Misses',
     clues: true,          // the clue ladder, arrow included
-    rule: 'No limit on misses, and clues on request. Least help wins, then quickest.',
     hint: () => `Click the ${GEO.noun} named above, or press and hold to zoom. `
               + 'Misses are counted, not fatal.',
     empty: 'No runs yet. Every run here finishes, so the score is how little '

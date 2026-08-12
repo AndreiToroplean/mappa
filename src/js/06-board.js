@@ -242,7 +242,7 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape' && !confirmBox.hidden) confirmBox.hidden = true;
 });
 
-/* Switching mode swaps the rules copy and the board, and is available from
+/* Switching mode swaps the board and the selected button, and is available from
    both cards so a run can be followed by a different kind of run without a
    reload. */
 async function setMode(id) {
@@ -261,7 +261,6 @@ function refreshCopy() {
   // so on a fresh load no button looked selected at all.
   document.querySelectorAll('.modeBtn').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === MODE.id));
-  document.querySelectorAll('.modeRule').forEach(n => { n.textContent = MODE.rule; });
   document.querySelectorAll('.clearLabel').forEach(n => {
     n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label}`;
   });

@@ -5,7 +5,7 @@ Needs package/states-albers-10m.json:
     npm pack us-atlas@3 && tar xzf us-atlas-3.0.1.tgz
 """
 import json
-from geo import ROOT, region, emit, normalise, bounds, simplify
+from geo import ROOT, region, emit, normalise, pin, bounds, simplify
 
 ABBR = {
     'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR',
@@ -42,10 +42,17 @@ def ring_pts(idxs):
         out.extend(a[1:] if out else a)
     return out
 
-# One panel. Albers USA already composites Alaska and Hawaii into the frame at
-# fixed positions, and that arrangement is worth keeping — so the US has a
-# mainland panel and no insets. A geography can do either: bake its insets into
-# one panel, or hand them over and let the layout place them.
+# Three panels, two of them fixed. Albers USA already composites Alaska and
+# Hawaii into the frame, and that arrangement is worth keeping — so unlike
+# France's, these insets are not handed to the layout engine; they are pinned
+# where the projection put them (see pin() and the `fix` field).
+#
+# They are still separate panels, and that is the point of doing this at all.
+# The game asks which panel two regions are on before drawing a line between
+# them, and with everything on one panel it would happily point from Texas to
+# Hawaii — a direction that is true of the picture and false of the world.
+INSETS = {'Alaska': 'alaska', 'Hawaii': 'hawaii'}
+
 polys_by_name, order = {}, []
 for g in d['objects']['states']['geometries']:
     name = g['properties']['name']
@@ -55,14 +62,26 @@ for g in d['objects']['states']['geometries']:
     polys_by_name[name] = [[ring_pts(r) for r in poly] for poly in raw]
     order.append(name)
 
+# Normalised over every state together, so the frame is the whole composited
+# picture and the fixed insets sit inside it exactly as before. Splitting them
+# out afterwards moves nothing: the transform is shared, and pin() does not
+# rescale.
 flat = [poly for name in order for poly in polys_by_name[name]]
 placed, pw, ph = normalise(flat)
-i = 0
-regions = []
+by_name, i = {}, 0
 for name in order:
     n = len(polys_by_name[name])
-    regions.append(region(name, placed[i:i + n], panel=0))
+    by_name[name] = placed[i:i + n]
     i += n
+
+panels = [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1), 'km': 4600}]
+regions = [region(name, by_name[name], panel=0)
+           for name in order if name not in INSETS]
+
+for name, pid in INSETS.items():
+    local, box = pin(by_name[name])
+    panels.append({'id': pid, **box})
+    regions.append(region(name, local, panel=len(panels) - 1))
 
 # --- grouping outlines, dissolved exactly ---------------------------------
 # TopoJSON neighbours share arc indices, so the outline of a set of states is
@@ -104,7 +123,6 @@ for gname, uses in arc_use.items():
     groups[gname] = {'p': 0, 'd': ''.join(parts)}
 assert len(groups) == 9, f'expected 9 census divisions, got {len(groups)}'
 
-emit('us.json', [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1),
-                  'km': 4600}],
+emit('us.json', panels,
      regions, ABBR, groups=groups,
      meta={'source': 'us-atlas v3.0.1 (ISC), US Census Bureau boundaries'})

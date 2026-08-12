@@ -392,6 +392,44 @@ them, and took a phone from 82% to 90% ink coverage.
 
 Five insets, five candidate widths: cheap enough to just try them all.
 
+## Fixed insets, and the arrow that lied
+
+The US shipped as one panel, because Albers USA had already composited Alaska and
+Hawaii into the frame and there was nothing left to place. That was true of the
+picture and wrong as a model, and the clue arrow is where it showed: asked for
+Hawaii, a miss on Texas drew an arrow pointing down, because on one panel every
+region is the same landmass and `canNudge` had nothing to refuse. Down is where
+Hawaii is on the page. It is not where Hawaii is.
+
+The fix is not a special case in the arrow. It is to stop lying in the data: the
+US now ships three panels, and Alaska and Hawaii are their own. What they are not
+is *laid out* — the projection already chose their positions and those positions
+are worth keeping — so a panel may now carry `fix`, a place in panel 0's own units.
+Fixed panels ride the mainland's transform, so the arrangement survives every
+screen shape, and the packer never sees them.
+
+Their space needs no reserving because panel 0's box is the whole composited frame
+rather than the lower 48's ink. That is what it already was, which is why splitting
+the panels out changed nothing on screen.
+
+Two details that make it exact rather than nearly exact:
+
+`pin()` shifts geometry to its own origin but does **not** rescale it, unlike
+`normalise()`. Rescaling would change what the simplification tolerance means, and
+the panel would come out with different points than it had as part of its host. At
+scale 1 the tolerance is unchanged.
+
+The shift is rounded to a whole tenth, the grid the coordinates themselves are
+stored on. An arbitrary offset would round twice — once into the host's space, once
+into the panel's — and move points by up to a tenth of a unit. On the grid,
+subtracting the offset and adding it back is exact. Verified: composed coordinates
+are identical to the single-panel build at all nine test aspect ratios, to the last
+bit.
+
+The harness names the pairs it expects apart — Hawaii and Texas, Guyane and Nord —
+rather than deriving them from the panels. Deriving them would make the test agree
+with whatever the data says, which is exactly the thing that was wrong.
+
 ## Inset scale
 
 Insets are drawn at the mainland's scale — equal kilometres per composed unit —

@@ -27,9 +27,15 @@ their own local coordinates — a mainland, plus one inset per piece that sits
 apart from it — and the arrangement is chosen at run time from the shape of the
 space available.
 
-A geography may also bake its insets in and ship a single panel, which is what
-the US does: Albers USA already composites Alaska and Hawaii where they belong,
-and that arrangement is worth keeping.
+An inset may be **fixed** instead of laid out, which is what the US does. Albers
+USA already composites Alaska and Hawaii where they belong, and that arrangement
+is worth keeping — so those two panels carry a `fix` giving their place in the
+mainland's own units, ride whatever transform the mainland gets, and are invisible
+to the packer. Their space is reserved by the mainland panel's box being the whole
+composited frame, so fitting the mainland fits them too.
+
+They are separate panels rather than part of the mainland because the game asks
+which panel two regions are on before drawing a line between them.
 
 `chooseLayout` scores a handful of candidate arrangements — the inset block
 below the mainland or beside it, in every rows-by-columns shape — and takes the
@@ -41,7 +47,8 @@ That last part matters: composing back to a flat space means nothing downstream
 knows panels exist. Hit testing, `borders`, distances and the snap threshold are
 the same code they were when the build did the placing.
 
-France's five overseas départements each get their own panel, drawn at the
+France's five overseas départements are laid out rather than fixed, and each gets
+its own panel, drawn at the
 mainland's scale and then magnified only as far as they must be to stay
 hittable, capped at 3x. Albers USA does the same thing in reverse — measured
 against known areas it draws Alaska at 0.33 and Hawaii at 0.77 of true scale —

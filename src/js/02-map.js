@@ -180,14 +180,44 @@ function tryScale(s, W, H, main, insets, below) {
   return { s, scales, sizes, packed, below };
 }
 
+/* A panel carrying `fix` is not laid out. Its place is given relative to panel
+   0, in panel 0's own units, so it rides whatever transform the mainland gets
+   and the arrangement a cartographer chose survives every screen shape.
+
+   Alaska and Hawaii are the case this exists for. Albers USA composites them
+   into the frame at positions worth keeping, so they are pinned rather than
+   packed — but they are still panels, and that is the point: the game asks which
+   panel two regions are on before drawing a line between them, and on one panel
+   it would point from Texas to Hawaii, a direction true of the picture and false
+   of the world.
+
+   Fixed panels are therefore invisible to the packer, and their space is
+   reserved the only way it can be: panel 0's box is the whole composited frame,
+   so fitting the mainland fits them too. */
+const isFixed = p => !!p.fix;
+
+function placeFixed(place, panels) {
+  const m = place[0];
+  panels.forEach((p, i) => {
+    if (!isFixed(p)) return;
+    place[i] = { s: m.s * p.fix.s, dx: m.dx + p.fix.x * m.s,
+                 dy: m.dy + p.fix.y * m.s };
+  });
+  return place;
+}
+
 function chooseLayout(aspect, panels) {
   const W = aspect >= 1 ? SHORT * aspect : SHORT;
   const H = aspect >= 1 ? SHORT : SHORT / aspect;
-  const main = panels[0], insets = panels.slice(1);
+  const main = panels[0];
+  // indices are kept, because `place` is indexed by panel
+  const loose = panels.map((p, i) => i).filter(i => i && !isFixed(panels[i]));
+  const insets = loose.map(i => panels[i]);
 
   if (!insets.length) {
     const s = Math.min(W / main.w, H / main.h);
-    return { W, H, place: [{ s, dx: (W - main.w * s) / 2, dy: (H - main.h * s) / 2 }] };
+    const place = [{ s, dx: (W - main.w * s) / 2, dy: (H - main.h * s) / 2 }];
+    return { W, H, place: placeFixed(place, panels) };
   }
 
   // Largest mainland scale that still leaves room for the insets. Their size
@@ -202,7 +232,10 @@ function chooseLayout(aspect, panels) {
     }
     if (found && (!best || found.s > best.s)) best = found;
   }
-  if (!best) return { W, H, place: panels.map(() => ({ s: 0.1, dx: 0, dy: 0 })) };
+  if (!best) {
+    const place = panels.map(() => ({ s: 0.1, dx: 0, dy: 0 }));
+    return { W, H, place: placeFixed(place, panels) };
+  }
 
   const { s, scales, sizes, packed, below } = best;
   const mw = main.w * s, mh = main.h * s;
@@ -215,18 +248,18 @@ function chooseLayout(aspect, panels) {
   if (below) {
     place.push({ s, dx: (W - mw) / 2, dy: start });
     const y0 = start + mh + GAP;
-    insets.forEach((p, i) => {
-      place[i + 1] = { s: scales[i], dx: slack + packed.at[i].along,
-                       dy: y0 + packed.at[i].depth };
+    loose.forEach((pi, i) => {
+      place[pi] = { s: scales[i], dx: slack + packed.at[i].along,
+                    dy: y0 + packed.at[i].depth };
     });
   } else {
     place.push({ s, dx: start + packed.total + GAP, dy: (H - mh) / 2 });
-    insets.forEach((p, i) => {
-      place[i + 1] = { s: scales[i], dx: start + packed.at[i].depth,
-                       dy: slack + packed.at[i].along };
+    loose.forEach((pi, i) => {
+      place[pi] = { s: scales[i], dx: start + packed.at[i].depth,
+                    dy: slack + packed.at[i].along };
     });
   }
-  return { W, H, place, side: below ? 'below' : 'left' };
+  return { W, H, place: placeFixed(place, panels), side: below ? 'below' : 'left' };
 }
 
 /* ---- composing ----------------------------------------------------------

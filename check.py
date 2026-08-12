@@ -235,9 +235,6 @@ for geo in GEOS:
             bad += 1
             print(f'  FAIL {geo} aspect {aspect}: ink {min(xs):.0f}..{max(xs):.0f} x '
                   f'{min(ys):.0f}..{max(ys):.0f} outside frame {L["W"]:.0f}x{L["H"]:.0f}')
-        boxes = []
-        for i in range(len(d['panels'])):
-            px = [x for r, x in zip(regs, xs) if False]
         # panel boxes, for overlap
         per = {}
         for r in regs:
@@ -249,13 +246,33 @@ for geo in GEOS:
                     bb = per.setdefault(r['p'], [a, b, a, b])
                     bb[0] = min(bb[0], a); bb[1] = min(bb[1], b)
                     bb[2] = max(bb[2], a); bb[3] = max(bb[3], b)
-        keys = sorted(per)
+        # Fixed panels are exempt: they sit inside panel 0's box on purpose, in
+        # space the projection reserved for them, so their ink boxes overlap the
+        # mainland's while the ink itself does not. The invariant that matters
+        # for them is checked separately below.
+        keys = sorted(k for k in per if not d['panels'][k].get('fix'))
         for i in range(len(keys)):
             for j in range(i + 1, len(keys)):
                 x0, y0, x1, y1 = per[keys[i]]; a0, b0, a1, b1 = per[keys[j]]
                 if not (x1 <= a0 or a1 <= x0 or y1 <= b0 or b1 <= y0):
                     bad += 1
                     print(f'  FAIL {geo} aspect {aspect}: panels {keys[i]} and {keys[j]} overlap')
+
+        # A fixed panel must land exactly where panel 0's transform puts it —
+        # that is the whole promise of `fix`, and the thing that would break if
+        # the packer ever started seeing these panels.
+        m = L['place'][0]
+        for k, panel in enumerate(d['panels']):
+            if not panel.get('fix'):
+                continue
+            f = panel['fix']
+            want = (m['s'] * f['s'], m['dx'] + f['x'] * m['s'], m['dy'] + f['y'] * m['s'])
+            got = L['place'][k]
+            if max(abs(want[0] - got['s']), abs(want[1] - got['dx']),
+                   abs(want[2] - got['dy'])) > 1e-9:
+                bad += 1
+                print(f'  FAIL {geo} aspect {aspect}: fixed panel {k} placed at '
+                      f'{got} not {want}')
 print(f'  {"FAILED" if bad else "all panels inside the frame and non-overlapping, "
       f"{len(GEOS) * 9} layouts"}')
 fails += 1 if bad else 0
@@ -321,6 +338,93 @@ console.log('settle:  ' + (CASES.length - fail) + '/' + CASES.length + ' pass');
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-settle.js'], capture_output=True, text=True)
+print(r.stdout.rstrip() or r.stderr)
+fails += r.returncode
+
+# --------------------------------------------------- the arrow across a gap
+# The bug this guards: with the US on a single panel, every region counted as one
+# landmass, so a miss on Texas when asked for Hawaii drew an arrow pointing down
+# — true of the picture, false of the world. Alaska and Hawaii are now fixed
+# panels of their own, and the rule has something to bite on.
+cel_src = (JS / '07-celebrate.js').read_text()
+can = cel_src[cel_src.index('function canNudge'):]
+can = can[:can.index('\n}\n') + 3]
+
+# Named rather than derived from the data: deriving the pairs would make the test
+# agree with whatever the panels happen to say, which is exactly the thing that
+# was wrong. These are geographic facts, and the data has to match them.
+APART = {
+    'us': [('Hawaii', 'Texas'), ('Alaska', 'Texas'), ('Alaska', 'Hawaii'),
+           ('Hawaii', 'California'), ('Alaska', 'Washington')],
+    'fr': [('Guadeloupe', 'Ain'), ('Guyane', 'Nord'), ('Mayotte', 'La Réunion'),
+           ('Martinique', 'Guadeloupe'), ('La Réunion', 'Paris')],
+}
+TOGETHER = {
+    'us': [('Texas', 'Oklahoma'), ('California', 'Maine')],
+    'fr': [('Ain', 'Nord'), ('Paris', 'Corse-du-Sud')],
+}
+
+bad_apart = 0
+for geo, pairs in APART.items():
+    d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+    panel = {r['n']: r['p'] for r in d['regions']}
+    for a_, b_ in pairs + TOGETHER[geo]:
+        want_same = (a_, b_) in TOGETHER[geo]
+        got_same = panel[a_] == panel[b_]
+        if got_same != want_same:
+            bad_apart += 1
+            print(f'  panels FAIL {geo}: {a_} and {b_} '
+                  + ('should share a panel' if want_same else 'share a panel'))
+n_apart = sum(len(v) for v in APART.values()) + sum(len(v) for v in TOGETHER.values())
+print(f'panels:  {n_apart - bad_apart}/{n_apart} pass')
+fails += 1 if bad_apart else 0
+
+CASES = []
+for geo in GEOS:
+    d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+    panel = {r['n']: r['p'] for r in d['regions']}
+    by_panel = {}
+    for n, p in panel.items():
+        by_panel.setdefault(p, []).append(n)
+    same = [tuple(sorted(names)[:2]) for names in by_panel.values()
+            if len(names) > 1]
+    across = []
+    keys = sorted(by_panel)
+    for i in range(len(keys)):
+        for j in range(i + 1, len(keys)):
+            across.append((sorted(by_panel[keys[i]])[0], sorted(by_panel[keys[j]])[0]))
+    CASES.append((geo, panel, same, across))
+
+pathlib.Path('/tmp/fifty-nudge.js').write_text(
+    'let panelOf = {}, anchorAt = {};\n' + can + """
+let fail = 0, n = 0;
+for (const [geo, panel, same, across] of CASES){
+  panelOf = panel;
+  anchorAt = {};
+  for (const k of Object.keys(panel)) anchorAt[k] = {x: 0, y: 0};
+  for (const [a, b] of same){
+    n++;
+    if (canNudge(a, b) !== true){
+      fail++; console.log(`  nudge FAIL ${geo}: ${a} -> ${b} same panel, refused`);
+    }
+  }
+  for (const [a, b] of across){
+    n++;
+    if (canNudge(a, b) !== false){
+      fail++; console.log(`  nudge FAIL ${geo}: ${a} -> ${b} across panels, allowed`);
+    }
+  }
+  // and with no anchor yet, nothing can be pointed at
+  anchorAt = {};
+  n++;
+  if (canNudge(same[0][0], same[0][1]) !== false){
+    fail++; console.log(`  nudge FAIL ${geo}: pointed with no anchors`);
+  }
+}
+console.log('nudge:   ' + (n - fail) + '/' + n + ' pass');
+process.exitCode = fail ? 1 : 0;
+""".replace('CASES', json.dumps(CASES)))
+r = subprocess.run(['node', '/tmp/fifty-nudge.js'], capture_output=True, text=True)
 print(r.stdout.rstrip() or r.stderr)
 fails += r.returncode
 

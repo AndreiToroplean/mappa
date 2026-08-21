@@ -98,6 +98,37 @@ function distanceTo(name, u) {
   return Math.sqrt(borderDist2(name, u));
 }
 
+/* What a miss cost, on the 0..100 scale where 100 is the full width of the
+   geography. See SCORINGS.drift for why the unit is not kilometres.
+
+   Measured from where the finger actually landed to the nearest point of the
+   region that was asked for, so a tap on the border of the right answer costs
+   almost nothing and one across the country costs almost everything. A tap that
+   the ordinary resolver would have accepted never reaches here at all — it is a
+   hit, and hits are free — which is what makes the two scorings agree about
+   what counts as knowing it.
+
+   Two regions on different panels have no distance worth measuring: the gap
+   between them is a decision the map made, not a fact about the world. That
+   costs FAR, more than the worst honest miss. */
+function driftCost(target, missed, at) {
+  const p = panelOf[target];
+  if (p !== panelOf[missed]) return FAR;
+
+  const place = layoutNow && layoutNow.place[p];
+  const panel = GEO.panels[p];
+  if (!place || !panel || !panel.span) return FAR;    // nothing to measure with
+
+  // the yardstick, carried through the same transform as the ink
+  const span = panel.span * place.s;
+  // Falling back to the label anchor keeps this defined for a pick with no
+  // point behind it; it is the region's own centre, so it reads as a miss from
+  // where the region is.
+  const u = at || anchorAt[missed];
+  if (!u || !span) return FAR;
+  return Math.min(FAR, 100 * distanceTo(target, u) / span);
+}
+
 function nearestSelectable(u) {
   let best = null, bestD = SNAP_UNITS * SNAP_UNITS;   // seeded at the cap
   for (let s = 0; s < REGION_NAMES.length; s++) {

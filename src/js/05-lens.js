@@ -62,7 +62,7 @@ function moveLens(x, y) {
     if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
     aim = name;
     if (name) lensPaths[name].classList.add('aim');
-    trail.push({ name: name, t0: now, t1: now });
+    trail.push({ name: name, t0: now, t1: now, u: u });
     // Deliberately never the state's name. Naming what you are hovering would
     // answer the only question the game asks. The amber fill already says
     // *which shape* is aimed, which is all the magnifier needs to promise.
@@ -76,7 +76,16 @@ function moveLens(x, y) {
    glass. Walking back from there, the first state rested on for DWELL_MS is
    the answer; if nothing was rested on, fall back to the last state touched
    before the guard window. */
+/* settle() answers "which region", settled() answers it with the moment it was
+   aimed at still attached — distance scoring needs to measure from where the
+   finger was when it meant this region, not from where it happened to be at
+   lift. Two names for one walk, rather than two walks. */
 function settle() {
+  const s = settled();
+  return s ? s.name : null;
+}
+
+function settled() {
   const now = Date.now();
   if (trail.length) trail[trail.length - 1].t1 = now;
   const cutoff = now - GUARD_MS;
@@ -84,24 +93,24 @@ function settle() {
   for (let i = trail.length - 1; i >= 0; i--) {
     const s = trail[i];
     if (s.t0 >= cutoff) continue;                       // wholly inside the guard
-    if (Math.min(s.t1, cutoff) - s.t0 >= DWELL_MS) return s.name;
-    if (fallback === undefined) fallback = s.name;
+    if (Math.min(s.t1, cutoff) - s.t0 >= DWELL_MS) return s;
+    if (fallback === undefined) fallback = s;
   }
   if (fallback !== undefined) return fallback;
-  return trail.length ? trail[trail.length - 1].name : null;
+  return trail.length ? trail[trail.length - 1] : null;
 }
 
 function closeLens(commit) {
   clearTimeout(holdTimer);
   holdTimer = null;
   if (!lensOn) return false;
-  const pick = commit ? settle() : null;
+  const pick = commit ? settled() : null;
   if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
   lensOn = false;
   lensBox.hidden = true;
   aim = null;
   trail = [];
-  if (pick) guess(pick);
+  if (pick && pick.name) guess(pick.name, pick.u);
   return true;
 }
 
@@ -144,6 +153,7 @@ svg.addEventListener('click', e => {
   // An enlarged hit circle still counts, but only for a state worth picking;
   // anything else goes through the shared resolver.
   const tapped = e.target.dataset && e.target.dataset.name;
-  guess(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY));
+  const at = userPoint(e.clientX, e.clientY);
+  guess(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY), at);
 });
 

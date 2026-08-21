@@ -341,6 +341,97 @@ r = subprocess.run(['node', '/tmp/fifty-settle.js'], capture_output=True, text=T
 print(r.stdout.rstrip() or r.stderr)
 fails += r.returncode
 
+# --------------------------------------------------- distance scoring
+# What a miss costs, on the 0..100 scale where 100 is the full width of the
+# geography. Checked against a reference that never touches the layout: the
+# score must not depend on the shape of the window, which is the one thing that
+# could silently go wrong when a yardstick is carried through a transform.
+drift_js = geo_src[geo_src.index('function driftCost'):geo_src.index('function nearestSelectable')]
+bad_drift = n_drift = 0
+for geo in GEOS:
+    d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+    names = [r['n'] for r in d['regions']]
+    rnd = random.Random(7)
+    pairs = [(rnd.choice(names), rnd.choice(names)) for _ in range(60)]
+
+    panel = {r['n']: r['p'] for r in d['regions']}
+    pts = {r['n']: [tuple(map(float, q.split(',')))
+                    for part in r['d'].split('M') if part
+                    for q in part.rstrip('Z').split('L')] for r in d['regions']}
+    anchor_at = {r['n']: tuple(r['l']) for r in d['regions']}
+
+    def ref(t, m):
+        """Nearest vertex rather than nearest edge, so it is an upper bound on
+        the real answer and cannot silently agree by sharing a bug."""
+        if panel[t] != panel[m]:
+            return 200.0
+        ax, ay = anchor_at[m]
+        near = min(math.hypot(px - ax, py - ay) for px, py in pts[t])
+        return min(200.0, 100 * near / d['panels'][panel[t]]['span'])
+
+    # two aspect ratios: the score must come out the same in both
+    for aspect in (0.6, 2.4):
+        js = (LAYOUT + '\nconst DATA = ' + json.dumps(d) + ';\n' + """
+const FAR = 200;
+const GEO = {panels: DATA.panels};
+const panelOf = {}, anchorAt = {}, rings = {};
+const layoutNow = chooseLayout(ASPECT, DATA.panels);
+for (const r of DATA.regions){
+  panelOf[r.n] = r.p;
+  const at = layoutNow.place[r.p];
+  anchorAt[r.n] = {x: r.l[0]*at.s + at.dx, y: r.l[1]*at.s + at.dy};
+  rings[r.n] = r.d.split('M').filter(Boolean).map(p =>
+    p.replace(/Z$/,'').split('L').map(q => q.split(',').map(Number))
+      .map(c => [c[0]*at.s + at.dx, c[1]*at.s + at.dy]));
+}
+const CAN_HIT = false;
+function seg(px,py,ax,ay,bx,by){let dx=bx-ax,dy=by-ay;
+  if(dx||dy){const t=((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy);
+  if(t>1){ax=bx;ay=by;}else if(t>0){ax+=dx*t;ay+=dy*t;}}
+  dx=px-ax;dy=py-ay;return dx*dx+dy*dy;}
+function borderDist2(n,u){let b=Infinity;
+  for(const ring of rings[n]) for(let i=0;i<ring.length;i++){
+    const a=ring[i], c=ring[(i+1)%ring.length];
+    b=Math.min(b, seg(u.x,u.y,a[0],a[1],c[0],c[1]));}
+  return b;}
+function distanceTo(n,u){return Math.sqrt(borderDist2(n,u));}
+""".replace('ASPECT', repr(aspect)) + drift_js + """
+const OUT = [];
+for (const pr of PAIRS) OUT.push(driftCost(pr[0], pr[1], anchorAt[pr[1]]));
+console.log(JSON.stringify(OUT));
+""".replace('PAIRS', json.dumps(pairs)))
+        pathlib.Path('/tmp/fifty-drift.js').write_text(js)
+        r = subprocess.run(['node', '/tmp/fifty-drift.js'], capture_output=True, text=True)
+        if r.returncode:
+            raise SystemExit(r.stderr)
+        got = json.loads(r.stdout)
+        if aspect == 0.6:
+            first = got
+        for g, (t, m) in zip(got, pairs):
+            n_drift += 1
+            if abs(g - ref(t, m)) > 0.5:
+                bad_drift += 1
+                print(f'  drift FAIL {geo} {m} -> {t}: {g:.2f} not {ref(t, m):.2f}')
+        # Not exact equality: the same ratio computed through two different
+        # transforms differs in the last bits of a double. A hundredth of a
+        # point is far below what is ever displayed.
+        drift_shift = max(abs(g - f) for g, f in zip(got, first))
+        if drift_shift > 0.01:
+            bad_drift += 1
+            print(f'  drift FAIL {geo}: score moved {drift_shift:.4f} '
+                  f'with the window shape')
+        n_drift += 1
+
+    # the scale has to mean something at both ends
+    same = [(t, m) for t, m in pairs if panel[t] == panel[m]]
+    n_drift += 2
+    if not any(ref(t, m) < 20 for t, m in same):
+        bad_drift += 1; print(f'  drift FAIL {geo}: nothing scores as near')
+    if not any(ref(t, m) > 50 for t, m in same):
+        bad_drift += 1; print(f'  drift FAIL {geo}: nothing scores as far')
+print(f'drift:   {n_drift - bad_drift}/{n_drift} pass')
+fails += 1 if bad_drift else 0
+
 # --------------------------------------------------- the arrow across a gap
 # The bug this guards: with the US on a single panel, every region counted as one
 # landmass, so a miss on Texas when asked for Hawaii drew an arrow pointing down
@@ -433,7 +524,9 @@ pathlib.Path('/tmp/fifty-modes.js').write_text(
     "let TOTAL = 50;\nlet GEO = {id:'us', all:'All fifty', noun:'state'};\n"
     + data_src[data_src.index('const MODES = {'):]
     + board_src[board_src.index('const LEGACY_US'):board_src.index('/* One key-value layer')]
-    + board_src[board_src.index('const errorsOf'):board_src.index('const addEntry')] + """
+    + board_src[board_src.index('const errorsOf'):board_src.index('const addEntry')]
+    + board_src[board_src.index('function missWords'):board_src.index('function rowParts')]
+    + """
 const addEntry = (board, entry) => MODE.insert(board, entry);
 let fail = 0;
 const eq = (l, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want);
@@ -447,7 +540,8 @@ eq('practice: one entry per miss count', rankBoard(pb.slice()).map(r=>[r.e,r.t/1
    [[0,900],[3,400],[7,250],[12,100]]);
 eq('practice: quicker replaces same count', pb.find(r=>r.e===7).t/1000, 250);
 eq('practice: misses may exceed the region count', addEntry([], {f:50,e:73,t:1,d:1}).board[0].e, 73);
-eq('practice: lives unbounded', Number.isFinite(MODES.practice.lives), false);
+eq('practice: uncapped', MODES.practice.capped, false);
+eq('practice: budget is infinite', budget(), Infinity);
 
 MODE = MODES.trial;
 let cb = [];
@@ -457,12 +551,39 @@ eq('trial: one entry per partial tally', cb.filter(r=>r.f===31).map(r=>r.t/1000)
 eq('trial: full runs by misses then time', rankBoard(cb.slice()).filter(r=>r.f===50).map(r=>r.e), [0,1,2]);
 eq('trial: zero-region run does not post', cb.some(r=>r.f===0), false);
 
-// every geography and mode gets its own board, and the US keys are the old ones
+// every geography, mode and scoring gets its own board, and counting keeps the
+// old keys so boards saved before this feature survive
 const keys = [];
-for (const g of ['us','fr']) for (const m of ['trial','practice']) {
-  GEO = {id:g}; MODE = MODES[m]; keys.push(boardKey());
-}
-eq('board keys', keys, ['fifty:board2','fifty:practice1','fifty:fr:trial','fifty:fr:practice']);
+for (const sc of ['count','drift'])
+  for (const g of ['us','fr']) for (const m of ['trial','practice']) {
+    GEO = {id:g}; MODE = MODES[m]; SCORING = SCORINGS[sc]; keys.push(boardKey());
+  }
+SCORING = SCORINGS.count; MODE = MODES.trial;
+eq('board keys unchanged for counting', keys.slice(0,4),
+   ['fifty:board2','fifty:practice1','fifty:fr:trial','fifty:fr:practice']);
+eq('distance boards are separate', keys.slice(4),
+   ['fifty:us:trial:drift','fifty:us:practice:drift',
+    'fifty:fr:trial:drift','fifty:fr:practice:drift']);
+
+// --- the scoring axis -----------------------------------------------------
+eq('a trial spends three misses', (MODE = MODES.trial, SCORING = SCORINGS.count, budget()), 3);
+eq('or one full map', (SCORING = SCORINGS.drift, budget()), 100);
+eq('a counted miss always costs one', SCORINGS.count.cost(), 1);
+
+// Distance dominates clues rather than adding to them: one miss can cost 90 and
+// a clue costs 1, so a sum would be the distance with noise on top.
+SCORING = SCORINGS.drift; MODE = MODES.practice;
+eq('distance outranks clues', rankBoard([
+  {f:50,e:40,c:0,t:100,d:1}, {f:50,e:5,c:9,t:900,d:2},
+]).map(r=>r.d), [2,1]);
+eq('clues break a distance tie', rankBoard([
+  {f:50,e:12,c:4,t:100,d:1}, {f:50,e:12,c:1,t:900,d:2},
+]).map(r=>r.d), [2,1]);
+eq('perfect reads as perfect', missWords(0), 'Perfect');
+eq('and a miss reads as a distance', missWords(37), 'Off by 37');
+SCORING = SCORINGS.count;
+eq('counting still reads as misses', missWords(2), '2 misses');
+SCORING = SCORINGS.count; MODE = MODES.practice;
 // clues count as help alongside misses, and bucket with them
 MODE = MODES.practice;
 eq('clues rank with misses', rankBoard([
@@ -476,8 +597,8 @@ eq('same misses and clues replaces on time', [bb.kept, bb.board.length, bb.board
 bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
-eq('board keys are all distinct', new Set(keys).size, 4);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '15/15 pass'));
+eq('board keys are all distinct', new Set(keys).size, 8);
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '25/25 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

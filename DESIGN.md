@@ -310,14 +310,28 @@ exactly. Only what happens after a miss differs.
 narrowing is the thing this scoring is trying to price: a second guess three
 regions closer would post a better distance than the first, and the number would
 then describe the search rather than the knowledge. So a wrong tap ends the turn.
-The answer is revealed in amber, a red line is drawn from where the finger landed
-to the nearest point of it carrying both the score and the real distance, and
-after two seconds the next region is named.
 
-The clock stops for that reveal. It is the game holding the screen, not the
-player thinking, and charging time for it would fine a miss twice. The wrongly
-tapped region goes back to open — it was never asked for, and leaving it red
-would mark the map with regions still to come.
+**But it interrupts nothing.** The first attempt held the screen for two seconds
+with the clock stopped. That was wrong twice over — it broke the rhythm the drill
+is built on, and counting mode had already settled the question: a miss is
+reported, not dwelt on. The next region is named in the same breath and
+everything the miss has to say happens alongside it. The name of what was hit
+flashes in the middle with the cost under it, the shape flashes red, the answer
+is revealed in amber, a line is drawn to it, and all of it fades on its own.
+
+**The wrongly tapped region keeps its status.** Marking it would take it out of
+play, and it may well be the region just named — the one thing a player must be
+able to do straight after a wrong tap is tap the same shape again and be right.
+So the red is a class with a timer, not a state, and it fades its *fill* back to
+open rather than its opacity, which would punch a hole in the map on the way out.
+
+**The cost goes under the flashed name, not on the arrow.** On the arrow it was
+small, set at whatever angle the arrow happened to lie, and often over the map's
+busiest part. Under the name it is a footnote to the one thing the eye is already
+on: *off by 1,850 km (+43 error points)*.
+
+**No arrow across a gap the map invented.** Same rule as the clue arrow, now
+named `sameLandmass()` and used by both.
 
 A consequence worth knowing: a distance run can reach the end of the queue having
 found half the regions, which a counting run never does. So the completed-run
@@ -348,9 +362,14 @@ Brest to Strasbourg at 885km, both within a few percent of the great-circle
 truth. Albers is equal-area rather than equidistant, so a few percent is the
 expected error, not a bug to chase.
 
-**A different landmass costs 200,** and reports no kilometres, because there is
-no honest number to report across a gap the map invented. Same panel test as the
-clue arrow.
+**A different landmass costs a flat 100** — the wrong inset, or the mainland when
+an inset was wanted — and reports no kilometres, because there is no honest
+number to report across a gap the map invented.
+
+It is not a ceiling. A real miss can cost more, since 100 is the width of the
+geography and its diagonal is longer. Getting the wrong landmass is a category
+error and should cost what a long miss costs, not what the worst conceivable one
+does.
 
 **Always whole.** Tenths of a percent of a continent are not something anyone can
 feel. But the running total is kept unrounded until it is shown or stored —
@@ -362,6 +381,19 @@ end early" with "at what", which are now `MODE.capped` and `SCORING.budget`.
 **Clues stop adding.** Under counting, misses and clues are both help and the sum
 is one sentence. Under distance a miss can cost 90 and a clue costs 1, so the sum
 would be the distance with rounding noise on top. Clues become the tie-break.
+
+**The board leads with how many were right,** in both modes, then error points,
+then clues, then time. A distance run can reach the end having found half, which
+is the first fact about it and the one that survives being read quickly.
+
+Considered and rejected: ranking on found *minus* clues. It makes forty right
+with five clues indistinguishable from thirty-five right with none, and those are
+not the same run — a clue does not undo a correct answer, it discounts one. Four
+ordered terms say that without pretending the units are interchangeable.
+
+Both modes therefore use the tally-based insert, not just Trial. Under counting,
+every practice run completes and bucketing on misses alone is right; under
+distance it would let twenty right replace forty right.
 
 **Old boards survive.** Counting keeps the unsuffixed keys, including the two
 legacy US ones; only distance boards take a suffix.

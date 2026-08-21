@@ -263,11 +263,15 @@ early. Scoring — Misses or Distance — says what a wrong tap costs.
 Counting charges 1 a miss and leaves the region on the table; Trial allows 3.
 
 Distance charges how far the tap was from the region asked for, on a scale where
-100 is the width of the geography; Trial allows 100. There is one tap per region:
-a wrong one reveals the answer in amber, draws a red line to the nearest point of
-it labelled with the score and the real distance, and moves on after two seconds
-with the clock stopped. A tap on a different landmass costs 200. A hit costs
-nothing under either scoring.
+100 is the width of the geography; Trial allows 100. There is one tap per region,
+but nothing pauses: the next region is named immediately while the miss reports
+itself alongside — the name of what was hit flashes with the cost under it, the
+shape flashes red for a moment without leaving play, the answer is revealed in
+amber, and a red line is drawn to it unless the two are on different panels. A
+tap on a different landmass costs a flat 100. A hit costs nothing under either
+scoring.
+
+Distance boards rank by regions found, then error points, then clues, then time.
 
 The scale needs no stored data. `normalise()` already makes each panel's longest
 side `PANEL_SPAN` local units, so that is the width by construction; the composed

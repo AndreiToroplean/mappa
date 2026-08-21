@@ -319,11 +319,18 @@ everything the miss has to say happens alongside it. The name of what was hit
 flashes in the middle with the cost under it, the shape flashes red, the answer
 is revealed in amber, a line is drawn to it, and all of it fades on its own.
 
-**The wrongly tapped region keeps its status.** Marking it would take it out of
-play, and it may well be the region just named — the one thing a player must be
-able to do straight after a wrong tap is tap the same shape again and be right.
-So the red is a class with a timer, not a state, and it fades its *fill* back to
-open rather than its opacity, which would punch a hole in the map on the way out.
+**The wrongly tapped region keeps its status,** and only its outline is marked.
+Marking it properly would take it out of play, and it may well be the region just
+named — the one thing a player must be able to do straight after a wrong tap is
+tap the same shape again and be right. So the red is a class with a timer.
+
+Outline rather than fill, because a filled shape is what every other mode uses to
+mean a state the region has *become*, and this one has become nothing. Filling it
+read as an error state that had been recorded.
+
+**One life for the whole report.** The flashed name, the outline and the arrow
+share `MISS_MS`. They are one statement about one tap, and it read as a bug when
+the arrow stayed behind on the next question.
 
 **The cost goes under the flashed name, not on the arrow.** On the arrow it was
 small, set at whatever angle the arrow happened to lie, and often over the map's
@@ -544,7 +551,19 @@ where the knowledge runs out — not which regions were wrong, which a drill can
 only tell you once, but how wrong, region by region, in one glance.
 
 The fills stay dark and the strokes carry the signal, so the thing still reads as
-a map rather than as a chart. Labels go light on a dark outline, since a scored
+a map rather than as a chart.
+
+**The ramp is not walked linearly.** A tap just outside a border scores 1 or 2,
+and on a straight ramp that is indistinguishable from a tap inside it — which
+loses the one distinction the scoring most wants to make, since landing inside is
+the whole game. So anything above zero starts a tenth of the way along: the
+remaining goodness, `100 - points`, is scaled by 0.9 before it is mapped, and only
+an exact zero keeps the full green. One error point comes out about 11% toward
+red.
+
+The gap is at the green end deliberately. Two bad answers being hard to tell apart
+costs nothing. A bad answer looking like a right one costs the reading of the
+whole map. Labels go light on a dark outline, since a scored
 region can be any colour on the ramp and the label cannot borrow either end's.
 
 `paintScore()` sets fill and stroke inline; `setStatus()` clears them on any other

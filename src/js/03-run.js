@@ -68,10 +68,7 @@ function resetRun() {
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
   errors = 0; found = 0; revealed = 0; running = false;
-  clearDrift();
-  clearTimeout(wrongTimer);
-  document.querySelectorAll('.wrongflash')
-    .forEach(n => n.classList.remove('wrongflash'));
+  clearMissMarks();
   document.body.classList.toggle('practice', MODE.id === 'practice');
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawCounter();
@@ -142,7 +139,7 @@ function next() {
    scoring has any use for it. It is optional because not every pick has one. */
 function guess(name, at) {
   if (!running || paused || !selectable(name)) return;
-  clearDrift();          // whatever the last miss drew has had its moment
+  clearMissMarks();      // whatever the last miss drew has had its moment
 
   if (name === current) {
     clearFlash();     // a red name left over from a miss would read as wrong
@@ -183,9 +180,9 @@ function guess(name, at) {
    The wrongly tapped region deliberately keeps its status. Marking it would take
    it out of play, and it may well be the region just named — the one thing a
    player must be able to do straight after a wrong tap is tap the same shape
-   again and be right. So the red is a class with a timer, not a state. */
-const WRONG_MS = 1600;
-let wrongTimer = null;
+   again and be right. So the red is a class with a timer, not a state — and only
+   its outline, since a filled shape is what every other mode uses to mean a
+   state the region is now *in*. See markMiss(). */
 
 function missByDistance(name, at) {
   const target = current;
@@ -196,37 +193,23 @@ function missByDistance(name, at) {
   drawCounter();
 
   const points = Math.round(cost);
-  flashMiss(name, km === null
-    ? `a different landmass  (+${points} error points)`
-    : `off by ${fmtKm(km)}  (+${points} error points)`);
-  flashWrong(name);
+  const cost_ = km === null ? `A different landmass (+${points} EPs)`
+                            : `Off by ${fmtKm(km)} (+${points} EPs)`;
+  flashMiss(name, cost_);
   paintScore(target, points);       // consumed: it will not be asked again
   revealed++;
   drawProgress();
   drawDrift(from, target, name);
+  markMiss(name);                   // outline, arrow and flash share one life
 
-  // Short: the flash in the middle of the screen has already said the rest, and
-  // a long line here ellipsised on a phone.
-  ticker.innerHTML = `<span class="no">${target}</span> · +${points}`
-    + (km === null ? '' : ` · ${fmtKm(km)}`);
+  /* What was tapped struck through, what was wanted after it, then the cost.
+     The strike-through does the work a sentence was doing before, and the line
+     is short enough not to ellipsise on a phone. */
+  ticker.innerHTML = `<s class="no">${name}</s> <b>${target}</b> · ${cost_}`;
 
   if (busted()) return finish(false, name);
   if (queue.length === 0) return finish(true, target);
   next();
-}
-
-/* Red for a moment, and not a status: see missByDistance. */
-function flashWrong(name) {
-  clearTimeout(wrongTimer);
-  document.querySelectorAll('.wrongflash')
-    .forEach(n => n.classList.remove('wrongflash'));
-  const node = shapes[name];
-  if (!node) return;
-  node.classList.add('wrongflash');
-  wrongTimer = setTimeout(() => {
-    // setStatus may have repainted it since; only ever remove the class
-    if (shapes[name]) shapes[name].classList.remove('wrongflash');
-  }, WRONG_MS);
 }
 
 /* Rounded the way a person would say it: no false precision at 3,000km, no

@@ -51,7 +51,24 @@ const STATUS = {
 /* Green at nothing, amber halfway, red at a full width. The fills stay dark
    enough for the map to read as a map, and the strokes carry the signal — a
    glance over a finished board shows where the knowledge runs out, which is the
-   thing this scoring exists to say. */
+   thing this scoring exists to say.
+
+   The ramp is not walked linearly. A tap just outside the border scores 1 or 2,
+   and on a straight ramp that is indistinguishable from a tap inside it — which
+   loses the one distinction the scoring most wants to make, since landing inside
+   is the whole game. So anything above zero starts a tenth of the way along:
+   the remaining goodness (100 - points) is scaled by 0.9 before it is mapped,
+   and only an exact zero keeps the full green.
+
+   The gap is at the *green* end deliberately. Two bad answers being hard to tell
+   apart costs nothing; a bad answer looking like a right one costs the reading
+   of the whole map. */
+const NEAR_GAP = 0.9;
+
+function effective(pts) {
+  if (pts <= 0) return 0;                       // inside the region: perfect
+  return 100 - (100 - Math.min(100, pts)) * NEAR_GAP;
+}
 const SCALE = [
   { at: 0,   fill: [29, 83, 72],   line: [79, 203, 164] },
   { at: 50,  fill: [122, 84, 24],  line: [255, 194, 75] },
@@ -64,7 +81,7 @@ function mix(a, b, t) {
 }
 
 function scoreColour(pts) {
-  const p = Math.max(0, Math.min(100, pts));
+  const p = Math.max(0, Math.min(100, effective(pts)));
   const hi = p <= SCALE[1].at ? 1 : 2, lo = hi - 1;
   const t = (p - SCALE[lo].at) / (SCALE[hi].at - SCALE[lo].at);
   return { fill: mix(SCALE[lo].fill, SCALE[hi].fill, t),

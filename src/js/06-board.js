@@ -221,7 +221,8 @@ async function finish(won, lastClick) {
     el.target.textContent = tally();
     el.target.classList.add('won');
     clock.classList.add('won');
-    pause = celebrate(spent() === 0 ? 'Perfect run' : tally());
+    pause = celebrate(!MODE.capped && spent() !== 0 ? 'Finished'
+                    : spent() === 0 ? 'Perfect run' : tally());
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';

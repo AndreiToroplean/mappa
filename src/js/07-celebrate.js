@@ -100,8 +100,16 @@ function confetti() {
 
 /* How long finish() should hold the map before the overlay. The celebration
    owns this number so the two can never disagree about it. */
+/* Confetti is for Trial, where finishing is an achievement that could have gone
+   the other way. In Practice nothing can end a run early, so every run ends this
+   way and a celebration for it congratulates you on having kept tapping — which
+   is the sort of praise that makes the real thing worth less. Practice still
+   gets the banner, because a run should visibly end; it just gets told plainly
+   that it is over.
+
+   The reduced-motion path already did exactly this, and for a related reason. */
 function celebrate(title) {
-  if (still.matches) {
+  if (still.matches || !MODE.capped) {
     fanfare.firstElementChild.textContent = title;
     fanfare.hidden = false;
     setTimeout(() => { fanfare.hidden = true; }, 900);

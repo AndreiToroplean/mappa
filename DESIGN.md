@@ -477,6 +477,19 @@ them, and took a phone from 82% to 90% ink coverage.
 
 Five insets, five candidate widths: cheap enough to just try them all.
 
+## No confetti in Practice
+
+Trial can go the other way, so finishing it is an achievement and the confetti
+means something. Practice cannot end early — every run ends this way — so
+celebrating it congratulates you on having kept tapping, and praise for the
+unavoidable makes the real thing worth less. Practice keeps the banner, because a
+run should visibly end; it just reads *Finished*.
+
+A perfect practice run still celebrates. That one *is* an achievement.
+
+The reduced-motion path already did exactly this, for a related reason, so the
+two share a branch.
+
 ## Fixed insets, and the arrow that lied
 
 The US shipped as one panel, because Albers USA had already composited Alaska and

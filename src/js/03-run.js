@@ -1,5 +1,5 @@
 // game state
-let queue, current, errors, found, t0, raf, running;
+let queue, current, errors, found, revealed, t0, raf, running;
 
 /* Errors are the thing that is counted; the cap is a rule about them. Tracking
    what is left directly would leave practice mode — no cap at all — with
@@ -16,6 +16,7 @@ const busted = () => MODE.capped && errors >= budget() - 1e-9;
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
 ['bar', 'promptLabel', 'target', 'lives', 'counterLabel', 'missCount', 'clue',
+ 'progressLabel',
  'pause', 'paused', 'resumeBtn', 'restartBtn', 'quitBtn',
  'progress', 'clock', 'ticker',
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
@@ -34,10 +35,20 @@ const fmt = ms => {
    anything reads faster as objects than as a number. Anything else is a number:
    misses taken, or distance spent — and in a capped run the cap is shown beside
    it, since a budget nobody can see is not a budget. */
+/* Counting asks how many you got; distance asks how far through you are, since
+   every region is resolved the moment it is named and "found" would only ever
+   climb by one a turn or not at all. Revealed is the honest reading of the same
+   column: what is now on the map. */
+function drawProgress() {
+  const drift = SCORING.id === 'drift';
+  el.progressLabel.textContent = drift ? 'Revealed' : 'Found';
+  el.progress.textContent = (drift ? revealed : found) + '/' + TOTAL;
+}
+
 function drawCounter() {
   const pips = SCORING.pips && MODE.capped;
   document.body.classList.toggle('numeric', !pips);
-  el.counterLabel.textContent = SCORING.id === 'drift' ? 'Off by'
+  el.counterLabel.textContent = SCORING.id === 'drift' ? 'Error points'
     : MODE.capped ? 'Lives' : 'Misses';
 
   if (!pips) {
@@ -56,7 +67,7 @@ function resetRun() {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
-  errors = 0; found = 0; running = false;
+  errors = 0; found = 0; revealed = 0; running = false;
   clearDrift();
   clearTimeout(wrongTimer);
   document.querySelectorAll('.wrongflash')
@@ -72,7 +83,7 @@ function resetRun() {
   el.target.classList.remove('lost', 'won');
   clock.classList.remove('lost', 'won');
   el.promptLabel.textContent = 'Find this ' + GEO.noun;
-  el.progress.textContent = '0/' + TOTAL;
+  drawProgress();
   el.target.textContent = 'Get ready';
   clock.textContent = '0:00.0';
   /* The one thing the menu no longer says, delivered where it is about to be
@@ -137,11 +148,13 @@ function guess(name, at) {
     clearFlash();     // a red name left over from a miss would read as wrong
     clearNudge();
     resetClues(false);
-    setStatus(name, 'found');
+    // Right is simply nothing off, so distance paints it on the same scale as
+    // everything else rather than giving it a status of its own.
+    if (SCORING.id === 'drift') paintScore(name, 0); else setStatus(name, 'found');
     // the turn is over: clear this turn's misses, they count again next time
     REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });
-    found++;
-    el.progress.textContent = found + '/' + TOTAL;
+    found++; revealed++;
+    drawProgress();
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
     if (queue.length === 0) return finish(true, name);
     next();
@@ -187,12 +200,15 @@ function missByDistance(name, at) {
     ? `a different landmass  (+${points} error points)`
     : `off by ${fmtKm(km)}  (+${points} error points)`);
   flashWrong(name);
-  setStatus(target, 'answer');      // consumed: it will not be asked again
+  paintScore(target, points);       // consumed: it will not be asked again
+  revealed++;
+  drawProgress();
   drawDrift(from, target, name);
 
-  ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>. `
-    + `It was <b>${target}</b>, <span class="no">+${points}</span>`
-    + (km === null ? ' — a different landmass.' : `, about ${fmtKm(km)}.`);
+  // Short: the flash in the middle of the screen has already said the rest, and
+  // a long line here ellipsised on a phone.
+  ticker.innerHTML = `<span class="no">${target}</span> · +${points}`
+    + (km === null ? '' : ` · ${fmtKm(km)}`);
 
   if (busted()) return finish(false, name);
   if (queue.length === 0) return finish(true, target);

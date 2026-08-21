@@ -143,7 +143,11 @@ const SCORINGS = {
     label: 'Distance',
     budget: 100,          // one full width of the geography
     pips: false,
-    insert: byTally,      // overrides the mode's, since a run can end unfinished
+    /* One entry per score, the way counting-practice keeps one per miss count.
+       Not the tally: a distance run is asked every region, so the tally is not
+       an axis anyone competes on. */
+    insert: (board, entry) => replaceBy(board, entry,
+      r => errorsOf(r) === errorsOf(entry) && cluesOf(r) === cluesOf(entry)),
     /* One tap per region. Guessing again after a miss is how you *narrow* an
        answer, and narrowing is exactly what this scoring is trying to price: a
        second guess three regions closer would post a better distance than the

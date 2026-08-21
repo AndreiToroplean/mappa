@@ -180,6 +180,7 @@ process.exitCode = (fail || dfail || afail) ? 1 : 0;
 SNAP = int(geo_src.split('const SNAP_UNITS =')[1].split(';')[0])
 map_src = (JS / '02-map.js').read_text()
 LAYOUT = map_src[map_src.index('const SHORT ='):map_src.index('/* ---- composing')]
+DIAM = map_src[map_src.index('function hull('):map_src.index('function measurePanels')]
 
 
 def layout_for(panels, aspect):
@@ -346,6 +347,22 @@ fails += r.returncode
 # geography. Checked against a reference that never touches the layout: the
 # score must not depend on the shape of the window, which is the one thing that
 # could silently go wrong when a yardstick is carried through a transform.
+def convex_hull(pts):
+    pts = sorted(set(pts))
+    if len(pts) < 3:
+        return pts
+    def cross(o, a_, b_):
+        return (a_[0]-o[0])*(b_[1]-o[1]) - (a_[1]-o[1])*(b_[0]-o[0])
+    def half(seq):
+        out = []
+        for q in seq:
+            while len(out) > 1 and cross(out[-2], out[-1], q) <= 0:
+                out.pop()
+            out.append(q)
+        return out[:-1]
+    return half(pts) + half(pts[::-1])
+
+
 drift_js = geo_src[geo_src.index('function driftFrom'):geo_src.index('function nearestSelectable')]
 bad_drift = n_drift = 0
 for geo in GEOS:
@@ -360,6 +377,14 @@ for geo in GEOS:
                     for q in part.rstrip('Z').split('L')] for r in d['regions']}
     anchor_at = {r['n']: tuple(r['l']) for r in d['regions']}
 
+    # Independent diameter: every pair on the hull, compared exhaustively. The
+    # game walks the hull with callipers; this does not, on purpose.
+    diam = {}
+    for i in range(len(d['panels'])):
+        pp = [q for r in d['regions'] if r['p'] == i for q in pts[r['n']]]
+        h = convex_hull(pp)
+        diam[i] = max(math.dist(a_, b_) for a_ in h for b_ in h) if len(h) > 1 else 0
+
     def ref(t, m):
         """Nearest vertex rather than nearest edge, so it is an upper bound on
         the real answer and cannot silently agree by sharing a bug."""
@@ -367,16 +392,27 @@ for geo in GEOS:
             return 200.0
         ax, ay = anchor_at[m]
         near = min(math.hypot(px - ax, py - ay) for px, py in pts[t])
-        # PANEL_SPAN: normalise() scaled every panel's longest side to 1000, so
-        # 1000 local units is the width of the geography by construction
-        return min(200.0, 100 * near / 1000.0)
+        return min(100.0, 100 * near / diam[panel[t]])
 
     # two aspect ratios: the score must come out the same in both
     for aspect in (0.6, 2.4):
-        js = (LAYOUT + '\nconst DATA = ' + json.dumps(d) + ';\n' + """
+        js = (LAYOUT + DIAM + '\nconst DATA = ' + json.dumps(d) + ';\n' + """
 const FAR = 200;
 const GEO = {panels: DATA.panels};
 const PANEL_SPAN = 1000;
+const panelDiam = DATA.panels.map((p, i) => {
+  const pts = [];
+  for (const r of DATA.regions){
+    if (r.p !== i) continue;
+    for (const part of r.d.split('M')){
+      if (!part) continue;
+      for (const q of part.replace(/Z$/,'').split('L')){
+        const c = q.split(','); pts.push([+c[0], +c[1]]);
+      }
+    }
+  }
+  return pts.length ? diameter(pts) : 0;
+});
 const panelOf = {}, anchorAt = {}, rings = {};
 const layoutNow = chooseLayout(ASPECT, DATA.panels);
 for (const r of DATA.regions){
@@ -432,6 +468,10 @@ console.log(JSON.stringify(OUT));
         bad_drift += 1; print(f'  drift FAIL {geo}: nothing scores as near')
     if not any(ref(t, m) > 50 for t, m in same):
         bad_drift += 1; print(f'  drift FAIL {geo}: nothing scores as far')
+    # the whole point of dividing by the diameter: the scale has an end
+    n_drift += 1
+    if max(ref(t, m) for t, m in same) > 100.0001:
+        bad_drift += 1; print(f'  drift FAIL {geo}: a miss scored over 100')
 print(f'drift:   {n_drift - bad_drift}/{n_drift} pass')
 fails += 1 if bad_drift else 0
 
@@ -587,16 +627,23 @@ eq('clues break a distance tie', rankBoard([
 eq('perfect reads as perfect', missWords(0), 'Perfect');
 eq('and a miss reads as error points', missWords(37), '37 pts');
 
-// A distance run can end unfinished in either mode, so both use the tally-based
-// insert: forty right and twenty right are different achievements, and bucketing
-// on points alone would let one replace the other.
+/* Distance ignores the tally completely: every run is asked every region, so how
+   many came out right is the same fact told coarsely. One entry per score. */
 SCORING = SCORINGS.drift; MODE = MODES.practice;
 let db = [];
-[[31,4],[42,7],[31,9],[20,1]].forEach(([f,e],i) => {
+[[31,4],[42,7],[31,9],[20,4]].forEach(([f,e],i) => {
   db = addEntry(db, {f:f,e:e,c:0,t:(i+1)*1000,d:i}).board; });
-eq('distance keeps one entry per tally', db.filter(r=>r.f===31).map(r=>r.e), [4]);
-eq('distance ranks by found before points, so 20 clean loses to 31 scruffy',
-   rankBoard(db.slice()).map(r=>r.f), [42,31,20]);
+eq('distance keeps one entry per score', db.map(r=>r.e).sort((x,y)=>x-y), [4,7,9]);
+eq('distance ranks on points alone, ignoring the tally',
+   rankBoard(db.slice()).map(r=>r.e), [4,7,9]);
+// the fourth run scored 4 as well, on 20 regions rather than 31, and slower:
+// same bucket, not an improvement, so the tally never comes into it
+eq('same score, slower, does not replace', db.find(r=>r.e===4).f, 31);
+eq('20 right at 4 points beats 42 right at 7',
+   rankBoard([{f:20,e:4,c:0,t:9000,d:1},{f:42,e:7,c:0,t:100,d:2}]).map(r=>r.d), [1,2]);
+eq('counting still ranks the tally first',
+   (SCORING = SCORINGS.count, rankBoard(
+     [{f:20,e:0,c:0,t:100,d:1},{f:42,e:7,c:0,t:900,d:2}]).map(r=>r.d)), [2,1]);
 SCORING = SCORINGS.count; MODE = MODES.practice;
 SCORING = SCORINGS.count;
 eq('counting still reads as misses', missWords(2), '2 misses');
@@ -615,7 +662,7 @@ bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
 eq('board keys are all distinct', new Set(keys).size, 8);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '27/27 pass'));
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '30/30 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

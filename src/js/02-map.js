@@ -41,7 +41,46 @@ const STATUS = {
   found:  { cls: 'state found',  layer: 'FOUND',  label: 'found',  lens: 'found' },
   missed: { cls: 'state miss',   layer: 'MISS',   label: 'wrong',  lens: 'miss' },
   answer: { cls: 'state reveal', layer: 'ANSWER', label: 'answer', lens: '' },
+  /* Distance scoring's single resting state. Every region ends up here, right or
+     wrong, and what separates them is the colour rather than the status — see
+     paintScore(). There is no "found" and no "missed" to distinguish, because
+     every region is attempted exactly once and the answer is always shown. */
+  scored: { cls: 'state scored', layer: 'FOUND', label: 'scored', lens: 'found' },
 };
+
+/* Green at nothing, amber halfway, red at a full width. The fills stay dark
+   enough for the map to read as a map, and the strokes carry the signal — a
+   glance over a finished board shows where the knowledge runs out, which is the
+   thing this scoring exists to say. */
+const SCALE = [
+  { at: 0,   fill: [29, 83, 72],   line: [79, 203, 164] },
+  { at: 50,  fill: [122, 84, 24],  line: [255, 194, 75] },
+  { at: 100, fill: [122, 38, 43],  line: [229, 72, 77] },
+];
+
+function mix(a, b, t) {
+  return '#' + [0, 1, 2].map(i =>
+    Math.round(a[i] + (b[i] - a[i]) * t).toString(16).padStart(2, '0')).join('');
+}
+
+function scoreColour(pts) {
+  const p = Math.max(0, Math.min(100, pts));
+  const hi = p <= SCALE[1].at ? 1 : 2, lo = hi - 1;
+  const t = (p - SCALE[lo].at) / (SCALE[hi].at - SCALE[lo].at);
+  return { fill: mix(SCALE[lo].fill, SCALE[hi].fill, t),
+           line: mix(SCALE[lo].line, SCALE[hi].line, t) };
+}
+
+function paintScore(name, pts) {
+  setStatus(name, 'scored');
+  const c = scoreColour(pts);
+  shapes[name].style.fill = c.fill;
+  shapes[name].style.stroke = c.line;
+  if (lensPaths[name]) {
+    lensPaths[name].style.fill = c.fill;
+    lensPaths[name].style.stroke = c.line;
+  }
+}
 const LAYERS = { FOUND: L_FOUND, MISS: L_MISS, ANSWER: L_ANSWER };
 
 let statusOf = {};     // region name -> key of STATUS
@@ -49,6 +88,14 @@ let statusOf = {};     // region name -> key of STATUS
 function setStatus(name, key) {
   const spec = STATUS[key];
   statusOf[name] = key;
+  if (key !== 'scored') {          // only paintScore() sets these
+    shapes[name].style.fill = '';
+    shapes[name].style.stroke = '';
+    if (lensPaths[name]) {
+      lensPaths[name].style.fill = '';
+      lensPaths[name].style.stroke = '';
+    }
+  }
   shapes[name].setAttribute('class', spec.cls);
   (spec.layer ? LAYERS[spec.layer] : L_BASE).appendChild(shapes[name]);
   setLabel(name, spec.label);
@@ -339,8 +386,73 @@ function buildMap() {
     labels[r.name] = t;
   });
 
+  measurePanels();       // the yardstick distance scoring divides by
+
   // whether this browser can hit-test a path's fill; needs a real path to ask
   CAN_HIT = typeof shapes[REGION_NAMES[0]].isPointInFill === 'function';
+}
+
+/* ---- how wide a panel really is ----------------------------------------
+   Distance scoring divides by this, so the number it divides by has to be the
+   largest distance that can exist between two points of the panel — otherwise a
+   long miss scores over 100 and the colour scale runs off its own end.
+
+   The bounding box is not that number. Its diagonal overstates a wide flat
+   country and its sides understate a diagonal one; France's ink spans 1000x931
+   local units but its true diameter is neither 1000 nor 1366.
+
+   So: convex hull, then rotating callipers. The two farthest points of a set are
+   always both on its hull, and on a convex polygon the farthest pair can be
+   walked in one pass rather than compared pairwise. About 9,000 points for the
+   US and 15,000 for France reduce to a hull of a few dozen, once per geography
+   load. */
+let panelDiam = [];
+
+function hull(pts) {
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cross = (o, a, b) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const half = list => {
+    const out = [];
+    for (const q of list) {
+      while (out.length > 1 && cross(out[out.length - 2], out[out.length - 1], q) <= 0)
+        out.pop();
+      out.push(q);
+    }
+    out.pop();
+    return out;
+  };
+  return half(p).concat(half(p.reverse()));
+}
+
+function diameter(pts) {
+  const h = hull(pts);
+  const n = h.length;
+  if (n < 2) return 0;
+  const d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
+  // callipers: for each edge, the farthest vertex only ever moves forward
+  let best = 0, j = 1;
+  for (let i = 0; i < n; i++) {
+    const k = (i + 1) % n;
+    while (d2(h[i], h[(j + 1) % n]) > d2(h[i], h[j]) ||
+           d2(h[k], h[(j + 1) % n]) > d2(h[k], h[j])) {
+      j = (j + 1) % n;
+      if (j === i) break;
+    }
+    best = Math.max(best, d2(h[i], h[j]), d2(h[k], h[j]));
+  }
+  return Math.sqrt(best);
+}
+
+function measurePanels() {
+  panelDiam = GEO.panels.map(() => 0);
+  const byPanel = GEO.panels.map(() => []);
+  REGIONS.forEach(r => {
+    for (const a of localRings[r.name])
+      for (let i = 0; i < a.length; i += 2) byPanel[r.panel].push([a[i], a[i + 1]]);
+  });
+  byPanel.forEach((pts, i) => { panelDiam[i] = diameter(pts); });
 }
 
 function compose() {

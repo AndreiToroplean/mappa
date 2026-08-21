@@ -122,7 +122,14 @@ const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
    without pretending a clue and half a continent are the same currency. */
 const helpOf = r => SCORING.id === 'drift'
   ? errorsOf(r) : errorsOf(r) + cluesOf(r);
-const better = (a, c) => c.f - a.f || helpOf(a) - helpOf(c)
+
+/* Distance drops the first term entirely. Every run is asked every region, so
+   how many came out right is not an achievement separate from the score — it is
+   the same fact told coarsely, and ranking on it first would put a run that
+   guessed forty by a hair above one that got thirty dead on. The points already
+   say everything the tally would. */
+const better = (a, c) => (SCORING.id === 'drift' ? 0 : c.f - a.f)
+  || helpOf(a) - helpOf(c)
   || (SCORING.id === 'drift' ? cluesOf(a) - cluesOf(c) : 0) || a.t - c.t;
 const rankBoard = b => b.sort(better);
 
@@ -153,20 +160,17 @@ function missWords(e) {
 function rowParts(r) {
   const words = missWords(r.e);
 
-  /* Distance rows lead with how many were right, in both modes. That is the
-     first fact about a distance run and the one that survives being read
-     quickly; the points and the clues follow as the fine print. A practice run
-     under distance no longer completes by definition, so leading with the
-     points the way counting-practice does would bury the difference between
-     forty right and twenty. */
+  /* Distance rows lead with the points and say nothing about the tally. Every
+     run is asked every region, so there is one number worth comparing and it is
+     this one. Zero is a perfect run: every tap inside the region it named. */
   if (SCORING.id === 'drift') {
     const c = cluesOf(r);
     return {
-      tier: r.f === TOTAL && r.e === 0 ? 'full' : 'partial',
-      tally: r.f === TOTAL ? GEO.all : `${r.f} of ${TOTAL}`,
-      errs: `<span class="errs${r.e === 0 ? ' perfect' : ''}">${words}`
-          + (MODE.clues ? ` · ${c} clue${c === 1 ? '' : 's'}` : '')
-          + '</span>',
+      tier: r.e === 0 ? 'full' : 'partial',
+      tally: words,
+      errs: MODE.clues
+        ? `<span class="errs${c ? '' : ' perfect'}">${c} clue${c === 1 ? '' : 's'}</span>`
+        : '<span class="errs"></span>',
     };
   }
 
@@ -218,11 +222,12 @@ async function finish(won, lastClick) {
     // say it in the header too, so a win reads as a win the instant it lands
     el.bar.classList.add('won');
     el.promptLabel.textContent = 'Complete';
-    el.target.textContent = tally();
+    el.target.textContent = SCORING.id === 'drift' ? 'Finished' : tally();
     el.target.classList.add('won');
     clock.classList.add('won');
-    pause = celebrate(!MODE.capped && spent() !== 0 ? 'Finished'
-                    : spent() === 0 ? 'Perfect run' : tally());
+    pause = celebrate(spent() === 0 ? 'Perfect run'
+                    : (!MODE.capped || SCORING.id === 'drift') ? 'Finished'
+                    : tally());
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';
@@ -238,11 +243,12 @@ async function finish(won, lastClick) {
 
   el.ovTitle.textContent = !won
       ? (SCORING.id === 'drift' ? 'Too far off.' : 'Out of lives.')
-    : spent() === 0 ? 'Perfect run.' : tally() + '.';
+    : spent() === 0 ? 'Perfect run.'
+    : SCORING.id === 'drift' ? 'Finished.' : tally() + '.';
   el.ovSub.textContent = !won
       ? `${found} of ${TOTAL} found · ${fmt(ms)}`
     : SCORING.id === 'drift'
-      ? `${found} of ${TOTAL} right · ${spent()} error points · ${fmt(ms)}`
+      ? `${spent()} error points · ${fmt(ms)}`
       : `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`;
 
   const entry = { f: found, e: spent(), c: cluesUsed, t: ms, d: Date.now() };

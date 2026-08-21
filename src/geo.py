@@ -212,23 +212,6 @@ def emit(path, panels, regions, abbr, groups=None, meta=None):
         if i and not panel.get('fix'):
             assert panel.get('km'), f'panel {i} is laid out and needs km'
     assert not panels[0].get('fix'), 'panel 0 is the host and cannot be fixed'
-
-    # How far it is across each panel, in its own local units: the yardstick for
-    # distance scoring, where 100 means the full width of the geography. Measured
-    # from the ink rather than from the panel box, because a panel box can be the
-    # whole composited frame (the US mainland's is) and would flatter every miss.
-    for i, panel in enumerate(panels):
-        xs, ys = [], []
-        for r in regions:
-            if r['p'] != i:
-                continue
-            for part in r['d'].split('M'):
-                if not part:
-                    continue
-                for q in part.rstrip('Z').split('L'):
-                    a, b = q.split(',')
-                    xs.append(float(a)); ys.append(float(b))
-        panel['span'] = round(math.hypot(max(xs) - min(xs), max(ys) - min(ys)), 1)
     out = {'panels': panels, 'abbr': abbr, 'regions': regions}
     if groups:
         out['groups'] = groups

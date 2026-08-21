@@ -9,7 +9,7 @@ let labels = {};     // region name -> its abbreviation <text>
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
 const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
       L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
-      L_NUDGE = layer(), L_HIT = layer();
+      L_NUDGE = layer(), L_DRIFT = layer(), L_HIT = layer();
 
 /* Composed label anchors, kept because the nudge arrow needs to point from one
    region to another and the anchor is the most sensible "middle" we have — it
@@ -315,7 +315,7 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_HIT]
+  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT, L_HIT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
   panelOf = {};

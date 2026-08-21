@@ -278,3 +278,67 @@ function clearNudge() {
   shownArrow = null;
   if (L_NUDGE) while (L_NUDGE.firstChild) L_NUDGE.removeChild(L_NUDGE.firstChild);
 }
+
+/* ---- the distance a miss cost ------------------------------------------
+   Drawn only under distance scoring, and unlike the clue arrow it is allowed to
+   give everything away: the turn is already over. It runs the whole way from
+   where the finger landed to the nearest point of the answer, which is the
+   distance that was actually charged, and carries both numbers on it — the
+   score, and what that score is in kilometres.
+
+   Red, against the answer's amber. The answer is the thing to look at; this is
+   what it cost not to.
+
+   Not redrawn on a resize, unlike the clue hints: it is on screen for two
+   seconds and it is anchored to a tap, not to a region, so there is nothing to
+   recompose it from. clearDrift() on recompose is the honest answer. */
+function drawDrift(from, target, cost, km) {
+  if (!L_DRIFT || !from) return;
+  clearDrift();
+  const to = nearestPointOn(target, from);
+  if (!to) return;
+  const dx = to.x - from.x, dy = to.y - from.y;
+  const far = Math.sqrt(dx * dx + dy * dy);
+  if (far < 2) return;              // landed on the answer's edge; nothing to draw
+  const ux = dx / far, uy = dy / far;
+
+  const line = document.createElementNS(NS, 'path');
+  line.setAttribute('class', 'drift');
+  line.setAttribute('d', `M${from.x.toFixed(1)},${from.y.toFixed(1)}`
+                       + `L${to.x.toFixed(1)},${to.y.toFixed(1)}`);
+  L_DRIFT.appendChild(line);
+
+  // a dot where the finger actually was, so the line has a visible origin
+  const dot = document.createElementNS(NS, 'circle');
+  dot.setAttribute('class', 'driftdot');
+  dot.setAttribute('cx', from.x.toFixed(1));
+  dot.setAttribute('cy', from.y.toFixed(1));
+  dot.setAttribute('r', 3.5);
+  L_DRIFT.appendChild(dot);
+
+  const px = -uy, py = ux;
+  const at = (t, sd) => (to.x + ux * t + px * sd).toFixed(1) + ',' +
+                        (to.y + uy * t + py * sd).toFixed(1);
+  const head = document.createElementNS(NS, 'path');
+  head.setAttribute('class', 'drifthead');
+  head.setAttribute('d', `M${at(0, 0)}L${at(-11, 6.2)}L${at(-11, -6.2)}Z`);
+  L_DRIFT.appendChild(head);
+
+  /* Along the line, nudged clear of it, and flipped so it never reads upside
+     down. Halfway is the one place on a line that is never under either end. */
+  const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2;
+  const flip = ux < 0;
+  const deg = Math.atan2(flip ? -uy : uy, flip ? -ux : ux) * 180 / Math.PI;
+  const label = document.createElementNS(NS, 'text');
+  label.setAttribute('class', 'driftlabel');
+  label.setAttribute('x', mx.toFixed(1));
+  label.setAttribute('y', my.toFixed(1));
+  label.setAttribute('transform',
+    `rotate(${deg.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}) translate(0 -9)`);
+  label.textContent = km === null ? `+${cost}` : `+${cost} · ${fmtKm(km)}`;
+  L_DRIFT.appendChild(label);
+}
+
+function clearDrift() {
+  if (L_DRIFT) while (L_DRIFT.firstChild) L_DRIFT.removeChild(L_DRIFT.firstChild);
+}

@@ -346,7 +346,7 @@ fails += r.returncode
 # geography. Checked against a reference that never touches the layout: the
 # score must not depend on the shape of the window, which is the one thing that
 # could silently go wrong when a yardstick is carried through a transform.
-drift_js = geo_src[geo_src.index('function driftCost'):geo_src.index('function nearestSelectable')]
+drift_js = geo_src[geo_src.index('function driftFrom'):geo_src.index('function nearestSelectable')]
 bad_drift = n_drift = 0
 for geo in GEOS:
     d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
@@ -367,13 +367,16 @@ for geo in GEOS:
             return 200.0
         ax, ay = anchor_at[m]
         near = min(math.hypot(px - ax, py - ay) for px, py in pts[t])
-        return min(200.0, 100 * near / d['panels'][panel[t]]['span'])
+        # PANEL_SPAN: normalise() scaled every panel's longest side to 1000, so
+        # 1000 local units is the width of the geography by construction
+        return min(200.0, 100 * near / 1000.0)
 
     # two aspect ratios: the score must come out the same in both
     for aspect in (0.6, 2.4):
         js = (LAYOUT + '\nconst DATA = ' + json.dumps(d) + ';\n' + """
 const FAR = 200;
 const GEO = {panels: DATA.panels};
+const PANEL_SPAN = 1000;
 const panelOf = {}, anchorAt = {}, rings = {};
 const layoutNow = chooseLayout(ASPECT, DATA.panels);
 for (const r of DATA.regions){
@@ -397,7 +400,7 @@ function borderDist2(n,u){let b=Infinity;
 function distanceTo(n,u){return Math.sqrt(borderDist2(n,u));}
 """.replace('ASPECT', repr(aspect)) + drift_js + """
 const OUT = [];
-for (const pr of PAIRS) OUT.push(driftCost(pr[0], pr[1], anchorAt[pr[1]]));
+for (const pr of PAIRS) OUT.push(driftFrom(pr[0], pr[1], anchorAt[pr[1]]).cost);
 console.log(JSON.stringify(OUT));
 """.replace('PAIRS', json.dumps(pairs)))
         pathlib.Path('/tmp/fifty-drift.js').write_text(js)
@@ -568,7 +571,8 @@ eq('distance boards are separate', keys.slice(4),
 // --- the scoring axis -----------------------------------------------------
 eq('a trial spends three misses', (MODE = MODES.trial, SCORING = SCORINGS.count, budget()), 3);
 eq('or one full map', (SCORING = SCORINGS.drift, budget()), 100);
-eq('a counted miss always costs one', SCORINGS.count.cost(), 1);
+eq('counting lets you guess again', SCORINGS.count.retry, true);
+eq('distance gives one tap per region', SCORINGS.drift.retry, false);
 
 // Distance dominates clues rather than adding to them: one miss can cost 90 and
 // a clue costs 1, so a sum would be the distance with noise on top.

@@ -200,10 +200,10 @@ async function finish(won, lastClick) {
     // say it in the header too, so a win reads as a win the instant it lands
     el.bar.classList.add('won');
     el.promptLabel.textContent = 'Complete';
-    el.target.textContent = GEO.all;
+    el.target.textContent = tally();
     el.target.classList.add('won');
     clock.classList.add('won');
-    pause = celebrate(spent() === 0 ? 'Perfect run' : GEO.all);
+    pause = celebrate(spent() === 0 ? 'Perfect run' : tally());
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';
@@ -219,7 +219,7 @@ async function finish(won, lastClick) {
 
   el.ovTitle.textContent = !won
       ? (SCORING.id === 'drift' ? 'Too far off.' : 'Out of lives.')
-    : spent() === 0 ? 'Perfect run.' : GEO.all + '.';
+    : spent() === 0 ? 'Perfect run.' : tally() + '.';
   el.ovSub.textContent =
     won ? `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`
         : `${found} of ${TOTAL} found · ${fmt(ms)}`;
@@ -276,7 +276,12 @@ async function setScoring(id) {
 
 async function afterSwitch() {
   refreshCopy();
-  resetRun();        // the header counts a different thing now
+  /* drawCounter(), not resetRun(): resetRun() ends by hiding the intro card,
+     which is right when a geography change invalidates a half-played map and
+     wrong here — tapping a switch on the menu made the game appear to start.
+     Nothing about the board needs resetting, only the header column, which is
+     counting a different thing now. */
+  drawCounter();
   try { showBoards(await loadBoard(), null); }
   catch (e) { reportCrash('board: ' + e.message); }
 }

@@ -126,7 +126,7 @@ const better = (a, c) => c.f - a.f || helpOf(a) - helpOf(c)
   || (SCORING.id === 'drift' ? cluesOf(a) - cluesOf(c) : 0) || a.t - c.t;
 const rankBoard = b => b.sort(better);
 
-const addEntry = (board, entry) => MODE.insert(board, entry);
+const addEntry = (board, entry) => (SCORING.insert || MODE.insert)(board, entry);
 
 /* Both cards show the same board, so they are always painted together. Three
    call sites used to render one or both with slightly different arguments. */
@@ -143,7 +143,7 @@ function showBoards(board, mine) {
 function missWords(e) {
   if (typeof e !== 'number') return '—';
   if (e === 0) return 'Perfect';
-  return SCORING.id === 'drift' ? `Off by ${e}`
+  return SCORING.id === 'drift' ? `${e} pts`
                                 : `${e} miss${e === 1 ? '' : 'es'}`;
 }
 
@@ -152,6 +152,24 @@ function missWords(e) {
    row would say nothing — misses become the headline instead. */
 function rowParts(r) {
   const words = missWords(r.e);
+
+  /* Distance rows lead with how many were right, in both modes. That is the
+     first fact about a distance run and the one that survives being read
+     quickly; the points and the clues follow as the fine print. A practice run
+     under distance no longer completes by definition, so leading with the
+     points the way counting-practice does would bury the difference between
+     forty right and twenty. */
+  if (SCORING.id === 'drift') {
+    const c = cluesOf(r);
+    return {
+      tier: r.f === TOTAL && r.e === 0 ? 'full' : 'partial',
+      tally: r.f === TOTAL ? GEO.all : `${r.f} of ${TOTAL}`,
+      errs: `<span class="errs${r.e === 0 ? ' perfect' : ''}">${words}`
+          + (MODE.clues ? ` · ${c} clue${c === 1 ? '' : 's'}` : '')
+          + '</span>',
+    };
+  }
+
   if (MODE.id === 'practice') {
     const c = cluesOf(r);
     return {
@@ -220,9 +238,11 @@ async function finish(won, lastClick) {
   el.ovTitle.textContent = !won
       ? (SCORING.id === 'drift' ? 'Too far off.' : 'Out of lives.')
     : spent() === 0 ? 'Perfect run.' : tally() + '.';
-  el.ovSub.textContent =
-    won ? `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`
-        : `${found} of ${TOTAL} found · ${fmt(ms)}`;
+  el.ovSub.textContent = !won
+      ? `${found} of ${TOTAL} found · ${fmt(ms)}`
+    : SCORING.id === 'drift'
+      ? `${found} of ${TOTAL} right · ${spent()} error points · ${fmt(ms)}`
+      : `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`;
 
   const entry = { f: found, e: spent(), c: cluesUsed, t: ms, d: Date.now() };
   const res = addEntry(await loadBoard(), entry);

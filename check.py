@@ -441,7 +441,8 @@ fails += 1 if bad_drift else 0
 # — true of the picture, false of the world. Alaska and Hawaii are now fixed
 # panels of their own, and the rule has something to bite on.
 cel_src = (JS / '07-celebrate.js').read_text()
-can = cel_src[cel_src.index('function canNudge'):]
+can = (cel_src[cel_src.index('const sameLandmass'):cel_src.index('function canNudge')]
+       + cel_src[cel_src.index('function canNudge'):])
 can = can[:can.index('\n}\n') + 3]
 
 # Named rather than derived from the data: deriving the pairs would make the test
@@ -525,12 +526,12 @@ fails += r.returncode
 # --------------------------------------------------- modes and board keying
 pathlib.Path('/tmp/fifty-modes.js').write_text(
     "let TOTAL = 50;\nlet GEO = {id:'us', all:'All fifty', noun:'state'};\n"
-    + data_src[data_src.index('const MODES = {'):]
+    + data_src[data_src.index('function byTally'):]
     + board_src[board_src.index('const LEGACY_US'):board_src.index('/* One key-value layer')]
     + board_src[board_src.index('const errorsOf'):board_src.index('const addEntry')]
     + board_src[board_src.index('function missWords'):board_src.index('function rowParts')]
     + """
-const addEntry = (board, entry) => MODE.insert(board, entry);
+const addEntry = (board, entry) => (SCORING.insert || MODE.insert)(board, entry);
 let fail = 0;
 const eq = (l, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) { fail++; console.log('  FAIL ' + l + '  got ' + JSON.stringify(got) + ' want ' + JSON.stringify(want)); } };
@@ -584,7 +585,19 @@ eq('clues break a distance tie', rankBoard([
   {f:50,e:12,c:4,t:100,d:1}, {f:50,e:12,c:1,t:900,d:2},
 ]).map(r=>r.d), [2,1]);
 eq('perfect reads as perfect', missWords(0), 'Perfect');
-eq('and a miss reads as a distance', missWords(37), 'Off by 37');
+eq('and a miss reads as error points', missWords(37), '37 pts');
+
+// A distance run can end unfinished in either mode, so both use the tally-based
+// insert: forty right and twenty right are different achievements, and bucketing
+// on points alone would let one replace the other.
+SCORING = SCORINGS.drift; MODE = MODES.practice;
+let db = [];
+[[31,4],[42,7],[31,9],[20,1]].forEach(([f,e],i) => {
+  db = addEntry(db, {f:f,e:e,c:0,t:(i+1)*1000,d:i}).board; });
+eq('distance keeps one entry per tally', db.filter(r=>r.f===31).map(r=>r.e), [4]);
+eq('distance ranks by found before points, so 20 clean loses to 31 scruffy',
+   rankBoard(db.slice()).map(r=>r.f), [42,31,20]);
+SCORING = SCORINGS.count; MODE = MODES.practice;
 SCORING = SCORINGS.count;
 eq('counting still reads as misses', missWords(2), '2 misses');
 SCORING = SCORINGS.count; MODE = MODES.practice;
@@ -602,7 +615,7 @@ bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
 eq('board keys are all distinct', new Set(keys).size, 8);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '25/25 pass'));
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '27/27 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

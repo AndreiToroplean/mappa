@@ -128,7 +128,7 @@ function celebrate(title) {
 const flashBox = $('flash');
 let flashTimer = null;
 
-function flashMiss(name) {
+function flashMiss(name, sub) {
   if (!flashBox) return;
   const span = flashBox.firstElementChild;
   clearTimeout(flashTimer);
@@ -137,9 +137,14 @@ function flashMiss(name) {
   span.style.animation = 'none';
   void span.offsetWidth;
   span.style.animation = '';
+  /* The cost goes under the name rather than on the arrow. On the arrow it was
+     small, at whatever angle the arrow happened to lie, and often over the map's
+     busiest part; here it is under the one thing the eye is already on. */
   span.textContent = name;
+  if (sub) span.appendChild(Object.assign(document.createElement('b'),
+                                          { textContent: sub }));
   flashBox.hidden = false;
-  flashTimer = setTimeout(() => { flashBox.hidden = true; }, 1150);
+  flashTimer = setTimeout(() => { flashBox.hidden = true; }, 1600);
 }
 
 function clearFlash() {
@@ -195,9 +200,12 @@ function touching(a, b) {
 }
 
 /* An arrow across a gap that does not exist on the ground would be a lie: the
-   mainland and an inset are not one map, and neither are two insets. */
+   mainland and an inset are not one map, and neither are two insets. The same
+   rule governs the distance arrow, so it is named once. */
+const sameLandmass = (a, b) => panelOf[a] === panelOf[b];
+
 function canNudge(from, to) {
-  return !!(anchorAt[from] && anchorAt[to] && panelOf[from] === panelOf[to]);
+  return !!(anchorAt[from] && anchorAt[to] && sameLandmass(from, to));
 }
 
 function bandFor(from, to, far) {
@@ -287,13 +295,17 @@ function clearNudge() {
    score, and what that score is in kilometres.
 
    Red, against the answer's amber. The answer is the thing to look at; this is
-   what it cost not to.
+   what it cost not to. It carries no label: the numbers read better under the
+   flashed name, where the eye already is.
 
    Not redrawn on a resize, unlike the clue hints: it is on screen for two
    seconds and it is anchored to a tap, not to a region, so there is nothing to
    recompose it from. clearDrift() on recompose is the honest answer. */
-function drawDrift(from, target, cost, km) {
+function drawDrift(from, target, tapped) {
   if (!L_DRIFT || !from) return;
+  // Same rule as the clue arrow: a line across a gap the map invented would
+  // describe a distance nobody travelled.
+  if (!sameLandmass(tapped, target)) return;
   clearDrift();
   const to = nearestPointOn(target, from);
   if (!to) return;
@@ -323,20 +335,6 @@ function drawDrift(from, target, cost, km) {
   head.setAttribute('class', 'drifthead');
   head.setAttribute('d', `M${at(0, 0)}L${at(-11, 6.2)}L${at(-11, -6.2)}Z`);
   L_DRIFT.appendChild(head);
-
-  /* Along the line, nudged clear of it, and flipped so it never reads upside
-     down. Halfway is the one place on a line that is never under either end. */
-  const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2;
-  const flip = ux < 0;
-  const deg = Math.atan2(flip ? -uy : uy, flip ? -ux : ux) * 180 / Math.PI;
-  const label = document.createElementNS(NS, 'text');
-  label.setAttribute('class', 'driftlabel');
-  label.setAttribute('x', mx.toFixed(1));
-  label.setAttribute('y', my.toFixed(1));
-  label.setAttribute('transform',
-    `rotate(${deg.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}) translate(0 -9)`);
-  label.textContent = km === null ? `+${cost}` : `+${cost} · ${fmtKm(km)}`;
-  L_DRIFT.appendChild(label);
 }
 
 function clearDrift() {

@@ -136,7 +136,7 @@ function celebrate(title) {
 const flashBox = $('flash');
 let flashTimer = null;
 
-function flashMiss(name, sub) {
+function flashMiss(name) {
   if (!flashBox) return;
   const span = flashBox.firstElementChild;
   clearTimeout(flashTimer);
@@ -145,12 +145,10 @@ function flashMiss(name, sub) {
   span.style.animation = 'none';
   void span.offsetWidth;
   span.style.animation = '';
-  /* The cost goes under the name rather than on the arrow. On the arrow it was
-     small, at whatever angle the arrow happened to lie, and often over the map's
-     busiest part; here it is under the one thing the eye is already on. */
+  /* Only ever the name, in every mode. The cost went here for a while and it
+     made the same event report itself twice in two places at once; the ticker
+     has room to say it properly and this does not. */
   span.textContent = name;
-  if (sub) span.appendChild(Object.assign(document.createElement('b'),
-                                          { textContent: sub }));
   flashBox.hidden = false;
   flashTimer = setTimeout(() => { flashBox.hidden = true; }, MISS_MS);
 }

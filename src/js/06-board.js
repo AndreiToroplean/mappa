@@ -143,14 +143,18 @@ function showBoards(board, mine) {
   showNote();
 }
 
-/* A bare count with a symbol read as "1x", which means nothing unless you
+/* One name for the unit, two lengths of it. Spelled out where there is room —
+   the header column and the end card — and "EPs" wherever a row has to stay on
+   one line. It was briefly "pts", which named nothing.
+
+   A bare count with a symbol read as "1x", which means nothing unless you
    already know the column is errors. Spell it out instead, and let a clean run
    say so — zero is the whole point of the ranking, so it should read as an
    achievement rather than as the number below one. */
 function missWords(e) {
   if (typeof e !== 'number') return '—';
   if (e === 0) return 'Perfect';
-  return SCORING.id === 'drift' ? `${e} pts`
+  return SCORING.id === 'drift' ? `${e} EPs`
                                 : `${e} miss${e === 1 ? '' : 'es'}`;
 }
 

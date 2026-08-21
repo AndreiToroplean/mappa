@@ -625,7 +625,7 @@ eq('clues break a distance tie', rankBoard([
   {f:50,e:12,c:4,t:100,d:1}, {f:50,e:12,c:1,t:900,d:2},
 ]).map(r=>r.d), [2,1]);
 eq('perfect reads as perfect', missWords(0), 'Perfect');
-eq('and a miss reads as error points', missWords(37), '37 pts');
+eq('and a miss reads as error points', missWords(37), '37 EPs');
 
 /* Distance ignores the tally completely: every run is asked every region, so how
    many came out right is the same fact told coarsely. One entry per score. */

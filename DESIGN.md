@@ -332,10 +332,18 @@ read as an error state that had been recorded.
 share `MISS_MS`. They are one statement about one tap, and it read as a bug when
 the arrow stayed behind on the next question.
 
-**The cost goes under the flashed name, not on the arrow.** On the arrow it was
-small, set at whatever angle the arrow happened to lie, and often over the map's
-busiest part. Under the name it is a footnote to the one thing the eye is already
-on: *off by 1,850 km (+43 error points)*.
+**The flash says the name and nothing else,** the same as in every other mode.
+The cost lived under it for a version and that was one report in two places at
+once — the middle of the screen shouting a number the footer was already
+explaining properly. The footer has room for the whole thing and this does not:
+*~~Arkansas~~ Missouri · Off by 1,850 km (+43 EPs)*.
+
+It was on the arrow before that, where it was small, set at whatever angle the
+arrow happened to lie, and often over the busiest part of the map.
+
+**One name for the unit.** Error points, spelled out where there is room — the
+header column, the end card — and *EPs* wherever a row has to stay on one line.
+It was briefly *pts*, which named nothing.
 
 **No arrow across a gap the map invented.** Same rule as the clue arrow, now
 named `sameLandmass()` and used by both.

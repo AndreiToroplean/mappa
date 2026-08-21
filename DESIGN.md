@@ -292,6 +292,57 @@ or moving the file does not give a fresh board. The button sits by the board
 heading in both cards and routes through a confirm dialog, since it destroys
 full-fifty runs that took real effort.
 
+## Scoring by distance
+
+A third axis, independent of the other two. Mode says whether a run can end
+early; scoring says what a wrong tap costs. Counting is the original game and
+asks whether you knew it. Measuring asks something else — how close were you —
+and under it a tap on the neighbouring département and a tap in the Atlantic
+stop being the same answer. That is a different drill, not a different
+difficulty, which is why it is an axis rather than a third mode: either question
+is worth asking of either kind of run.
+
+A hit is free either way, and deliberately so. The cost is only computed for taps
+the ordinary resolver rejected, so ocean-snapping and the enlarged hit circles
+still decide what counts as knowing it, and the two scorings agree about that
+exactly. Only what happens *after* a miss differs.
+
+**The unit is not kilometres.** France would then be scored on a scale a fifth
+the width of the US, and a run in one would say nothing about a run in the other.
+100 is the longest distance across the geography's own mainland instead, measured
+at build time from the ink and stored per panel as `span`. Measured from the ink
+rather than from the panel box, because the US mainland's box is the whole
+composited frame — Alaska's corner included — and would flatter every miss by
+about a third.
+
+**A different landmass costs 200.** There is no honest distance to measure across
+a gap the map invented, and whatever it costs should exceed the worst real miss,
+so it is twice the full width. This is the same panel test the clue arrow uses.
+
+**Always whole.** Tenths of a percent of a continent are not something anyone can
+feel, and a decimal point would claim a precision that simplified borders do not
+have. But the running total is kept unrounded until it is shown or stored —
+rounding each miss as it lands would let a run of small ones cost nothing at all.
+
+**Trial spends 100, one full map.** Three lives and one full width are the same
+kind of rule, so `MODE.capped` says a run can end early and `SCORING.budget` says
+at what. `MODE.lives` is gone; it conflated the two.
+
+**Clues stop adding.** Under counting, misses and clues are both help and the sum
+is one sentence. Under distance a miss can cost 90 and a clue costs 1, so the sum
+would be the distance with rounding noise on top. Clues become the tie-break
+instead, which keeps them worth thinking about without pretending a clue and half
+a continent are the same currency.
+
+**Old boards survive.** Counting keeps the unsuffixed keys, including the two
+legacy US ones; only distance boards take a suffix. Suffixing both would have
+orphaned every board anyone has.
+
+The harness checks the score against a reference that never touches the layout,
+at two aspect ratios. The one thing that could go wrong silently here is the
+score depending on the shape of the window, since the yardstick is carried
+through the same transform as the ink.
+
 ## Game rules as implemented
 
 - Start screen, then a centred 3-2-1. The clock does not start until it clears.
@@ -625,10 +676,12 @@ not; the board grows from a one-line note to six rows over a few sessions. All o
 it fed back into the card's height, so choosing a mode moved Start out from under
 the thumb that was reaching for it.
 
-The card's height is now `min(660px, 100%)` in portrait and the window less its
-padding in landscape. 660 is a little above the tallest the contents get once the
-explanation is one line, so a roomy screen shows no scrollbar; the cap keeps the
-card from becoming a full-height slab on a tall monitor.
+The card's height is now `min(720px, 100%)` in portrait and the window less its
+padding in landscape. 720 is a little above the tallest the contents get, so a
+roomy screen shows no scrollbar; the cap keeps the card from becoming a
+full-height slab on a tall monitor. It was 660 before the scoring axis added a
+second row of buttons — a number that has to be revisited when the card gains a
+row, which is the honest cost of this approach.
 
 The board is the only child allowed to flex, which is the point rather than a
 detail: it means there is exactly one place where variation can go, so nothing

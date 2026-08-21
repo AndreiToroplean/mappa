@@ -1,10 +1,17 @@
 // game state
 let queue, current, errors, found, t0, raf, running;
 
-/* Errors are the thing that is counted; lives are a rule about them. Tracking
-   lives directly would leave practice mode — unlimited lives, ranked on errors
-   — with nothing to count. */
-const livesLeft = () => MODE.lives - errors;
+/* Errors are the thing that is counted; the cap is a rule about them. Tracking
+   what is left directly would leave practice mode — no cap at all — with
+   nothing to count.
+
+   Under distance scoring `errors` is a fraction rather than a whole number, so
+   it is kept unrounded all the way to the end and rounded only where it is
+   shown or stored. Rounding each miss as it lands would let a run of tiny ones
+   cost nothing at all. */
+const spendLeft = () => budget() - errors;
+const spent = () => Math.round(errors);
+const busted = () => MODE.capped && errors >= budget() - 1e-9;
 /* Every element the game touches, looked up once. These were a mix of cached
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
@@ -23,18 +30,24 @@ const fmt = ms => {
     + '.' + Math.floor((s * 10) % 10);
 };
 
-/* The same header column either way: lives left when they are countable,
-   misses taken when they are not. */
+/* One header column, three readings. Three lives are pips, because three of
+   anything reads faster as objects than as a number. Anything else is a number:
+   misses taken, or distance spent — and in a capped run the cap is shown beside
+   it, since a budget nobody can see is not a budget. */
 function drawCounter() {
-  el.counterLabel.textContent = MODE.counter;
-  if (!Number.isFinite(MODE.lives)) {
-    el.missCount.textContent = errors;
+  const pips = SCORING.pips && MODE.capped;
+  document.body.classList.toggle('numeric', !pips);
+  el.counterLabel.textContent = SCORING.id === 'drift' ? 'Off by'
+    : MODE.capped ? 'Lives' : 'Misses';
+
+  if (!pips) {
+    el.missCount.textContent = MODE.capped ? `${spent()}/${budget()}` : spent();
     el.missCount.classList.toggle('bad', errors > 0);
     return;
   }
-  el.lives.innerHTML = Array.from({ length: MODE.lives }, (_, i) =>
-    `<div class="pip${i < livesLeft() ? '' : ' gone'}"></div>`).join('');
-  if (livesLeft() === 0) document.querySelector('.pip').classList.add('lastgone');
+  el.lives.innerHTML = Array.from({ length: budget() }, (_, i) =>
+    `<div class="pip${i < spendLeft() ? '' : ' gone'}"></div>`).join('');
+  if (busted()) document.querySelector('.pip').classList.add('lastgone');
 }
 
 function resetRun() {
@@ -104,7 +117,9 @@ function next() {
   resetClues(false);      // the ladder starts again for each region
 }
 
-function guess(name) {
+/* `at` is where the tap actually landed, in composed units, and only distance
+   scoring has any use for it. It is optional because not every pick has one. */
+function guess(name, at) {
   if (!running || paused || !selectable(name)) return;
 
   if (name === current) {
@@ -123,10 +138,13 @@ function guess(name) {
     setStatus(name, 'missed');
     flashMiss(name);
     if (MODE.clues) missed(name);   // opens the arrow rung; drawn only on request
-    errors++;
+    const was = spent();
+    errors += SCORING.cost(current, name, at);
     drawCounter();
-    ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
-    if (livesLeft() === 0) finish(false, name);
+    const cost = spent() - was;
+    ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`
+      + (SCORING.id === 'drift' ? ` <span class="cost">+${cost}</span>` : '');
+    if (busted()) finish(false, name);
   }
 }
 

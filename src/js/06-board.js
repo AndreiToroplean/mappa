@@ -3,6 +3,7 @@
 const PROBE = 'fifty:probe';
 const PREF_GEO = 'fifty:geo';
 const PREF_MODE = 'fifty:mode';
+const PREF_SCORING = 'fifty:scoring';
 
 /* Every geography-and-mode combination keeps its own board. Mixing them would
    be meaningless — a practice run cannot fail, and a departement is not a
@@ -10,10 +11,13 @@ const PREF_MODE = 'fifty:mode';
 
    The two US keys are the ones written before geographies existed, so they are
    kept verbatim rather than renamed into the scheme. Boards saved by earlier
-   versions survive; the cost is this exception. */
+   versions survive; the cost is this exception — and the reason counting stays
+   the unsuffixed spelling, since suffixing it would orphan every board anyone
+   has. */
 const LEGACY_US = { trial: 'fifty:board2', practice: 'fifty:practice1' };
-const boardKey = () => GEO.id === 'us' ? LEGACY_US[MODE.id]
-                                       : `fifty:${GEO.id}:${MODE.id}`;
+const boardKey = () => SCORING.id !== 'count'
+  ? `fifty:${GEO.id}:${MODE.id}:${SCORING.id}`
+  : (GEO.id === 'us' ? LEGACY_US[MODE.id] : `fifty:${GEO.id}:${MODE.id}`);
 const mem = {};   // last resort backend
 
 /* Three backends, tried in order, because the file gets run two very different
@@ -41,9 +45,9 @@ const parse = s => { try { return JSON.parse(s) || []; } catch (e) { return []; 
    by running out of lives, so its count is known exactly. A completed run's is
    not recoverable, and is left blank rather than invented. */
 function normalise(board) {
-  if (!Number.isFinite(MODE.lives)) return board;   // nothing to infer
+  if (!MODE.capped) return board;                   // nothing to infer
   return board.map(r => (typeof r.e === 'number' || r.f === TOTAL)
-    ? r : Object.assign({}, r, { e: MODE.lives }));
+    ? r : Object.assign({}, r, { e: budget() }));
 }
 
 /* One key-value layer over the three backends. Boards and the saved geography
@@ -101,7 +105,7 @@ function showNote() {
    so the ceiling is one short of them. It can then never outrank a run we know
    was cleaner. Displayed as blank, not as that number. */
 const errorsOf = r => typeof r.e === 'number' ? r.e
-  : (Number.isFinite(MODE.lives) ? MODE.lives - 1 : Infinity);
+  : (MODE.capped ? budget() - 1 : Infinity);
 const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
 
 /* The one definition of "better": more found first, then fewer errors, then
@@ -112,8 +116,14 @@ const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
    one sentence, and both numbers are shown so a row can still be read. Ranking
    misses ahead of clues instead would make clues nearly free, which defeats
    counting them. Trial has no clues, so there the sum is just the misses. */
-const helpOf = r => errorsOf(r) + cluesOf(r);
-const better = (a, c) => c.f - a.f || helpOf(a) - helpOf(c) || a.t - c.t;
+/* Under distance scoring they cannot be added: one miss can cost 90 and a clue
+   costs 1, so the sum is the distance with rounding noise on top. Clues become
+   the tie-break there instead, which keeps them costly enough to think about
+   without pretending a clue and half a continent are the same currency. */
+const helpOf = r => SCORING.id === 'drift'
+  ? errorsOf(r) : errorsOf(r) + cluesOf(r);
+const better = (a, c) => c.f - a.f || helpOf(a) - helpOf(c)
+  || (SCORING.id === 'drift' ? cluesOf(a) - cluesOf(c) : 0) || a.t - c.t;
 const rankBoard = b => b.sort(better);
 
 const addEntry = (board, entry) => MODE.insert(board, entry);
@@ -133,7 +143,8 @@ function showBoards(board, mine) {
 function missWords(e) {
   if (typeof e !== 'number') return '—';
   if (e === 0) return 'Perfect';
-  return `${e} miss${e === 1 ? '' : 'es'}`;
+  return SCORING.id === 'drift' ? `Off by ${e}`
+                                : `${e} miss${e === 1 ? '' : 'es'}`;
 }
 
 /* Classic rows lead with how far you got and carry the misses alongside.
@@ -192,26 +203,28 @@ async function finish(won, lastClick) {
     el.target.textContent = GEO.all;
     el.target.classList.add('won');
     clock.classList.add('won');
-    pause = celebrate(errors === 0 ? 'Perfect run' : GEO.all);
+    pause = celebrate(spent() === 0 ? 'Perfect run' : GEO.all);
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';
-    el.target.textContent = 'Out of lives';
+    el.target.textContent = SCORING.id === 'drift' ? 'Too far off' : 'Out of lives';
     el.target.classList.add('lost');
     clock.classList.add('lost');
     setStatus(current, 'answer');
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +
-                       `Out of lives; you were looking for <b>${current}</b>.`;
+      (SCORING.id === 'drift' ? 'Out of room; ' : 'Out of lives; ') +
+      `you were looking for <b>${current}</b>.`;
     pause = 2600;   // time to read the miss and see the real answer
   }
 
-  el.ovTitle.textContent = !won ? 'Out of lives.'
-    : errors === 0 ? 'Perfect run.' : GEO.all + '.';
+  el.ovTitle.textContent = !won
+      ? (SCORING.id === 'drift' ? 'Too far off.' : 'Out of lives.')
+    : spent() === 0 ? 'Perfect run.' : GEO.all + '.';
   el.ovSub.textContent =
-    won ? `Complete in ${fmt(ms)} · ${errors} ${errors === 1 ? 'miss' : 'misses'}`
+    won ? `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`
         : `${found} of ${TOTAL} found · ${fmt(ms)}`;
 
-  const entry = { f: found, e: errors, c: cluesUsed, t: ms, d: Date.now() };
+  const entry = { f: found, e: spent(), c: cluesUsed, t: ms, d: Date.now() };
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);
   showBoards(res.board, res.kept ? entry.d : null);
@@ -249,7 +262,21 @@ async function setMode(id) {
   if (!GEO || !MODES[id]) return;    // a tap can land before startup finishes
   MODE = MODES[id];
   await kvSet(PREF_MODE, id);
+  await afterSwitch();
+}
+
+/* The scoring axis switches exactly like the mode axis, and for the same
+   reason: both change which board is being looked at and nothing else. */
+async function setScoring(id) {
+  if (!GEO || !SCORINGS[id]) return;
+  SCORING = SCORINGS[id];
+  await kvSet(PREF_SCORING, id);
+  await afterSwitch();
+}
+
+async function afterSwitch() {
   refreshCopy();
+  resetRun();        // the header counts a different thing now
   try { showBoards(await loadBoard(), null); }
   catch (e) { reportCrash('board: ' + e.message); }
 }
@@ -261,8 +288,10 @@ function refreshCopy() {
   // so on a fresh load no button looked selected at all.
   document.querySelectorAll('.modeBtn').forEach(b =>
     b.classList.toggle('on', b.dataset.mode === MODE.id));
+  document.querySelectorAll('.scoreBtn').forEach(b =>
+    b.classList.toggle('on', b.dataset.score === SCORING.id));
   document.querySelectorAll('.clearLabel').forEach(n => {
-    n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label}`;
+    n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label} · ${SCORING.label}`;
   });
   document.querySelectorAll('.geoNoun').forEach(n => { n.textContent = GEO.noun; });
   document.querySelectorAll('.geoSel').forEach(s => { s.value = GEO.id; });
@@ -305,6 +334,8 @@ async function setGeo(id) {
 
 document.querySelectorAll('.modeBtn').forEach(b =>
   b.addEventListener('click', () => setMode(b.dataset.mode)));
+document.querySelectorAll('.scoreBtn').forEach(b =>
+  b.addEventListener('click', () => setScoring(b.dataset.score)));
 document.querySelectorAll('.geoSel').forEach(s =>
   s.addEventListener('change', () => setGeo(s.value)));
 
@@ -318,13 +349,16 @@ el.startBtn.addEventListener('click', beginRun);
   // The geography is built first and separately from anything that can fail:
   // if reading the saved preference throws, the game should still start, just
   // without remembering the choice.
-  let savedGeo = null, savedMode = null;
+  let savedGeo = null, savedMode = null, savedScoring = null;
   try {
     savedGeo = await kvGet(PREF_GEO);
     savedMode = await kvGet(PREF_MODE);
+    savedScoring = await kvGet(PREF_SCORING);
   } catch (e) { reportCrash('storage: ' + e.message); }
-  // Both choices are remembered. Trial is the default reading of "play".
+  // Every choice is remembered. Trial and counting are the default reading of
+  // "play the game".
   MODE = MODES[savedMode] || MODES.trial;
+  SCORING = SCORINGS[savedScoring] || SCORINGS.count;
   drawFsButton();
   loadGeography(GEOS[savedGeo] ? savedGeo : DEFAULT_GEO);
   refreshCopy();

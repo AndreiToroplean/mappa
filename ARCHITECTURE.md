@@ -155,7 +155,7 @@ reserved widths, and the prompt ellipsises rather than wraps. Any of these
 flexing would resize the map mid-run.
 
 The main menu is pinned the same way, for the same reason. Its height comes from
-the window — `min(660px, 100%)`, or the full height less the padding in
+the window — `min(720px, 100%)`, or the full height less the padding in
 landscape — rather than from its contents, which change size whenever you touch
 the mode or geography switcher. The leaderboard is the only part that flexes, so
 it absorbs all of the variation and scrolls if the window is too short. The
@@ -255,7 +255,25 @@ Not in the game. Two attempts are parked on branch `water-wip`; see DESIGN.md fo
 what failed. `src/build-coast.py` stays on master because it holds the recovered
 albersUsa transform, which anything aligning to the US map will need.
 
-## Clues
+## Scoring
+
+Two axes on the menu. Mode — Trial or Practice — says whether a run can end
+early. Scoring — Misses or Distance — says what a wrong tap costs.
+
+Counting charges 1 a miss; Trial allows 3. Distance charges how far the tap was
+from the region asked for, on a scale where 100 is the longest distance across
+the geography's mainland; Trial allows 100. A tap on a different landmass costs
+200. A hit costs nothing under either.
+
+The scale comes from each panel's `span`, emitted at build time as the diagonal
+of that panel's ink in local units, and carried through the layout transform so
+the score does not depend on the window.
+
+Every geography, mode and scoring combination has its own board. Counting keeps
+the original keys so boards saved before this feature survive; distance boards
+take a `:drift` suffix.
+
+## Licence
 
 Practice offers a clue ladder, always on request and never automatic. Three
 rungs, in a fixed order:

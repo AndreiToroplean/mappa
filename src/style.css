@@ -166,6 +166,9 @@
      is not treated the same way. */
   .geoSel:focus-visible{outline:none}
   .modes{display:flex;gap:8px;margin:0 0 20px}
+  /* The second axis reads as a continuation of the first, not as a separate
+     question: same buttons, closer together than the gap below the pair. */
+  .modes.second{margin-top:-12px}
   /* A real row rather than an absolutely-positioned button: the title takes the
      space it needs and the icon sits at the end of the same line. Positioning it
      over the card meant guessing where the title ended, and in the two-column
@@ -192,9 +195,12 @@
   /* Practice has no lives to spend, so the same column counts what it does
      have. Keeping the column rather than hiding it holds the header layout
      steady between modes. */
+  /* The counter column shows pips or a number, never both. Driven by a class
+     rather than by which mode is live: it is the scoring axis that decides
+     this now, and three lives are the only thing pips are good for. */
   #missCount{display:none;min-width:38px}
-  body.practice #missCount{display:block}
-  body.practice #lives{display:none}
+  body.numeric #missCount{display:block}
+  body.numeric #lives{display:none}
   .val.bad{color:#D4797C}
   .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
   .bhead{display:flex;align-items:center;justify-content:space-between;
@@ -218,6 +224,10 @@
   .storenote{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
     color:var(--muted);margin-top:12px;line-height:1.45}
   .storenote.warn{color:var(--amber)}
+  /* What a miss just cost, under distance scoring. Beside the miss rather than
+     in the header, because the header shows the running total and this is the
+     one number the total does not tell you. */
+  .cost{color:var(--amber);font-family:var(--mono);font-size:12px}
 
   /* Both menus' height comes from the window, not from what is in them. Almost
      everything on the card changes size: 'département' wraps where 'state' does
@@ -234,7 +244,7 @@
      The intro and the end card are the same card in two states, so they share
      the height rather than each having its own: going menu -> run -> end card
      and back now moves nothing on screen but the words. */
-  .card.menu{height:min(660px, 100%);display:flex;flex-direction:column}
+  .card.menu{height:min(720px, 100%);display:flex;flex-direction:column}
   .card.menu > *{flex:none}
   .card.menu > .board{flex:1 1 auto;min-height:0;
     display:flex;flex-direction:column}

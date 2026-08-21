@@ -195,7 +195,7 @@ function missByDistance(name, at) {
   const points = Math.round(cost);
   const cost_ = km === null ? `A different landmass (+${points} EPs)`
                             : `Off by ${fmtKm(km)} (+${points} EPs)`;
-  flashMiss(name, cost_);
+  flashMiss(name);
   paintScore(target, points);       // consumed: it will not be asked again
   revealed++;
   drawProgress();

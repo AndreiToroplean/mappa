@@ -325,10 +325,6 @@
     line-height:1.08;color:var(--red);text-align:center;max-width:100%;
     text-shadow:0 2px 16px rgba(10,14,23,.95), 0 0 44px rgba(10,14,23,.85);
     animation:missflash 1600ms ease-out forwards}
-  /* What the miss cost, under the name it belongs to. Small enough to read as a
-     footnote to the name rather than as a second announcement. */
-  .flash span b{display:block;margin-top:10px;font-family:var(--mono);
-    font-size:15px;font-weight:500;letter-spacing:0;white-space:nowrap}
   @keyframes missflash{
     0%{transform:scale(.86);opacity:0}
     8%{transform:scale(1.03);opacity:1}

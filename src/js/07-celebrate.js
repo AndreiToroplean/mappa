@@ -152,7 +152,7 @@ function flashMiss(name, sub) {
   if (sub) span.appendChild(Object.assign(document.createElement('b'),
                                           { textContent: sub }));
   flashBox.hidden = false;
-  flashTimer = setTimeout(() => { flashBox.hidden = true; }, 1600);
+  flashTimer = setTimeout(() => { flashBox.hidden = true; }, MISS_MS);
 }
 
 function clearFlash() {
@@ -295,6 +295,11 @@ function clearNudge() {
   if (L_NUDGE) while (L_NUDGE.firstChild) L_NUDGE.removeChild(L_NUDGE.firstChild);
 }
 
+/* How long everything a miss has to say stays on screen: the flashed name, the
+   outline of what was hit, and the arrow to what was wanted. One number, because
+   they are one report — it read as a bug when half of it stayed behind. */
+const MISS_MS = 1600;
+
 /* ---- the distance a miss cost ------------------------------------------
    Drawn only under distance scoring, and unlike the clue arrow it is allowed to
    give everything away: the turn is already over. It runs the whole way from
@@ -347,4 +352,28 @@ function drawDrift(from, target, tapped) {
 
 function clearDrift() {
   if (L_DRIFT) while (L_DRIFT.firstChild) L_DRIFT.removeChild(L_DRIFT.firstChild);
+}
+
+/* The wrongly tapped region, outlined for as long as the rest of the report
+   lasts. Outline and not fill: a filled shape is what every other mode uses to
+   mean a state the region is *in*, and this one is in no state at all — it stays
+   open, and may be the region just named. */
+let missTimer = null;
+
+function markMiss(name) {
+  clearTimeout(missTimer);
+  const node = shapes[name];
+  if (node) node.classList.add('wrongflash');
+  missTimer = setTimeout(() => {
+    // setStatus may have repainted it since; only ever remove the class
+    if (shapes[name]) shapes[name].classList.remove('wrongflash');
+    clearDrift();
+  }, MISS_MS);
+}
+
+function clearMissMarks() {
+  clearTimeout(missTimer);
+  document.querySelectorAll('.wrongflash')
+    .forEach(n => n.classList.remove('wrongflash'));
+  clearDrift();
 }

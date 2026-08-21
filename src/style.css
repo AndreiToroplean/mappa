@@ -63,16 +63,16 @@
   path.state.reveal{fill:var(--amber);stroke:#FFDFA6;stroke-width:1}
   /* Fill and stroke come from paintScore(), inline, one colour per score. */
   path.state.scored{stroke-width:1;cursor:default;pointer-events:none}
-  /* A wrong tap under distance scoring, which is a moment rather than a state —
-     the shape stays in play and may be the region named next. Fading rather
-     than switching off, so it does not blink out mid-glance. */
-  path.state.wrongflash{fill:var(--red);stroke:#FF9296;stroke-width:1;
+  /* A wrong tap under distance scoring, which is a moment rather than a state.
+     Only the outline: filling it would read as the region having *become*
+     something, which is what a filled shape means everywhere else in the game,
+     and this one is still open and may be the region named next. */
+  path.state.wrongflash{stroke:var(--red);stroke-width:2.4;
     animation:wrongfade 1600ms ease-out forwards}
-  /* Fading the fill back to open, not the opacity: fading the shape itself
-     would punch a hole in the map on the way out. */
   @keyframes wrongfade{
-    0%,55%{fill:var(--red);stroke:#FF9296}
-    100%{fill:var(--land);stroke:var(--ink)}
+    0%{stroke:#FF9296;stroke-width:3.2}
+    60%{stroke:var(--red);stroke-width:2.4}
+    100%{stroke:var(--ink);stroke-width:1}
   }
   circle.hit{fill:transparent;cursor:pointer}
   /* The miss arrow. Amber rather than red: red is the colour of the mistake
@@ -113,6 +113,11 @@
   path.drift{stroke:var(--red);stroke-width:2.2;fill:none;stroke-linecap:round}
   path.drifthead{fill:var(--red);stroke:none}
   circle.driftdot{fill:none;stroke:var(--red);stroke-width:2}
+  /* The arrow belongs to the same moment as the outline and the flashed name,
+     so it leaves at the same time rather than sitting over the next question. */
+  #map > g > .drift,#map > g > .drifthead,#map > g > .driftdot{
+    animation:driftfade 1600ms ease-out forwards}
+  @keyframes driftfade{0%,62%{opacity:1}100%{opacity:0}}
 
   text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
     text-anchor:middle;pointer-events:none;opacity:.85}

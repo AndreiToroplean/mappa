@@ -95,6 +95,14 @@
   path.nudge{stroke:var(--amber);stroke-linecap:round;stroke-linejoin:round;
     fill:none;opacity:.95}
   path.nudgehead{fill:var(--amber);stroke:none;opacity:.95}
+  /* The distance a miss cost. Red against the answer's amber: the answer is the
+     thing to look at, this is what it cost not to. */
+  path.drift{stroke:var(--red);stroke-width:2.2;fill:none;stroke-linecap:round}
+  path.drifthead{fill:var(--red);stroke:none}
+  circle.driftdot{fill:none;stroke:var(--red);stroke-width:2}
+  text.driftlabel{font-family:var(--mono);font-size:12px;font-weight:600;
+    fill:var(--red);text-anchor:middle;pointer-events:none;
+    paint-order:stroke;stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
   text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
     text-anchor:middle;pointer-events:none;opacity:.85}
   text.label.wrong{fill:#FFE4E5;opacity:1;font-weight:600;

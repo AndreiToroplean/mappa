@@ -56,7 +56,8 @@ function resetRun() {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
-  errors = 0; found = 0; running = false;
+  errors = 0; found = 0; running = false; revealing = false;
+  clearDrift();
   document.body.classList.toggle('practice', MODE.id === 'practice');
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawCounter();
@@ -79,6 +80,12 @@ function resetRun() {
   overlay.hidden = true;
   el.intro.hidden = true;
 }
+
+/* What to call a finished run. Counting only ever completes by finding
+   everything, so this was the geography's own word for it. Distance completes
+   whether or not you were right, so a run can reach the end having found half —
+   and calling that "All fifty" would be a lie the scoreboard then repeats. */
+const tally = () => (found === TOTAL ? GEO.all : `${found} of ${TOTAL}`);
 
 function countdown(done) {
   const box = el.countdown, num = el.countNum;
@@ -120,7 +127,7 @@ function next() {
 /* `at` is where the tap actually landed, in composed units, and only distance
    scoring has any use for it. It is optional because not every pick has one. */
 function guess(name, at) {
-  if (!running || paused || !selectable(name)) return;
+  if (!running || paused || revealing || !selectable(name)) return;
 
   if (name === current) {
     clearFlash();     // a red name left over from a miss would read as wrong
@@ -134,17 +141,69 @@ function guess(name, at) {
     ticker.innerHTML = `<span class="ok">Correct</span> — <b>${name}</b>`;
     if (queue.length === 0) return finish(true, name);
     next();
-  } else {
+  } else if (SCORING.retry) {
     setStatus(name, 'missed');
     flashMiss(name);
     if (MODE.clues) missed(name);   // opens the arrow rung; drawn only on request
-    const was = spent();
-    errors += SCORING.cost(current, name, at);
+    errors += 1;
     drawCounter();
-    const cost = spent() - was;
-    ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`
-      + (SCORING.id === 'drift' ? ` <span class="cost">+${cost}</span>` : '');
+    ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>`;
     if (busted()) finish(false, name);
+  } else {
+    missByDistance(name, at);
   }
+}
+
+/* One tap per region, so a wrong one ends the turn instead of leaving it open.
+   The answer is shown, the distance to it is drawn from where the finger
+   actually landed, and then the next region is named — see SCORINGS.drift for
+   why guessing again would spoil the number. */
+const REVEAL_MS = 2100;   // long enough to read the arrow and find the answer
+let revealing = false;
+
+function missByDistance(name, at) {
+  const target = current;
+  const from = at || anchorAt[name];
+  const { cost, km } = driftFrom(target, name, from);
+
+  errors += cost;
+  drawCounter();
+
+  setStatus(name, 'missed');
+  flashMiss(name);
+  setStatus(target, 'answer');
+  drawDrift(from, target, Math.round(cost), km);
+
+  ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>. `
+    + `It was <b>${target}</b>, <span class="no">off by ${Math.round(cost)}</span>`
+    + (km === null ? ' — a different landmass.' : `, about ${fmtKm(km)}.`);
+
+  if (busted()) return finish(false, name);
+
+  /* The clock stops for the reveal. It is the game holding the screen, not the
+     player thinking, and charging time for it would fine a miss twice. */
+  revealing = true;
+  const heldAt = Date.now();
+  setTimeout(() => {
+    revealing = false;
+    if (!running) return;           // paused out, or the run ended meanwhile
+    t0 += Date.now() - heldAt;
+    clearDrift();
+    /* The wrong region goes back on the table. It was never asked for, and
+       leaving it red would mark the map with regions that are still to come —
+       counting mode clears them at the end of a turn for the same reason, and
+       here the turn ended immediately. The answer stays amber: that one really
+       is done with. */
+    REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });
+    if (queue.length === 0) return finish(true, target);
+    next();
+  }, REVEAL_MS);
+}
+
+/* Rounded the way a person would say it: no false precision at 3,000km, no
+   uselessly round zero under ten. */
+function fmtKm(km) {
+  if (km < 10) return km.toFixed(1) + ' km';
+  return Math.round(km).toLocaleString() + ' km';
 }
 

@@ -297,51 +297,85 @@ full-fifty runs that took real effort.
 A third axis, independent of the other two. Mode says whether a run can end
 early; scoring says what a wrong tap costs. Counting is the original game and
 asks whether you knew it. Measuring asks something else — how close were you —
-and under it a tap on the neighbouring département and a tap in the Atlantic
-stop being the same answer. That is a different drill, not a different
-difficulty, which is why it is an axis rather than a third mode: either question
-is worth asking of either kind of run.
+and under it a tap on the neighbouring département and a tap in the Atlantic stop
+being the same answer. That is a different drill, not a different difficulty,
+which is why it is an axis rather than a third mode.
 
-A hit is free either way, and deliberately so. The cost is only computed for taps
+A hit is free either way, and deliberately so. The cost is computed only for taps
 the ordinary resolver rejected, so ocean-snapping and the enlarged hit circles
 still decide what counts as knowing it, and the two scorings agree about that
-exactly. Only what happens *after* a miss differs.
+exactly. Only what happens after a miss differs.
 
-**The unit is not kilometres.** France would then be scored on a scale a fifth
-the width of the US, and a run in one would say nothing about a run in the other.
-100 is the longest distance across the geography's own mainland instead, measured
-at build time from the ink and stored per panel as `span`. Measured from the ink
-rather than from the panel box, because the US mainland's box is the whole
-composited frame — Alaska's corner included — and would flatter every miss by
-about a third.
+**One tap per region.** Guessing again is how you *narrow* an answer, and
+narrowing is the thing this scoring is trying to price: a second guess three
+regions closer would post a better distance than the first, and the number would
+then describe the search rather than the knowledge. So a wrong tap ends the turn.
+The answer is revealed in amber, a red line is drawn from where the finger landed
+to the nearest point of it carrying both the score and the real distance, and
+after two seconds the next region is named.
 
-**A different landmass costs 200.** There is no honest distance to measure across
-a gap the map invented, and whatever it costs should exceed the worst real miss,
-so it is twice the full width. This is the same panel test the clue arrow uses.
+The clock stops for that reveal. It is the game holding the screen, not the
+player thinking, and charging time for it would fine a miss twice. The wrongly
+tapped region goes back to open — it was never asked for, and leaving it red
+would mark the map with regions still to come.
+
+A consequence worth knowing: a distance run can reach the end of the queue having
+found half the regions, which a counting run never does. So the completed-run
+wording is the tally rather than the geography's own word for the full set —
+calling it "All fifty" would be a lie the scoreboard then repeats.
+
+**No new geometry, and no new build data.** The first attempt added a `span` to
+every panel at build time. It did not need to. `distanceTo()` already measures a
+point to a region, and `normalise()` already scales every panel so its longest
+side is `PANEL_SPAN` local units — so `PANEL_SPAN` *is* the width of the
+geography, by construction, and the score is one division. `km` on the panel is
+that same span in real kilometres, so the distance in kilometres is the same
+ratio the other way. Dividing the composed distance by the panel's placed scale
+first is what makes the score independent of the window.
+
+The one genuinely new piece of geometry is `nearestPointOn()`, and only because
+the arrow has to be *drawn* to the point the distance was measured to. Measuring
+never needed it.
+
+**The unit is not kilometres.** France would be scored on a scale a fifth the
+width of the US, and a run in one would say nothing about a run in the other. 100
+is the width of the geography instead. Note that it is the width, not the
+diagonal, so a corner-to-corner miss can score about 109 in the US and 137 in
+France — a single catastrophic miss can end a Trial run, which seems right.
+
+Checked against known distances: Washington to Maine comes out at 4,055km and
+Brest to Strasbourg at 885km, both within a few percent of the great-circle
+truth. Albers is equal-area rather than equidistant, so a few percent is the
+expected error, not a bug to chase.
+
+**A different landmass costs 200,** and reports no kilometres, because there is
+no honest number to report across a gap the map invented. Same panel test as the
+clue arrow.
 
 **Always whole.** Tenths of a percent of a continent are not something anyone can
-feel, and a decimal point would claim a precision that simplified borders do not
-have. But the running total is kept unrounded until it is shown or stored —
-rounding each miss as it lands would let a run of small ones cost nothing at all.
+feel. But the running total is kept unrounded until it is shown or stored —
+rounding each miss as it lands would let a run of small ones cost nothing.
 
-**Trial spends 100, one full map.** Three lives and one full width are the same
-kind of rule, so `MODE.capped` says a run can end early and `SCORING.budget` says
-at what. `MODE.lives` is gone; it conflated the two.
+**Trial spends 100, one full map.** `MODE.lives` is gone: it conflated "a run can
+end early" with "at what", which are now `MODE.capped` and `SCORING.budget`.
 
 **Clues stop adding.** Under counting, misses and clues are both help and the sum
 is one sentence. Under distance a miss can cost 90 and a clue costs 1, so the sum
-would be the distance with rounding noise on top. Clues become the tie-break
-instead, which keeps them worth thinking about without pretending a clue and half
-a continent are the same currency.
+would be the distance with rounding noise on top. Clues become the tie-break.
 
 **Old boards survive.** Counting keeps the unsuffixed keys, including the two
-legacy US ones; only distance boards take a suffix. Suffixing both would have
-orphaned every board anyone has.
+legacy US ones; only distance boards take a suffix.
+
+**Switching a mode must not start the game.** `setMode` and `setScoring` share
+`afterSwitch()`, which calls `drawCounter()` and not `resetRun()` — `resetRun()`
+ends by hiding the intro card, which is right when a geography change invalidates
+a half-played map and wrong on a switch, where it made the menu appear to start
+the game.
 
 The harness checks the score against a reference that never touches the layout,
-at two aspect ratios. The one thing that could go wrong silently here is the
-score depending on the shape of the window, since the yardstick is carried
-through the same transform as the ink.
+at two aspect ratios. The one thing that could go wrong silently is the score
+depending on the shape of the window, since the distance is measured in composed
+units and divided back out.
 
 ## Game rules as implemented
 

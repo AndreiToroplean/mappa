@@ -260,14 +260,20 @@ albersUsa transform, which anything aligning to the US map will need.
 Two axes on the menu. Mode — Trial or Practice — says whether a run can end
 early. Scoring — Misses or Distance — says what a wrong tap costs.
 
-Counting charges 1 a miss; Trial allows 3. Distance charges how far the tap was
-from the region asked for, on a scale where 100 is the longest distance across
-the geography's mainland; Trial allows 100. A tap on a different landmass costs
-200. A hit costs nothing under either.
+Counting charges 1 a miss and leaves the region on the table; Trial allows 3.
 
-The scale comes from each panel's `span`, emitted at build time as the diagonal
-of that panel's ink in local units, and carried through the layout transform so
-the score does not depend on the window.
+Distance charges how far the tap was from the region asked for, on a scale where
+100 is the width of the geography; Trial allows 100. There is one tap per region:
+a wrong one reveals the answer in amber, draws a red line to the nearest point of
+it labelled with the score and the real distance, and moves on after two seconds
+with the clock stopped. A tap on a different landmass costs 200. A hit costs
+nothing under either scoring.
+
+The scale needs no stored data. `normalise()` already makes each panel's longest
+side `PANEL_SPAN` local units, so that is the width by construction; the composed
+distance is divided by the panel's placed scale first, which is what keeps the
+score independent of the window. `km` on the panel converts the same ratio into
+real kilometres.
 
 Every geography, mode and scoring combination has its own board. Counting keeps
 the original keys so boards saved before this feature survive; distance boards

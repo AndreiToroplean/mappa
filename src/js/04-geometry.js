@@ -98,35 +98,59 @@ function distanceTo(name, u) {
   return Math.sqrt(borderDist2(name, u));
 }
 
-/* What a miss cost, on the 0..100 scale where 100 is the full width of the
-   geography. See SCORINGS.drift for why the unit is not kilometres.
+/* What a miss cost, and how far it really was.
 
-   Measured from where the finger actually landed to the nearest point of the
-   region that was asked for, so a tap on the border of the right answer costs
-   almost nothing and one across the country costs almost everything. A tap that
-   the ordinary resolver would have accepted never reaches here at all — it is a
-   hit, and hits are free — which is what makes the two scorings agree about
-   what counts as knowing it.
+   No new geometry and no new build data: distanceTo() already measures a point
+   to a region, and the yardstick was already there. normalise() scales every
+   panel so its longest side is PANEL_SPAN local units, so PANEL_SPAN *is* the
+   width of the geography — the cost is the local distance as a percentage of
+   it, which is a division. `km` on the panel is the same span in real
+   kilometres, so the real distance is the same ratio the other way.
 
-   Two regions on different panels have no distance worth measuring: the gap
+   The composed scale divides out, which is the point: the score cannot depend
+   on the size or shape of the window.
+
+   Two regions on different panels have no distance worth measuring — the gap
    between them is a decision the map made, not a fact about the world. That
-   costs FAR, more than the worst honest miss. */
-function driftCost(target, missed, at) {
+   costs FAR, more than the worst honest miss, and reports no kilometres because
+   there is no honest number to report. */
+function driftFrom(target, missed, at) {
   const p = panelOf[target];
-  if (p !== panelOf[missed]) return FAR;
+  if (p !== panelOf[missed]) return { cost: FAR, km: null };
 
   const place = layoutNow && layoutNow.place[p];
-  const panel = GEO.panels[p];
-  if (!place || !panel || !panel.span) return FAR;    // nothing to measure with
+  if (!place || !place.s || !at) return { cost: FAR, km: null };
 
-  // the yardstick, carried through the same transform as the ink
-  const span = panel.span * place.s;
-  // Falling back to the label anchor keeps this defined for a pick with no
-  // point behind it; it is the region's own centre, so it reads as a miss from
-  // where the region is.
-  const u = at || anchorAt[missed];
-  if (!u || !span) return FAR;
-  return Math.min(FAR, 100 * distanceTo(target, u) / span);
+  // composed units back into the panel's own, where PANEL_SPAN is the width
+  const local = distanceTo(target, at) / place.s;
+  const km = GEO.panels[p].km;
+  return {
+    cost: Math.min(FAR, 100 * local / PANEL_SPAN),
+    km: km ? local * km / PANEL_SPAN : null,
+  };
+}
+
+/* Where on the target the arrow should land: the nearest point of it to the
+   tap, which is the point the distance was measured to. Inside the region there
+   is nothing to point at, and the caller does not draw an arrow at all. */
+function nearestPointOn(name, u) {
+  let best = null, bestD = Infinity;
+  for (const ring of borders[name]) {
+    for (let i = 0; i < ring.length; i += 2) {
+      const ax = ring[i], ay = ring[i + 1];
+      const j = (i + 2) % ring.length;
+      const bx = ring[j], by = ring[j + 1];
+      let dx = bx - ax, dy = by - ay, px = ax, py = ay;
+      if (dx || dy) {
+        const t = ((u.x - ax) * dx + (u.y - ay) * dy) / (dx * dx + dy * dy);
+        if (t > 1) { px = bx; py = by; }
+        else if (t > 0) { px = ax + dx * t; py = ay + dy * t; }
+      }
+      const d = (u.x - px) * (u.x - px) + (u.y - py) * (u.y - py);
+      if (d < bestD) { bestD = d; best = { x: px, y: py }; }
+    }
+  }
+  return best;
 }
 
 function nearestSelectable(u) {

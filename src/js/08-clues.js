@@ -117,6 +117,9 @@ function clearGroup() {
    between layouts belongs here, or it will survive a resize in the wrong
    place. */
 function redrawHints() {
+  // The distance arrow is anchored to a tap rather than to a region, so there
+  // is nothing to rebuild it from once the coordinates move.
+  clearDrift();
   const g = shownGroup, a = shownArrow;
   if (g) showGroup(g);
   if (a) nudge(a.from, a.to);

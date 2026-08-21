@@ -113,6 +113,7 @@ let MODE = MODES.trial;
    anyone can feel, and a decimal point would suggest a precision the
    simplified borders do not have.  */
 const FAR = 200;
+const PANEL_SPAN = 1000;   // what normalise() scales a panel's longest side to
 
 const SCORINGS = {
   count: {
@@ -120,7 +121,7 @@ const SCORINGS = {
     label: 'Misses',
     budget: 3,            // what a Trial run may spend
     pips: true,           // three lives read better as pips than as a number
-    cost: () => 1,
+    retry: true,          // a wrong tap leaves the region on the table
   },
 
   drift: {
@@ -128,7 +129,13 @@ const SCORINGS = {
     label: 'Distance',
     budget: 100,          // one full width of the geography
     pips: false,
-    cost: (target, missed, at) => driftCost(target, missed, at),
+    /* One tap per region. Guessing again after a miss is how you *narrow* an
+       answer, and narrowing is exactly what this scoring is trying to price: a
+       second guess three regions closer would post a better distance than the
+       first, and the number would then describe the search rather than the
+       knowledge. So the answer is shown, the distance to it is drawn, and the
+       next region is named. */
+    retry: false,
   },
 };
 

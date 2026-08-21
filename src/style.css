@@ -61,6 +61,8 @@
   path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
   path.state.miss{fill:var(--red);stroke:#FF9296;stroke-width:1;cursor:default}
   path.state.reveal{fill:var(--amber);stroke:#FFDFA6;stroke-width:1}
+  /* Fill and stroke come from paintScore(), inline, one colour per score. */
+  path.state.scored{stroke-width:1;cursor:default;pointer-events:none}
   /* A wrong tap under distance scoring, which is a moment rather than a state —
      the shape stays in play and may be the region named next. Fading rather
      than switching off, so it does not blink out mid-glance. */
@@ -118,6 +120,10 @@
     stroke:#4A0D10;stroke-width:3px;paint-order:stroke}
   text.label.answer{fill:#3A2600;opacity:1;font-weight:600;
     stroke:#FFE3AE;stroke-width:3px;paint-order:stroke}
+  /* Scored regions span green to red, so the label cannot borrow either end's
+     colour. Light on a dark outline reads on all of them. */
+  text.label.scored{fill:#F1F5F9;opacity:1;font-weight:600;
+    stroke:rgba(10,14,23,.75);stroke-width:3px;paint-order:stroke}
 
   footer{
     font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);

@@ -100,12 +100,13 @@ function distanceTo(name, u) {
 
 /* What a miss cost, and how far it really was.
 
-   No new geometry and no new build data: distanceTo() already measures a point
-   to a region, and the yardstick was already there. normalise() scales every
-   panel so its longest side is PANEL_SPAN local units, so PANEL_SPAN *is* the
-   width of the geography — the cost is the local distance as a percentage of
-   it, which is a division. `km` on the panel is the same span in real
-   kilometres, so the real distance is the same ratio the other way.
+   The score is the distance as a percentage of the panel's true diameter — the
+   farthest two points of it can be — so a full-width miss is 100 and nothing can
+   be worse. See measurePanels() for why the bounding box would not do.
+
+   Kilometres come from the other yardstick, which needs no measuring:
+   normalise() scaled the panel so its longest side is PANEL_SPAN local units,
+   and `km` is that same side in real kilometres, so the ratio converts.
 
    The composed scale divides out, which is the point: the score cannot depend
    on the size or shape of the window.
@@ -121,11 +122,17 @@ function driftFrom(target, missed, at) {
   const place = layoutNow && layoutNow.place[p];
   if (!place || !place.s || !at) return { cost: FAR, km: null };
 
-  // composed units back into the panel's own, where PANEL_SPAN is the width
+  // composed units back into the panel's own
   const local = distanceTo(target, at) / place.s;
   const km = GEO.panels[p].km;
+  /* Divided by the panel's true diameter, so 100 is the farthest two points of
+     it can be and no miss can score past the end of the colour scale. The clamp
+     is for the one case the geometry does not cover: an ocean tap snaps to a
+     region from up to SNAP_UNITS outside the ink, so the point measured from can
+     sit marginally beyond the hull. */
+  const wide = panelDiam[p];
   return {
-    cost: 100 * local / PANEL_SPAN,      // uncapped; the geometry bounds it
+    cost: wide ? Math.min(100, 100 * local / wide) : FAR,
     km: km ? local * km / PANEL_SPAN : null,
   };
 }

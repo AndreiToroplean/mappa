@@ -263,7 +263,8 @@ early. Scoring — Misses or Distance — says what a wrong tap costs.
 Counting charges 1 a miss and leaves the region on the table; Trial allows 3.
 
 Distance charges how far the tap was from the region asked for, on a scale where
-100 is the width of the geography; Trial allows 100. There is one tap per region,
+100 is the panel's true diameter — measured at load by convex hull and rotating
+callipers, so no miss can exceed it. Trial allows 100. There is one tap per region,
 but nothing pauses: the next region is named immediately while the miss reports
 itself alongside — the name of what was hit flashes with the cost under it, the
 shape flashes red for a moment without leaving play, the answer is revealed in
@@ -271,13 +272,16 @@ amber, and a red line is drawn to it unless the two are on different panels. A
 tap on a different landmass costs a flat 100. A hit costs nothing under either
 scoring.
 
-Distance boards rank by regions found, then error points, then clues, then time.
+Every region ends up in one state, coloured green through amber to red by what it
+scored, so a finished board shows where the knowledge runs out. The header counts
+Revealed rather than Found. Distance boards rank on error points, then clues, then
+time — never the tally, which the points already contain.
 
-The scale needs no stored data. `normalise()` already makes each panel's longest
-side `PANEL_SPAN` local units, so that is the width by construction; the composed
-distance is divided by the panel's placed scale first, which is what keeps the
-score independent of the window. `km` on the panel converts the same ratio into
-real kilometres.
+Neither yardstick is stored. The diameter is measured from the geometry at load;
+kilometres come from `normalise()` having scaled each panel's longest side to
+`PANEL_SPAN`, with `km` on the panel being that same side in real kilometres. The
+composed distance is divided by the panel's placed scale first, which is what
+keeps the score independent of the window.
 
 Every geography, mode and scoring combination has its own board. Counting keeps
 the original keys so boards saved before this feature survive; distance boards

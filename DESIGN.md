@@ -353,9 +353,20 @@ never needed it.
 
 **The unit is not kilometres.** France would be scored on a scale a fifth the
 width of the US, and a run in one would say nothing about a run in the other. 100
-is the width of the geography instead. Note that it is the width, not the
-diagonal, so a corner-to-corner miss can score about 109 in the US and 137 in
-France — a single catastrophic miss can end a Trial run, which seems right.
+is the panel's *true diameter* instead — the farthest two points of it can be —
+so a full-width miss is exactly 100 and nothing can be worse.
+
+The bounding box will not do for that. Its diagonal overstates a wide flat
+country and its sides understate a diagonal one: France's ink spans 1000x931
+local units and its true diameter is neither 1000 nor 1366, but 1205. So
+`measurePanels()` takes the convex hull and walks it with rotating callipers,
+once per geography load — the two farthest points of a set are always both on its
+hull, and on a convex polygon the farthest pair can be walked in one pass. Nine
+thousand points reduce to a hull of a few dozen.
+
+The scale having a real end is what lets the map be coloured by it. `check.py`
+computes the same diameter by brute force over every hull pair, so the callipers
+are checked against something that cannot share their bug.
 
 Checked against known distances: Washington to Maine comes out at 4,055km and
 Brest to Strasbourg at 885km, both within a few percent of the great-circle
@@ -364,12 +375,8 @@ expected error, not a bug to chase.
 
 **A different landmass costs a flat 100** — the wrong inset, or the mainland when
 an inset was wanted — and reports no kilometres, because there is no honest
-number to report across a gap the map invented.
-
-It is not a ceiling. A real miss can cost more, since 100 is the width of the
-geography and its diagonal is longer. Getting the wrong landmass is a category
-error and should cost what a long miss costs, not what the worst conceivable one
-does.
+number to report across a gap the map invented. It is now exactly the top of the
+scale rather than beyond it, which it was when the yardstick was the width.
 
 **Always whole.** Tenths of a percent of a continent are not something anyone can
 feel. But the running total is kept unrounded until it is shown or stored —
@@ -382,18 +389,21 @@ end early" with "at what", which are now `MODE.capped` and `SCORING.budget`.
 is one sentence. Under distance a miss can cost 90 and a clue costs 1, so the sum
 would be the distance with rounding noise on top. Clues become the tie-break.
 
-**The board leads with how many were right,** in both modes, then error points,
-then clues, then time. A distance run can reach the end having found half, which
-is the first fact about it and the one that survives being read quickly.
+**The board says nothing about the tally.** Points, then clues, then time —
+`better()` drops its first term entirely under distance.
 
-Considered and rejected: ranking on found *minus* clues. It makes forty right
-with five clues indistinguishable from thirty-five right with none, and those are
-not the same run — a clue does not undo a correct answer, it discounts one. Four
-ordered terms say that without pretending the units are interchangeable.
+Counting how many came out right *and* how far off the rest were is the same
+question asked twice: every run is asked every region, and a region is right
+exactly when it scored zero. Ranking on the tally first would put a run that
+guessed forty by a hair above one that got thirty dead on. The points already
+contain the tally, told finely instead of coarsely.
 
-Both modes therefore use the tally-based insert, not just Trial. Under counting,
-every practice run completes and bucketing on misses alone is right; under
-distance it would let twenty right replace forty right.
+That also settles the header. **Counting shows Found; distance shows Revealed** —
+how many are now on the map — because under distance the column would otherwise
+climb by one a turn or not at all, and the interesting number is how far through
+you are.
+
+One entry per score, the way counting-practice keeps one per miss count.
 
 **Old boards survive.** Counting keeps the unsuffixed keys, including the two
 legacy US ones; only distance boards take a suffix.
@@ -521,6 +531,24 @@ A perfect practice run still celebrates. That one *is* an achievement.
 
 The reduced-motion path already did exactly this, for a related reason, so the
 two share a branch.
+
+## The map as the scoreboard
+
+Under distance every region ends in one state, `scored`, and what separates them
+is colour: green at zero, amber at fifty, red at a hundred, interpolated. There is
+no *found* and no *missed* to tell apart, because every region is attempted
+exactly once and the answer is always shown.
+
+This is the feature the rest of the scoring was for. A finished board is a map of
+where the knowledge runs out — not which regions were wrong, which a drill can
+only tell you once, but how wrong, region by region, in one glance.
+
+The fills stay dark and the strokes carry the signal, so the thing still reads as
+a map rather than as a chart. Labels go light on a dark outline, since a scored
+region can be any colour on the ramp and the label cannot borrow either end's.
+
+`paintScore()` sets fill and stroke inline; `setStatus()` clears them on any other
+transition, so the two cannot fight over a shape.
 
 ## Fixed insets, and the arrow that lied
 

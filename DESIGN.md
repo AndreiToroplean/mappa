@@ -7,15 +7,53 @@ thing is and how to build it; this file covers why.
 Written and kept up to date across the sessions that built it. If you change a
 decision recorded here, change the note too.
 
+## Picking this up in a new session
+
+The repo does not live on the machine that writes it. Each session starts from
+`fifty.bundle`, which Andrei keeps: `git clone fifty.bundle fifty`, then
+`git remote remove origin` since that origin is the bundle file. The container's
+filesystem does not survive between sessions; the bundle is the only continuity.
+
+```
+python3 src/make.py     # -> dist/fifty.html, the whole game in one file
+python3 check.py        # the regression harness; must be green before a commit
+python3 render.py app fr 780 390    # rasterise, to see what the code drew
+```
+
+Andrei does not read the code. Say what changed and why it changed, not what the
+diff looks like — and flag the judgement calls, because they are the part he can
+actually check.
+
+Working habits that have earned their place:
+
+- One commit per point of instruction, committed as you go without being asked.
+- Do not regenerate `fifty.bundle` unless asked. Do hand over `dist/fifty.html`
+  every time, so it can be tried on a phone.
+- `check.py` is not decoration. Three real bugs were caught by writing the test
+  before believing the code: the panel test that was in a comment and not in the
+  code, the harness's private copy of `addEntry` that had drifted from the real
+  one, and a test that derived its expectations from the data it was checking.
+  Name expectations rather than deriving them.
+- Before adding a field to the build, check whether the number is already implied
+  by the geometry. It usually is; see the `span` that was added and reverted.
+- `render.py` before trusting any argument about layout.
+
+Regenerating the source data needs downloads that are not in the repo — see the
+docstrings at the top of `build-us.py`, `build-fr.py` and `build-clues.py`. Both
+builds reproduce the committed files byte for byte, which is worth verifying
+before changing either.
+
+The roadmap, such as it is, is *Ideas not built* at the end of this file.
+
 ## Structure
 
 `src/` is split for editing; `make.py` inlines it all back into one file, so
 the shipped artifact is unchanged — single file, no external references.
 
 ```
-01-data.js    the region set; expands the short payload keys, holds RULES
+01-data.js    the region set and its short keys; MODES, SCORINGS, ranking
 02-map.js     SVG construction, paint layers, labels, tap targets, STATUS
-03-run.js     run lifecycle: queue, lives, clock, guess()
+03-run.js     run lifecycle: queue, spending cap, clock, guess()
 04-geometry.js  screen->map coords, distance, resolving a position
 05-lens.js    the press-and-hold magnifier
 06-board.js   storage, leaderboard, end of run
@@ -34,13 +72,12 @@ both, and the transition was hand-written at five call sites — two via
 
 **`borderDist2` is the geometric primitive.** Squared distance from a point to
 a region's border, with an early-out ceiling. The snap threshold is a ceiling
-on it, resolving a position is a minimum over it, and blind mode's error score
-is `distanceTo()` — the same measure aimed at one named region, zero inside.
-`distanceTo` is deliberately unused today; it is there so the roadmap does not
-reinvent it.
+on it, resolving a position is a minimum over it, and what distance scoring
+charges for a miss is `distanceTo()` — the same measure aimed at one named
+region, zero inside.
 
-**Totals are derived.** `TOTAL` from the region set, lives and wording from
-`RULES`. Fifty was hardcoded in eight places and three lives in two, which is
+**Totals are derived.** `TOTAL` from the region set, the spending cap and the
+wording from `MODE` and `SCORING`. Fifty was hardcoded in eight places and three lives in two, which is
 what blocked both a practice mode and a second geography.
 
 **`check.py`** runs the pure logic against independent Python implementations:
@@ -177,7 +214,7 @@ mode — unlimited lives, ranked on errors — with nothing to count.
 
 Errors rank ahead of time in `better()`. Boards written before this exist, so
 `normalise()` fills in what is recoverable: a run that did not finish ended by
-running out of lives, so its count is exactly `RULES.lives`. A completed run's
+running out of lives, so its count is exactly the cap. A completed run's
 count is not recoverable and is left blank rather than invented — displayed as
 a dash, and ranked by `errorsOf()` as the worst a completed run could be, one
 short of the lives, so it can never outrank a run known to be cleaner.
@@ -247,10 +284,10 @@ key, copy and a board-insertion policy; `MODE` points at the live one. What
 did *not* need to change is telling: `better()` serves both unchanged, because
 every practice run is a completed set, so its first term always ties and the
 ordering falls through to misses, then time — which is exactly what practice
-wants. `RULES` stayed behind as geography vocabulary, which is the right seam:
-mode and geography vary independently.
+wants. Geography vocabulary stayed behind on `GEO`, which is the right seam:
+the three axes vary independently.
 
-Practice keeps one entry per miss count, classic keeps one per tally plus five
+Practice keeps one entry per miss count, Trial keeps one per tally plus five
 full runs, and `replaceBy()` is the shared half. Boards live under separate
 keys: a practice run cannot fail, so ranking it against runs that could is
 meaningless, and merging them would bury every classic run under completed
@@ -295,289 +332,78 @@ full-fifty runs that took real effort.
 ## Scoring by distance
 
 A third axis, independent of the other two. Mode says whether a run can end
-early; scoring says what a wrong tap costs. Counting is the original game and
-asks whether you knew it. Measuring asks something else — how close were you —
-and under it a tap on the neighbouring département and a tap in the Atlantic stop
-being the same answer. That is a different drill, not a different difficulty,
-which is why it is an axis rather than a third mode.
+early; scoring says what a wrong tap costs. Counting asks whether you knew it.
+Measuring asks how close you were, and under it a tap on the neighbouring
+département and a tap in the Atlantic stop being the same answer. A different
+drill, not a different difficulty, which is why it is an axis and not a mode.
 
-A hit is free either way, and deliberately so. The cost is computed only for taps
-the ordinary resolver rejected, so ocean-snapping and the enlarged hit circles
-still decide what counts as knowing it, and the two scorings agree about that
-exactly. Only what happens after a miss differs.
+A hit is free either way. The cost is computed only for taps the ordinary
+resolver rejected, so ocean-snapping and the enlarged hit circles still decide
+what counts as knowing it and the two scorings agree about that exactly.
 
-**One tap per region.** Guessing again is how you *narrow* an answer, and
-narrowing is the thing this scoring is trying to price: a second guess three
-regions closer would post a better distance than the first, and the number would
-then describe the search rather than the knowledge. So a wrong tap ends the turn.
+**One tap per region, and it interrupts nothing.** Guessing again is how you
+*narrow* an answer, and narrowing is the thing this scoring prices: a second
+guess three regions closer would post a better distance than the first, and the
+number would describe the search rather than the knowledge. So a wrong tap ends
+the turn — but the next region is named in the same breath. The first attempt
+held the screen for two seconds with the clock stopped, which broke the rhythm
+the drill is built on; counting mode had already settled that question. A miss is
+reported, not dwelt on.
 
-**But it interrupts nothing.** The first attempt held the screen for two seconds
-with the clock stopped. That was wrong twice over — it broke the rhythm the drill
-is built on, and counting mode had already settled the question: a miss is
-reported, not dwelt on. The next region is named in the same breath and
-everything the miss has to say happens alongside it. The name of what was hit
-flashes in the middle with the cost under it, the shape flashes red, the answer
-is revealed in amber, a line is drawn to it, and all of it fades on its own.
+The report is the flashed name, the outline of what was hit, and an arrow to what
+was wanted. All three share `MISS_MS`, because they are one statement about one
+tap and it read as a bug when the arrow stayed behind. The flash says the name
+and nothing else, as in every other mode: the cost lived under it for a version
+and that was one event reporting itself twice at once. The footer has room to say
+it properly — *~~Arkansas~~ Missouri · Off by 1,850 km (+43 EPs)*.
 
-**The wrongly tapped region keeps its status,** and only its outline is marked.
-Marking it properly would take it out of play, and it may well be the region just
-named — the one thing a player must be able to do straight after a wrong tap is
-tap the same shape again and be right. So the red is a class with a timer.
+**The wrongly tapped region keeps its status, and only its outline is marked.**
+Marking it would take it out of play, and it may well be the region just named —
+the one thing a player must be able to do straight after a wrong tap is tap the
+same shape again and be right. Outline rather than fill, because a filled shape
+means a state the region has *become*, and this one has become nothing.
 
-Outline rather than fill, because a filled shape is what every other mode uses to
-mean a state the region has *become*, and this one has become nothing. Filling it
-read as an error state that had been recorded.
+**No arrow across a gap the map invented.** Same rule as the clue arrow, named
+once as `sameLandmass()` and used by both.
 
-**One life for the whole report.** The flashed name, the outline and the arrow
-share `MISS_MS`. They are one statement about one tap, and it read as a bug when
-the arrow stayed behind on the next question.
+### The scale
 
-**The flash says the name and nothing else,** the same as in every other mode.
-The cost lived under it for a version and that was one report in two places at
-once — the middle of the screen shouting a number the footer was already
-explaining properly. The footer has room for the whole thing and this does not:
-*~~Arkansas~~ Missouri · Off by 1,850 km (+43 EPs)*.
-
-It was on the arrow before that, where it was small, set at whatever angle the
-arrow happened to lie, and often over the busiest part of the map.
-
-**One name for the unit.** Error points, spelled out where there is room — the
-header column, the end card — and *EPs* wherever a row has to stay on one line.
-It was briefly *pts*, which named nothing.
-
-**No arrow across a gap the map invented.** Same rule as the clue arrow, now
-named `sameLandmass()` and used by both.
-
-A consequence worth knowing: a distance run can reach the end of the queue having
-found half the regions, which a counting run never does. So the completed-run
-wording is the tally rather than the geography's own word for the full set —
-calling it "All fifty" would be a lie the scoreboard then repeats.
-
-**No new geometry, and no new build data.** The first attempt added a `span` to
-every panel at build time. It did not need to. `distanceTo()` already measures a
-point to a region, and `normalise()` already scales every panel so its longest
-side is `PANEL_SPAN` local units — so `PANEL_SPAN` *is* the width of the
-geography, by construction, and the score is one division. `km` on the panel is
-that same span in real kilometres, so the distance in kilometres is the same
-ratio the other way. Dividing the composed distance by the panel's placed scale
-first is what makes the score independent of the window.
-
-The one genuinely new piece of geometry is `nearestPointOn()`, and only because
-the arrow has to be *drawn* to the point the distance was measured to. Measuring
-never needed it.
-
-**The unit is not kilometres.** France would be scored on a scale a fifth the
-width of the US, and a run in one would say nothing about a run in the other. 100
-is the panel's *true diameter* instead — the farthest two points of it can be —
-so a full-width miss is exactly 100 and nothing can be worse.
+**100 is the panel's true diameter** — the farthest two points of it can be — so
+a full-width miss is exactly 100 and nothing can be worse. Not kilometres:
+France would be scored on a fifth of the width of the US and neither run would
+say anything about the other.
 
 The bounding box will not do for that. Its diagonal overstates a wide flat
-country and its sides understate a diagonal one: France's ink spans 1000x931
-local units and its true diameter is neither 1000 nor 1366, but 1205. So
+country and its sides understate a diagonal one; France's ink spans 1000x931
+local units and its diameter is neither 1000 nor 1366, but 1205. So
 `measurePanels()` takes the convex hull and walks it with rotating callipers,
-once per geography load — the two farthest points of a set are always both on its
-hull, and on a convex polygon the farthest pair can be walked in one pass. Nine
-thousand points reduce to a hull of a few dozen.
+once per geography load. Nine thousand points reduce to a hull of a few dozen.
+`check.py` computes the same number by brute force over every hull pair, so the
+callipers are checked against something that cannot share their bug.
 
-The scale having a real end is what lets the map be coloured by it. `check.py`
-computes the same diameter by brute force over every hull pair, so the callipers
-are checked against something that cannot share their bug.
+**No build data, and almost no new geometry.** The first attempt added a `span`
+to every panel at build time and did not need to: `distanceTo()` already measured
+a point to a region. The lesson generalises — before adding a field, check
+whether the number is already implied by the geometry. Kilometres come from
+`normalise()` having scaled each panel's longest side to `PANEL_SPAN`, with `km`
+being that same side in real kilometres. Dividing the composed distance by the
+panel's placed scale first is what keeps the score independent of the window.
+`nearestPointOn()` is the only genuinely new geometry, and only because the arrow
+has to be *drawn* to the point the distance was measured to.
 
-Checked against known distances: Washington to Maine comes out at 4,055km and
-Brest to Strasbourg at 885km, both within a few percent of the great-circle
-truth. Albers is equal-area rather than equidistant, so a few percent is the
-expected error, not a bug to chase.
+**A different landmass costs a flat 100** and reports no kilometres, because
+there is no honest number to report across a gap the map invented.
 
-**A different landmass costs a flat 100** — the wrong inset, or the mainland when
-an inset was wanted — and reports no kilometres, because there is no honest
-number to report across a gap the map invented. It is now exactly the top of the
-scale rather than beyond it, which it was when the yardstick was the width.
+**Always whole,** but the running total is kept unrounded until it is shown or
+stored — rounding each miss as it lands would let a run of small ones cost
+nothing. **Trial spends 100, one full map.** `MODE.lives` is gone: it conflated
+"a run can end early" with "at what", now `MODE.capped` and `SCORING.budget`.
 
-**Always whole.** Tenths of a percent of a continent are not something anyone can
-feel. But the running total is kept unrounded until it is shown or stored —
-rounding each miss as it lands would let a run of small ones cost nothing.
+**One name for the unit.** Error points, spelled out where there is room — the
+header column, the end card — and *EPs* wherever a row must stay on one line. It
+was briefly *pts*, which named nothing.
 
-**Trial spends 100, one full map.** `MODE.lives` is gone: it conflated "a run can
-end early" with "at what", which are now `MODE.capped` and `SCORING.budget`.
-
-**Clues stop adding.** Under counting, misses and clues are both help and the sum
-is one sentence. Under distance a miss can cost 90 and a clue costs 1, so the sum
-would be the distance with rounding noise on top. Clues become the tie-break.
-
-**The board says nothing about the tally.** Points, then clues, then time —
-`better()` drops its first term entirely under distance.
-
-Counting how many came out right *and* how far off the rest were is the same
-question asked twice: every run is asked every region, and a region is right
-exactly when it scored zero. Ranking on the tally first would put a run that
-guessed forty by a hair above one that got thirty dead on. The points already
-contain the tally, told finely instead of coarsely.
-
-That also settles the header. **Counting shows Found; distance shows Revealed** —
-how many are now on the map — because under distance the column would otherwise
-climb by one a turn or not at all, and the interesting number is how far through
-you are.
-
-One entry per score, the way counting-practice keeps one per miss count.
-
-**Old boards survive.** Counting keeps the unsuffixed keys, including the two
-legacy US ones; only distance boards take a suffix.
-
-**Switching a mode must not start the game.** `setMode` and `setScoring` share
-`afterSwitch()`, which calls `drawCounter()` and not `resetRun()` — `resetRun()`
-ends by hiding the intro card, which is right when a geography change invalidates
-a half-played map and wrong on a switch, where it made the menu appear to start
-the game.
-
-The harness checks the score against a reference that never touches the layout,
-at two aspect ratios. The one thing that could go wrong silently is the score
-depending on the shape of the window, since the distance is measured in composed
-units and divided back out.
-
-## Game rules as implemented
-
-- Start screen, then a centred 3-2-1. The clock does not start until it clears.
-- All 50 states in random order, 3 lives.
-- A miss stays red and labelled until the correct state is clicked. Clicking an
-  already-missed state again is free — no life lost, nothing logged.
-- Getting it right clears all reds; those states are penalised again next turn.
-- On the third miss the header switches to "Out of lives" immediately, then the
-  board holds 2.6s (the answer lights amber) before the overlay. A win holds
-  1.2s so the completed map is visible.
-- Leaderboard: ranked by states found, then time. One entry per sub-50 tally
-  (your best 31-state run replaces your previous 31-state run, never competes
-  with your 12-state one). Up to five full runs coexist, ranked on time.
-  Zero-state runs don't post.
-- Errors are counted per run and rank ahead of time: cleaner beats quicker.
-  Shown on the board in words — "Perfect", "1 miss", "2 misses" — because a
-  bare count next to a symbol reads as nothing at all unless you already know
-  what the column is.
-  Only full runs really contend on it, since anything short of the full set
-  ended by running out of lives and therefore has exactly that many errors.
-
-## Clues
-
-Three rungs, requested not given, in a fixed order: arrow, capital, grouping.
-Each rung says whether it can be offered yet — the arrow needs a wrong guess to
-point away from, so before the first miss the button skips it. A new miss
-re-opens that rung, since pointing from a different mistake is new information,
-and it is paid for like any other clue. The ladder resets each turn; the tally
-does not reset until the run does.
-
-The arrow starts where the centre-to-centre line crosses the border of the region
-that was hit, from the composed border index. A fixed offset from the centre was
-the first attempt and is wrong in both directions: still inside a large region,
-adrift from a small one.
-
-Its three distance bands are three *shapes*, not three widths. Width alone was
-tried and was useless — an arrow is never seen beside another one, so there is
-nothing to compare a thickness against.
-
-Ranking adds misses and clues into one figure, then time. Ranking misses first
-would make clues nearly free; adding them keeps "least help, then quickest"
-explainable in a sentence, and both numbers are displayed so a row is still
-readable. Practice buckets entries on the pair, so one clue and one miss is a
-different achievement from two misses.
-
-Grouping outlines come from different places by necessity. The US dissolves them
-from TopoJSON arcs, which is exact because neighbours share arc indices and an
-interior arc is used twice. France cannot: each département was simplified on its
-own, so a shared border is two slightly different polylines and no edge matching
-cancels them. France therefore uses the régions' own geometry, projected with the
-mainland's transform. Checked by alignment against members — exact for the US,
-0.6 units for Île-de-France.
-
-The five overseas départements are each their own région, so the grouping clue
-reveals the answer there. Kept anyway: one rule for every region beats an
-exception nobody can predict.
-
-## Pausing
-
-The clock is derived from `t0` rather than accumulated, so resuming only has to
-push `t0` forward by the length of the pause — no drift, nothing to reconcile.
-
-The map is hidden while paused. That is the feature, not a nicety: a stopped
-clock over a visible map is free thinking time, which would make Trial times and
-Practice scores incomparable. `guess()` also refuses while paused, since the tap
-targets are still there under a hidden map.
-
-Leaving a pause in either direction has to clear the paused class explicitly, or
-the map stays invisible behind whatever screen comes next.
-
-## Arrow bands
-
-By relationship, not raw distance. "You are touching it" is a different and more
-useful statement than "you are close", so the thin chevron means a shared border,
-measured border-to-border — the distance between centres says nothing about it,
-since Paris and Essonne are further apart than Paris and Hauts-de-Seine and all
-three touch. `borderDist2`'s ceiling makes that test cheap enough to run per
-border point.
-
-The middling band is anything within half the mainland's drawn span, taken from
-the layout so it cannot fall out of step. Beyond that, the solid head.
-
-The rung is unavailable when the two regions sit on different panels. An arrow
-between the mainland and an inset would point across a gap that does not exist.
-
-## Inset packing
-
-Bottom-left packing against a skyline, at whichever of five candidate widths
-gives the tightest bounding box.
-
-Both simpler rules were tried and both were visibly wrong. A single shelf made
-the block as deep as Guyane, the tallest, and left the four small insets floating
-in a band of empty space beside it. Packing at full width then minimised depth,
-which laid those four in one long row and left the space beside Guyane empty —
-minimal depth is not the same as tidy. Scoring candidates on bounding area
-instead lets the small ones stack next to Guyane, which is how an atlas sets
-them, and took a phone from 82% to 90% ink coverage.
-
-Five insets, five candidate widths: cheap enough to just try them all.
-
-## No confetti in Practice
-
-Trial can go the other way, so finishing it is an achievement and the confetti
-means something. Practice cannot end early — every run ends this way — so
-celebrating it congratulates you on having kept tapping, and praise for the
-unavoidable makes the real thing worth less. Practice keeps the banner, because a
-run should visibly end; it just reads *Finished*.
-
-A perfect practice run still celebrates. That one *is* an achievement.
-
-The reduced-motion path already did exactly this, for a related reason, so the
-two share a branch.
-
-## The map as the scoreboard
-
-Under distance every region ends in one state, `scored`, and what separates them
-is colour: green at zero, amber at fifty, red at a hundred, interpolated. There is
-no *found* and no *missed* to tell apart, because every region is attempted
-exactly once and the answer is always shown.
-
-This is the feature the rest of the scoring was for. A finished board is a map of
-where the knowledge runs out — not which regions were wrong, which a drill can
-only tell you once, but how wrong, region by region, in one glance.
-
-The fills stay dark and the strokes carry the signal, so the thing still reads as
-a map rather than as a chart.
-
-**The ramp is not walked linearly.** A tap just outside a border scores 1 or 2,
-and on a straight ramp that is indistinguishable from a tap inside it — which
-loses the one distinction the scoring most wants to make, since landing inside is
-the whole game. So anything above zero starts a tenth of the way along: the
-remaining goodness, `100 - points`, is scaled by 0.9 before it is mapped, and only
-an exact zero keeps the full green. One error point comes out about 11% toward
-red.
-
-The gap is at the green end deliberately. Two bad answers being hard to tell apart
-costs nothing. A bad answer looking like a right one costs the reading of the
-whole map. Labels go light on a dark outline, since a scored
-region can be any colour on the ramp and the label cannot borrow either end's.
-
-`paintScore()` sets fill and stroke inline; `setStatus()` clears them on any other
-transition, so the two cannot fight over a shape.
-
-## Fixed insets, and the arrow that lied
+### Fixed insets, and the arrow that lied
 
 The US shipped as one panel, because Albers USA had already composited Alaska and
 Hawaii into the frame and there was nothing left to place. That was true of the
@@ -855,15 +681,11 @@ Alaska and Hawaii into their own panels, which is a deliberate no.
 
 ## Ideas not built
 
-**Blind mode.** No borders drawn — landmasses only. Every click reveals the
-target region, so no click can be wrong and there are no lives. Error is instead
-continuous and accumulates: each click scores the distance from the click to the
-nearest point of the region being asked for. Inside scores zero, near scores a
-little, the far side of the map scores a lot. Ocean is not special-cased.
-
-`distanceTo(region, point)` in `04-geometry.js` exists for exactly this and is
-otherwise unused. It is the only speculative code in the repo; if blind mode is
-abandoned, delete it.
+Blind mode — no borders drawn, landmasses only — was the idea on this list that
+`distanceTo()` was kept for. Distance scoring built most of it: continuous error,
+every region revealed, no click wrong. What is left of the original is only the
+part about not drawing the borders, which is now a rendering option rather than a
+mode.
 
 Smaller ones, never started: region mode (drill one area rather than the whole
 set), reverse mode (highlight a region, pick its name from four options),

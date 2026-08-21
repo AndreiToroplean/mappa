@@ -58,7 +58,7 @@ The composed frame always matches the container's aspect, with the shorter side
 fixed at 600 units. Fitting a fixed frame into a differently-shaped container
 was wasting about three fifths of a phone's height.
 
-## Layout
+## Source layout
 
 ```
 src/index.html      markup, with __CSS__ / __JS__ placeholders
@@ -214,9 +214,13 @@ window. Failing that, it is the state under the finger at the cutoff moment.
 
 ## Winning
 
-Completing the set switches the header to a win state, fires a two-wave
-confetti burst from the bottom corners, and flashes a banner — "Perfect run" if
-you never missed, otherwise "All fifty" — before the leaderboard appears.
+Reaching the end of the set switches the header to a win state and flashes a
+banner before the leaderboard appears — "Perfect run" if you never missed,
+otherwise the tally, or "Finished" where a tally would mislead.
+
+The two-wave confetti burst is for Trial and for perfect runs only. Practice
+cannot be failed, so celebrating every completion of it would cheapen the real
+thing.
 
 The cannons tilt further off vertical on wider screens. A fixed angle that
 looks right on a laptop fires straight out of the sides of a phone and empties
@@ -224,27 +228,24 @@ the screen in under a second.
 
 `celebrate()` returns how long `finish()` should hold the map, so the pause and
 the animation can never disagree. Under `prefers-reduced-motion` there is no
-confetti and no animation, and the pause returns to what it was before.
+confetti and no animation, and the pause returns to what it was before; an
+uncelebrated Practice run takes the same path.
 
 ## Modes
 
-Mode and geography are independent axes: a mode says what counts as a run and
-what counts as a good one, never which regions are in play.
+Three independent axes: geography, mode, and scoring. A mode says whether a run
+can end early, never which regions are in play or what a wrong tap costs.
 
-**Trial** — three misses ends the run. Ordered by regions found, then misses,
-then time.
+**Trial** — a run can end early, when the spending cap is reached: three misses
+under counting, 100 error points under distance.
 
-**Practice** — no limit on misses. The header column that counts lives in
-Trial counts misses here instead, so the layout holds steady between modes.
-Every run finishes, so the only axis left is misses:
-ranked by misses, then time, with one entry per miss count. Counts can exceed
-three, and can exceed the region count, since the same region can be missed on
-different turns.
+**Practice** — no cap, and the clue ladder. The header column that counts lives
+in Trial counts what was spent here instead, so the layout holds steady.
 
-Each mode keeps its own board under its own storage key. They are not
-comparable — a practice run cannot fail — and merging them would bury every
-Trial run under a wall of completed practice ones. Clearing a board clears
-only the mode you are looking at.
+Every combination of the three axes keeps its own board under its own storage
+key. They are not comparable — a practice run cannot fail, a département is not
+a state, and error points are not misses — and merging them would bury one under
+another. Clearing a board clears only the one you are looking at.
 
 The switcher appears on both the intro and the end-of-run card, so a run can be
 followed by a different kind of run without a reload.
@@ -287,7 +288,7 @@ Every geography, mode and scoring combination has its own board. Counting keeps
 the original keys so boards saved before this feature survive; distance boards
 take a `:drift` suffix.
 
-## Licence
+## Clues
 
 Practice offers a clue ladder, always on request and never automatic. Three
 rungs, in a fixed order:
@@ -375,13 +376,16 @@ The intro and game-over cards state which one is in use, and carry a reset
 button (with a confirmation step) beside the board. A board that silently
 forgets is worse than one that says up front that it will.
 
-Ordered by states found first, then errors, then time — a slow 50 always beats
-a fast 40, and a clean 50 beats a quicker one with misses. Errors are shown on
-every row; entries saved before runs counted them show a dash.
-Sub-50 runs keep one entry per tally, so your best 31-state run replaces your
-previous 31-state run but never competes with your 12-state one. Full runs are
-the exception: up to five coexist, ranked purely on time. Zero-state runs don't
-post.
+Under counting: regions found first, then errors, then time — a slow 50 always
+beats a fast 40, and a clean 50 beats a quicker one with misses. Sub-full runs
+keep one entry per tally, so your best 31 replaces your previous 31 but never
+competes with your 12; full runs are the exception, up to five coexisting.
+Zero-region runs do not post. Entries saved before runs counted errors show a
+dash.
+
+Under distance: error points, then clues, then time, and never the tally — every
+run is asked every region, so the points already contain it. One entry per
+score.
 
 ## Version stamp
 

@@ -51,25 +51,31 @@ function useGeo(id) {
    and what counts as a good one, never which regions are in play. Every
    combination gets its own board — see boardKey().
 */
+/* Sub-full runs keep one entry per tally, so a best 31 replaces a previous 31
+   without competing with a 12. Full runs are the exception: up to five coexist,
+   ranked against each other.
+
+   Shared by Trial and by distance scoring in either mode. Distance needs it even
+   in Practice, because a distance run can reach the end of the queue having
+   found half — how many you got right is the first thing about it. */
+function byTally(board, entry) {
+  if (entry.f === 0) return { board, kept: false };
+  if (entry.f === TOTAL) {
+    board.push(entry);
+    const full = board.filter(r => r.f === TOTAL).sort(better).slice(0, 5);
+    return { board: full.concat(board.filter(r => r.f < TOTAL)),
+             kept: full.includes(entry) };
+  }
+  return replaceBy(board, entry, r => r.f === entry.f);
+}
+
 const MODES = {
   trial: {
     id: 'trial',
     label: 'Trial',
     capped: true,           // a run can end early; SCORING says at what
 
-    /* Sub-full runs keep one entry per tally, so a best 31 replaces a previous
-       31 without competing with a 12. Full runs are the exception: up to five
-       coexist, ranked against each other. */
-    insert(board, entry) {
-      if (entry.f === 0) return { board, kept: false };
-      if (entry.f === TOTAL) {
-        board.push(entry);
-        const full = board.filter(r => r.f === TOTAL).sort(better).slice(0, 5);
-        return { board: full.concat(board.filter(r => r.f < TOTAL)),
-                 kept: full.includes(entry) };
-      }
-      return replaceBy(board, entry, r => r.f === entry.f);
-    },
+    insert: byTally,
   },
 
   practice: {
@@ -112,7 +118,15 @@ let MODE = MODES.trial;
    Always shown whole. Tenths of a percent of a continent are not something
    anyone can feel, and a decimal point would suggest a precision the
    simplified borders do not have.  */
-const FAR = 200;
+/* A flat charge for the wrong landmass — the wrong inset, or the mainland when
+   an inset was wanted. There is no honest distance to measure across a gap the
+   map invented, so it is priced rather than measured, at one full width.
+
+   Note that a real miss is not capped at it and can cost more: 100 is the
+   *width* of the geography and its diagonal is longer, about 109 in the US and
+   137 in France. Getting the wrong landmass is a category error and should cost
+   what a long miss costs, not what the worst conceivable one does. */
+const FAR = 100;
 const PANEL_SPAN = 1000;   // what normalise() scales a panel's longest side to
 
 const SCORINGS = {
@@ -129,6 +143,7 @@ const SCORINGS = {
     label: 'Distance',
     budget: 100,          // one full width of the geography
     pips: false,
+    insert: byTally,      // overrides the mode's, since a run can end unfinished
     /* One tap per region. Guessing again after a miss is how you *narrow* an
        answer, and narrowing is exactly what this scoring is trying to price: a
        second guess three regions closer would post a better distance than the

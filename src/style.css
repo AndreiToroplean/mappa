@@ -61,6 +61,17 @@
   path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
   path.state.miss{fill:var(--red);stroke:#FF9296;stroke-width:1;cursor:default}
   path.state.reveal{fill:var(--amber);stroke:#FFDFA6;stroke-width:1}
+  /* A wrong tap under distance scoring, which is a moment rather than a state —
+     the shape stays in play and may be the region named next. Fading rather
+     than switching off, so it does not blink out mid-glance. */
+  path.state.wrongflash{fill:var(--red);stroke:#FF9296;stroke-width:1;
+    animation:wrongfade 1600ms ease-out forwards}
+  /* Fading the fill back to open, not the opacity: fading the shape itself
+     would punch a hole in the map on the way out. */
+  @keyframes wrongfade{
+    0%,55%{fill:var(--red);stroke:#FF9296}
+    100%{fill:var(--land);stroke:var(--ink)}
+  }
   circle.hit{fill:transparent;cursor:pointer}
   /* The miss arrow. Amber rather than red: red is the colour of the mistake
      itself, and this is the help. */
@@ -100,9 +111,7 @@
   path.drift{stroke:var(--red);stroke-width:2.2;fill:none;stroke-linecap:round}
   path.drifthead{fill:var(--red);stroke:none}
   circle.driftdot{fill:none;stroke:var(--red);stroke-width:2}
-  text.driftlabel{font-family:var(--mono);font-size:12px;font-weight:600;
-    fill:var(--red);text-anchor:middle;pointer-events:none;
-    paint-order:stroke;stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+
   text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
     text-anchor:middle;pointer-events:none;opacity:.85}
   text.label.wrong{fill:#FFE4E5;opacity:1;font-weight:600;
@@ -304,12 +313,16 @@
   .flash span{font-size:46px;font-weight:700;letter-spacing:-0.02em;
     line-height:1.08;color:var(--red);text-align:center;max-width:100%;
     text-shadow:0 2px 16px rgba(10,14,23,.95), 0 0 44px rgba(10,14,23,.85);
-    animation:missflash 1150ms ease-out forwards}
+    animation:missflash 1600ms ease-out forwards}
+  /* What the miss cost, under the name it belongs to. Small enough to read as a
+     footnote to the name rather than as a second announcement. */
+  .flash span b{display:block;margin-top:10px;font-family:var(--mono);
+    font-size:15px;font-weight:500;letter-spacing:0;white-space:nowrap}
   @keyframes missflash{
     0%{transform:scale(.86);opacity:0}
-    11%{transform:scale(1.03);opacity:1}
-    20%{transform:scale(1)}
-    64%{opacity:1}
+    8%{transform:scale(1.03);opacity:1}
+    14%{transform:scale(1)}
+    72%{opacity:1}
     100%{transform:scale(1.01);opacity:0}
   }
   body.longnames .flash span{font-size:38px}

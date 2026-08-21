@@ -112,8 +112,8 @@ function distanceTo(name, u) {
 
    Two regions on different panels have no distance worth measuring — the gap
    between them is a decision the map made, not a fact about the world. That
-   costs FAR, more than the worst honest miss, and reports no kilometres because
-   there is no honest number to report. */
+   costs FAR, a flat charge, and reports no kilometres because there is no
+   honest number to report. */
 function driftFrom(target, missed, at) {
   const p = panelOf[target];
   if (p !== panelOf[missed]) return { cost: FAR, km: null };
@@ -125,7 +125,7 @@ function driftFrom(target, missed, at) {
   const local = distanceTo(target, at) / place.s;
   const km = GEO.panels[p].km;
   return {
-    cost: Math.min(FAR, 100 * local / PANEL_SPAN),
+    cost: 100 * local / PANEL_SPAN,      // uncapped; the geometry bounds it
     km: km ? local * km / PANEL_SPAN : null,
   };
 }

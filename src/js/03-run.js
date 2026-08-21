@@ -56,8 +56,11 @@ function resetRun() {
     const j = Math.floor(Math.random() * (i + 1));
     [queue[i], queue[j]] = [queue[j], queue[i]];
   }
-  errors = 0; found = 0; running = false; revealing = false;
+  errors = 0; found = 0; running = false;
   clearDrift();
+  clearTimeout(wrongTimer);
+  document.querySelectorAll('.wrongflash')
+    .forEach(n => n.classList.remove('wrongflash'));
   document.body.classList.toggle('practice', MODE.id === 'practice');
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawCounter();
@@ -127,7 +130,8 @@ function next() {
 /* `at` is where the tap actually landed, in composed units, and only distance
    scoring has any use for it. It is optional because not every pick has one. */
 function guess(name, at) {
-  if (!running || paused || revealing || !selectable(name)) return;
+  if (!running || paused || !selectable(name)) return;
+  clearDrift();          // whatever the last miss drew has had its moment
 
   if (name === current) {
     clearFlash();     // a red name left over from a miss would read as wrong
@@ -154,12 +158,21 @@ function guess(name, at) {
   }
 }
 
-/* One tap per region, so a wrong one ends the turn instead of leaving it open.
-   The answer is shown, the distance to it is drawn from where the finger
-   actually landed, and then the next region is named — see SCORINGS.drift for
-   why guessing again would spoil the number. */
-const REVEAL_MS = 2100;   // long enough to read the arrow and find the answer
-let revealing = false;
+/* One tap per region, so a wrong one ends the turn — but it does not interrupt
+   anything. The next region is named in the same breath, and everything the
+   miss has to say happens alongside it: the name of what was hit flashes in the
+   middle with the cost under it, the shape it belongs to flashes red, the answer
+   is revealed in amber, and a line is drawn to it. All of that fades on its own.
+
+   Nothing is put on hold and the clock does not stop, which is the same bargain
+   counting mode already made: a miss is reported, not dwelt on.
+
+   The wrongly tapped region deliberately keeps its status. Marking it would take
+   it out of play, and it may well be the region just named — the one thing a
+   player must be able to do straight after a wrong tap is tap the same shape
+   again and be right. So the red is a class with a timer, not a state. */
+const WRONG_MS = 1600;
+let wrongTimer = null;
 
 function missByDistance(name, at) {
   const target = current;
@@ -169,35 +182,35 @@ function missByDistance(name, at) {
   errors += cost;
   drawCounter();
 
-  setStatus(name, 'missed');
-  flashMiss(name);
-  setStatus(target, 'answer');
-  drawDrift(from, target, Math.round(cost), km);
+  const points = Math.round(cost);
+  flashMiss(name, km === null
+    ? `a different landmass  (+${points} error points)`
+    : `off by ${fmtKm(km)}  (+${points} error points)`);
+  flashWrong(name);
+  setStatus(target, 'answer');      // consumed: it will not be asked again
+  drawDrift(from, target, name);
 
   ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${name}</b>. `
-    + `It was <b>${target}</b>, <span class="no">off by ${Math.round(cost)}</span>`
+    + `It was <b>${target}</b>, <span class="no">+${points}</span>`
     + (km === null ? ' — a different landmass.' : `, about ${fmtKm(km)}.`);
 
   if (busted()) return finish(false, name);
+  if (queue.length === 0) return finish(true, target);
+  next();
+}
 
-  /* The clock stops for the reveal. It is the game holding the screen, not the
-     player thinking, and charging time for it would fine a miss twice. */
-  revealing = true;
-  const heldAt = Date.now();
-  setTimeout(() => {
-    revealing = false;
-    if (!running) return;           // paused out, or the run ended meanwhile
-    t0 += Date.now() - heldAt;
-    clearDrift();
-    /* The wrong region goes back on the table. It was never asked for, and
-       leaving it red would mark the map with regions that are still to come —
-       counting mode clears them at the end of a turn for the same reason, and
-       here the turn ended immediately. The answer stays amber: that one really
-       is done with. */
-    REGION_NAMES.forEach(m => { if (status(m) === 'missed') setStatus(m, 'open'); });
-    if (queue.length === 0) return finish(true, target);
-    next();
-  }, REVEAL_MS);
+/* Red for a moment, and not a status: see missByDistance. */
+function flashWrong(name) {
+  clearTimeout(wrongTimer);
+  document.querySelectorAll('.wrongflash')
+    .forEach(n => n.classList.remove('wrongflash'));
+  const node = shapes[name];
+  if (!node) return;
+  node.classList.add('wrongflash');
+  wrongTimer = setTimeout(() => {
+    // setStatus may have repainted it since; only ever remove the class
+    if (shapes[name]) shapes[name].classList.remove('wrongflash');
+  }, WRONG_MS);
 }
 
 /* Rounded the way a person would say it: no false precision at 3,000km, no

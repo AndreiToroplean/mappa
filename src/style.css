@@ -309,7 +309,8 @@
   /* Press-and-hold magnifier. Never in hit testing itself — aiming is done
      against the real map underneath, so the disc can float over the finger
      without ever intercepting what it is pointing at. */
-  .lens{position:fixed;z-index:15;pointer-events:none}
+  .lens{position:fixed;z-index:15;pointer-events:none;
+    display:flex;flex-direction:column;align-items:center}
   .lens[hidden]{display:none}
   .lens .disc{position:relative;width:184px;height:184px;border-radius:50%;
     overflow:hidden;background:var(--ink);
@@ -330,10 +331,18 @@
     color:var(--muted);font-weight:400}
   /* In review the caption carries the facts rather than an instruction, so it
      wraps rather than ellipsising: 'Alpes-de-Haute-Provence · Provence-Alpes-
-     Côte d'Azur · Digne-les-Bains' does not fit on one line of a 184px disc,
-     and a truncated fact teaches nothing. */
-  .lens .cap.facts{white-space:normal;max-width:230px;line-height:1.4;
-    letter-spacing:.02em}
+     Côte d'Azur · Digne-les-Bains' does not fit on one line, and a truncated
+     fact teaches nothing.
+
+     Its size is fixed rather than fitted to the text, which is what lets the
+     disc and the caption be positioned as one block. A caption that grew and
+     shrank as the finger crossed from Ain to Alpes-de-Haute-Provence would move
+     the disc under it every time, and the disc is the thing being aimed. Three
+     lines is one more than the longest fact needs at this width. */
+  .lens .cap.facts{white-space:normal;line-height:1.4;letter-spacing:.02em;
+    font-size:11px;width:min(280px, calc(100vw - 24px));height:56px;
+    max-width:none;display:flex;align-items:center;justify-content:center;
+    overflow:hidden}
   .lens path{fill:var(--land);stroke:var(--ink);stroke-width:1;
     vector-effect:non-scaling-stroke}
   .lens path.found{fill:var(--found);stroke:var(--foundline)}

@@ -15,9 +15,22 @@ const PREF_SCORING = 'fifty:scoring';
    the unsuffixed spelling, since suffixing it would orphan every board anyone
    has. */
 const LEGACY_US = { trial: 'fifty:board2', practice: 'fifty:practice1' };
-const boardKey = () => SCORING.id !== 'count'
-  ? `fifty:${GEO.id}:${MODE.id}:${SCORING.id}`
-  : (GEO.id === 'us' ? LEGACY_US[MODE.id] : `fifty:${GEO.id}:${MODE.id}`);
+/* Taking the axes as arguments rather than reading the live ones, so the export
+   can walk every key the game could ever have written without a second copy of
+   the scheme — legacy spellings and all. */
+const keyFor = (geo, mode, scoring) => scoring !== 'count'
+  ? `fifty:${geo}:${mode}:${scoring}`
+  : (geo === 'us' ? LEGACY_US[mode] : `fifty:${geo}:${mode}`);
+const boardKey = () => keyFor(GEO.id, MODE.id, SCORING.id);
+
+const PREF_KEYS = [PREF_GEO, PREF_MODE, PREF_SCORING];
+function boardKeys() {
+  const keys = [];
+  for (const g in GEOS) for (const m in MODES) for (const s in SCORINGS) {
+    keys.push(keyFor(g, m, s));
+  }
+  return keys;
+}
 const mem = {};   // last resort backend
 
 /* Three backends, tried in order, because the file gets run two very different
@@ -98,6 +111,19 @@ function showNote() {
     el.textContent = STORE_NOTE[store];
     el.classList.toggle('warn', store === 'memory');
   });
+}
+
+/* The line under the board already exists to say something true about where the
+   scores live, which makes it the right place to say what just happened to
+   them. It goes back to saying the usual thing on its own. */
+let noteTimer = null;
+function flashNote(msg, bad) {
+  clearTimeout(noteTimer);
+  document.querySelectorAll('.storenote').forEach(el => {
+    el.textContent = msg;
+    el.classList.toggle('warn', !!bad);
+  });
+  noteTimer = setTimeout(showNote, 7000);
 }
 
 /* A completed run whose error count predates this feature is ranked as the

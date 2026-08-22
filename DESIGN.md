@@ -782,6 +782,45 @@ Review has nothing else to say, so the same gap is a region that names itself an
 stops. `check.py` checks the shipped data files for it, not just `build-clues.py`
 at build time.
 
+## Data you can take with you
+
+The storage chapter of this game is a series of things that cannot be fixed from
+inside the page. Chrome treats every `file://` page as one origin, so two
+downloaded copies share a bucket and renaming the file does not give you a fresh
+board. The artifact runtime scopes storage to a build, so a rebuild starts empty.
+Clearing site data takes the lot, and nobody clears site data thinking about a
+geography drill. The game says which of the three backends it landed on, under
+the board, because a leaderboard that quietly forgets is worse than one that says
+it will — but saying so is all it could do about it.
+
+Export and import are what it can do about it. Not sync, not an account: a file.
+
+**Readable JSON, with the real keys.** Indented, and spelled `fifty:board2`
+rather than `us:trial:misses`, which is uglier and correct. Two reasons. A file
+that says exactly what the storage says cannot misroute on the way back in, and a
+prettier scheme would be a second naming scheme to keep in step with the first —
+this codebase has been bitten twice by two representations of one fact. The other
+reason is that someone should be able to open the file and read what the game has
+been keeping about them. That is half of what offering an export is for.
+
+**Empty boards are left out.** An import replaces the boards the file mentions
+and leaves the rest alone, which is the safe direction: exporting from a fresh
+phone and importing onto the laptop should not wipe the laptop. Writing `[]` for
+an untouched board would do exactly that.
+
+**The file is treated as something a stranger wrote,** because by the time it
+comes back it is: hand-edited, half-copied, or from a version that does not exist
+yet. Every board key is checked against the ones the game uses, every run against
+the three fields the board code reads without checking, and every row is rebuilt
+field by field so nothing else rides in. Nothing is written until all of it
+passes — a bad file leaves the boards exactly as they were — and the failure is a
+sentence a person can act on rather than whatever the browser calls a stray
+comma.
+
+**It asks first,** and the asking is where the count goes: *41 runs across 6
+boards · saved 2026-08-12*. That is the one moment where the file can be told
+apart from the wrong file, and it costs one tap.
+
 ## Ideas not built
 
 Blind mode — no borders drawn, landmasses only — was the idea on this list that

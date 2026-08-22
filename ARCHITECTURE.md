@@ -151,6 +151,18 @@ Without this, a neighbouring unsolved state drawn later clips the outline of one
 you've already solved. Hit targets stay topmost so clicks still land, which means
 the handler has to explicitly ignore clicks on already-found states.
 
+The magnifier stacks its own copy of the map the same way, and had the same bug
+until it did — the amber outline of the aimed region came out with pieces missing
+wherever a region later in the list touched it:
+
+```
+base  <  found  <  missed  <  aimed
+```
+
+Its tiers are the lens classes `STATUS` hands out, written down in `LENS_TIERS`
+rather than collected from the table, so `check.py` can hold the two against each
+other: a status added with a new lens class would otherwise be seated nowhere.
+
 Layout is pinned: header and footer have fixed heights, stat columns have
 reserved widths, and the prompt ellipsises rather than wraps. Any of these
 flexing would resize the map mid-run.

@@ -450,6 +450,11 @@ Under distance, Practice: points, then clues, then time. Every run is asked ever
 region, so the tally is constant and ties out of the way. One entry per score, and
 a negative one is a real result.
 
+Both Trial boards say it in the same two words: **Complete** is about the map,
+every region revealed, and **Perfect** is about the score, so the best run either
+scoring can post reads *Complete · Perfect*. Practice leads with the score
+instead, since every practice run is a completed set.
+
 Under distance, Trial: regions revealed first, then points, then time. The purse
 is what ends the run, so how far it got is the achievement and the points are
 near enough a hundred for every run that ran out. One entry per revealed count,

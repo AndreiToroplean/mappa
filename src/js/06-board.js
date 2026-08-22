@@ -218,16 +218,19 @@ function rowParts(r) {
       const v = revealedOf(r), full = v === TOTAL;
       return {
         tier: full ? 'full' : 'partial',
-        /* One word for it whatever the geography — "All fifty" only ever fit
-           one board. Reaching the end here means the purse never ran out, so
-           Perfect is what it is. */
+        /* The same two words a counting trial uses, in the same two columns.
+           Complete is about the map — every region revealed — and Perfect is
+           about the score, so the best run either scoring can post reads
+           "Complete · Perfect" and the boards can be read against each other.
+           "All fifty" was here before, and only ever fitted one board. */
         tally: typeof r.v === 'number' || full
-          ? (full ? 'Perfect' : `${v} of ${TOTAL}`) : '—',
+          ? (full ? 'Complete' : `${v} of ${TOTAL}`) : '—',
         /* What it had left, when it had any. A run that reached the bottom of
            the purse is described by that rather than by a zero: nothing was
            left, and the number stopped being the point the moment it ran out. */
         errs: `<span class="errs${known && p === purse() ? ' perfect' : ''}">`
-            + `${!known ? '—' : p > 0 ? ptWords(p) : 'Ran out'}</span>`,
+            + `${!known ? '—' : p === purse() ? 'Perfect'
+                          : p > 0 ? ptWords(p) : 'Ran out'}</span>`,
       };
     }
     /* Practice reveals everything by definition, so the points are the run.

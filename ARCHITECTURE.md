@@ -70,6 +70,7 @@ src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
 src/js/05-lens.js   the press-and-hold magnifier
 src/js/06-board.js  storage, leaderboard, end of run
 src/js/11-review.js reading the finished map: facts on tap and under the lens
+src/js/12-transfer.js  exporting and importing the player's data as JSON
 DESIGN.md           why it is the way it is, and the mistakes behind that
 check.py            regression harness for the pure logic (no browser needed)
 render.py           rasterises a geography as the game shows it, for eyeballing
@@ -448,6 +449,27 @@ is what ends the run, so how far it got is the achievement and the points are
 near enough a hundred for every run that ran out. One entry per revealed count,
 with full sets coexisting. Entries saved before the board recorded it fall back
 to the regions they found and show a dash.
+
+## Exporting and importing
+
+**Export data** and **Import data**, under Start on the main menu, move
+everything the game keeps — eight boards and three preferences — as indented
+JSON. The storage keys are spelled out as they really are, legacy US spellings
+included, so a file cannot misroute on the way back in and there is only one
+naming scheme to keep in step. Empty boards are left out: an import replaces what
+the file mentions and leaves the rest alone, so writing `[]` would quietly wipe a
+board that only exists on the other device.
+
+`keyFor(geo, mode, scoring)` takes its axes as arguments; `boardKey()` reads the
+live ones and `boardKeys()` walks all eight, so the export needs no second copy
+of the scheme. `check.py` holds the enumeration against the keys the game reads
+through.
+
+Import validates before it writes anything: the format number, every board key
+against `boardKeys()`, every row for the `f`/`t`/`d` the board code reads without
+checking, and each row rebuilt field by field so nothing else in the file is
+carried in. A failure throws a sentence worth showing and leaves storage
+untouched. It confirms first, with the run count and the date on the file.
 
 ## Version stamp
 

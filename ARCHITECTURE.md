@@ -238,14 +238,14 @@ Three independent axes: geography, mode, and scoring. A mode says whether a run
 can end early, never which regions are in play or what a wrong tap costs.
 
 **Trial** — a run can end early, when the spending cap is reached: three misses
-under counting, 100 error points under distance.
+under counting, or the whole hundred-point purse under distance.
 
 **Practice** — no cap, and the clue ladder. The header column that counts lives
 in Trial counts what was spent here instead, so the layout holds steady.
 
 Every combination of the three axes keeps its own board under its own storage
 key. They are not comparable — a practice run cannot fail, a département is not
-a state, and error points are not misses — and merging them would bury one under
+a state, and points are not misses — and merging them would bury one under
 another. Clearing a board clears only the one you are looking at.
 
 The switcher appears on both the intro and the end-of-run card, so a run can be
@@ -275,9 +275,15 @@ tap on a different landmass costs a flat 100. A hit costs nothing under either
 scoring.
 
 Every region ends up in one state, coloured green through amber to red by what it
-scored, so a finished board shows where the knowledge runs out. The header counts
-Revealed rather than Found. Distance boards rank on error points, then clues, then
-time — never the tally, which the points already contain.
+scored, so a finished board shows where the knowledge runs out. The answer to a
+miss is flashed amber first and settles into its score colour, so the region that
+just resolved is not lost among the ones that resolved before it. The header
+counts Revealed rather than Found.
+
+A run holds a hundred points and a miss takes from it. Trial ends when the purse
+does; Practice keeps going and can finish owing. Boards follow: a Trial ranks on
+regions revealed, since the purse is what stopped it, and a Practice ranks on the
+points it kept.
 
 Neither yardstick is stored. The diameter is measured from the geometry at load;
 kilometres come from `normalise()` having scaled each panel's longest side to
@@ -421,9 +427,15 @@ competes with your 12; full runs are the exception, up to five coexisting.
 Zero-region runs do not post. Entries saved before runs counted errors show a
 dash.
 
-Under distance: error points, then clues, then time, and never the tally — every
-run is asked every region, so the points already contain it. One entry per
-score.
+Under distance, Practice: points, then clues, then time. Every run is asked every
+region, so the tally is constant and ties out of the way. One entry per score, and
+a negative one is a real result.
+
+Under distance, Trial: regions revealed first, then points, then time. The purse
+is what ends the run, so how far it got is the achievement and the points are
+near enough a hundred for every run that ran out. One entry per revealed count,
+with full sets coexisting. Entries saved before the board recorded it fall back
+to the regions they found and show a dash.
 
 ## Version stamp
 

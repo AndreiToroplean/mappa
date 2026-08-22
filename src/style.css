@@ -376,9 +376,9 @@
   /* Review names a region rather than scoring one, so it arrives in the colour
      of help rather than the colour of a mistake. */
   .flash.help span{color:var(--amber)}
-  /* The end card's second offer, quieter than the first: the main thing to do
-     after a run is another run. Same gap as within a button row. */
-  #reviewBtn{margin-top:10px}
+  /* The end card's second row is quieter than the first: the main thing to do
+     after a run is another run. Same tight gap the pause card uses. */
+  #overlay .btnrow{margin-top:10px}
 
   /* Shown only when something threw; selectable so it can be quoted back. */
   .crash{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px;

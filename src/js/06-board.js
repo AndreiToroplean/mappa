@@ -377,6 +377,12 @@ document.querySelectorAll('.geoSel').forEach(s =>
 
 el.again.addEventListener('click', beginRun);
 el.startBtn.addEventListener('click', beginRun);
+/* Play again repeats the run you just had; this is the way out of it, for
+   changing geography and coming back to a fresh Start rather than dropping
+   straight into another countdown. It is the pause card's exit reused, which
+   already resets the run and puts the intro up — the end card and the pause
+   card are leaving the same thing. */
+if (el.menuBtn) el.menuBtn.addEventListener('click', quitToMenu);
 
 // show any existing best runs on the intro screen
 /* Startup. The geography is remembered between visits; the mode is not, since

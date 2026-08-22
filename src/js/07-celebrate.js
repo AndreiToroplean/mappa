@@ -136,10 +136,15 @@ function celebrate(title) {
 const flashBox = $('flash');
 let flashTimer = null;
 
-function flashMiss(name) {
+/* Two things put a name up now: a miss, in red, and a review tap, in amber —
+   naming a region once the run is over is help rather than a verdict, and amber
+   is the colour of help everywhere else in the game. Same animation either way;
+   only the colour differs, because only the reason does. */
+function flashName(name, help) {
   if (!flashBox) return;
   const span = flashBox.firstElementChild;
   clearTimeout(flashTimer);
+  flashBox.classList.toggle('help', !!help);
   // restart the animation from the top, in case this is a second miss in a row
   flashBox.hidden = true;
   span.style.animation = 'none';
@@ -152,6 +157,8 @@ function flashMiss(name) {
   flashBox.hidden = false;
   flashTimer = setTimeout(() => { flashBox.hidden = true; }, MISS_MS);
 }
+
+const flashMiss = name => flashName(name, false);
 
 function clearFlash() {
   clearTimeout(flashTimer);
@@ -356,22 +363,30 @@ function clearDrift() {
    lasts. Outline and not fill: a filled shape is what every other mode uses to
    mean a state the region is *in*, and this one is in no state at all — it stays
    open, and may be the region just named. */
+/* Review marks a region the same way and for a related reason — there, the
+   question is which shape answered the tap, since a tap in the sea resolves to
+   the coast beside it. One mark, two colours, one timer: they belong to
+   different halves of the same screen's life and can never overlap. */
+const MARKS = '.wrongflash,.pickflash';
 let missTimer = null;
 
-function markMiss(name) {
+function markRegion(name, cls) {
   clearTimeout(missTimer);
   const node = shapes[name];
-  if (node) node.classList.add('wrongflash');
+  if (node) node.classList.add(cls);
   missTimer = setTimeout(() => {
     // setStatus may have repainted it since; only ever remove the class
-    if (shapes[name]) shapes[name].classList.remove('wrongflash');
+    if (shapes[name]) shapes[name].classList.remove(cls);
     clearDrift();
   }, MISS_MS);
 }
 
+const markMiss = name => markRegion(name, 'wrongflash');
+const markPick = name => markRegion(name, 'pickflash');
+
 function clearMissMarks() {
   clearTimeout(missTimer);
-  document.querySelectorAll('.wrongflash')
-    .forEach(n => n.classList.remove('wrongflash'));
+  document.querySelectorAll(MARKS)
+    .forEach(n => n.classList.remove('wrongflash', 'pickflash'));
   clearDrift();
 }

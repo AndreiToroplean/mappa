@@ -20,7 +20,8 @@ const el = {};
  'pause', 'paused', 'resumeBtn', 'restartBtn', 'quitBtn',
  'progress', 'clock', 'ticker',
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
- 'boardList', 'confirm', 'again', 'startBtn', 'clearNo', 'clearYes',
+ 'boardList', 'confirm', 'again', 'reviewBtn', 'backBtn', 'startBtn',
+ 'clearNo', 'clearYes',
 ].forEach(id => { el[id] = $(id); });
 
 const clock = el.clock, ticker = el.ticker, overlay = el.overlay;

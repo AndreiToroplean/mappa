@@ -40,8 +40,13 @@ const SNAP_UNITS = 40;   // reach in map units — see DESIGN.md for why not px
    compose(), which is the only thing that knows how panels were placed. */
 let borders = {};
 
+/* Reviewing inverts the rule rather than bending it. During a run a region is
+   worth resolving to only while picking it would still do something; in review
+   picking it asks a question instead of answering one, and the regions worth
+   asking about are precisely the resolved ones. So everything is selectable
+   there, and the resolver, the snap and the magnifier need no other change. */
 function selectable(name) {
-  return !!name && !!shapes[name] && status(name) === 'open';
+  return !!name && !!shapes[name] && (reviewing || status(name) === 'open');
 }
 
 function segDist2(px, py, ax, ay, bx, by) {

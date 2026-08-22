@@ -55,18 +55,19 @@ function useGeo(id) {
    without competing with a 12. Full runs are the exception: up to five coexist,
    ranked against each other.
 
-   Shared by Trial and by distance scoring in either mode. Distance needs it even
-   in Practice, because a distance run can reach the end of the queue having
-   found half — how many you got right is the first thing about it. */
+   What counts as the tally depends on the scoring — regions found under
+   counting, regions revealed under distance — so it is asked for rather than
+   read off the entry. See tallyOf(). */
 function byTally(board, entry) {
-  if (entry.f === 0) return { board, kept: false };
-  if (entry.f === TOTAL) {
+  const t = tallyOf(entry);
+  if (t === 0) return { board, kept: false };
+  if (t === TOTAL) {
     board.push(entry);
-    const full = board.filter(r => r.f === TOTAL).sort(better).slice(0, 5);
-    return { board: full.concat(board.filter(r => r.f < TOTAL)),
+    const full = board.filter(r => tallyOf(r) === TOTAL).sort(better).slice(0, 5);
+    return { board: full.concat(board.filter(r => tallyOf(r) < TOTAL)),
              kept: full.includes(entry) };
   }
-  return replaceBy(board, entry, r => r.f === entry.f);
+  return replaceBy(board, entry, r => tallyOf(r) === t);
 }
 
 const MODES = {
@@ -141,13 +142,17 @@ const SCORINGS = {
   drift: {
     id: 'drift',
     label: 'Distance',
-    budget: 100,          // one full width of the geography
+    budget: 100,          // the purse: one full width of the geography
     pips: false,
-    /* One entry per score, the way counting-practice keeps one per miss count.
-       Not the tally: a distance run is asked every region, so the tally is not
-       an axis anyone competes on. */
-    insert: (board, entry) => replaceBy(board, entry,
-      r => errorsOf(r) === errorsOf(entry) && cluesOf(r) === cluesOf(entry)),
+    /* Trial ends the moment the purse runs out, so what a run has to show for
+       itself is how far it got before that: one entry per revealed count,
+       exactly as counting keeps one per tally, with the full sets ranked among
+       themselves. Practice cannot end early and always reaches the last region,
+       so there the tally is constant and the score is the only axis — one entry
+       per score, the way counting-practice keeps one per miss count. */
+    insert: (board, entry) => MODE.capped ? byTally(board, entry)
+      : replaceBy(board, entry,
+          r => errorsOf(r) === errorsOf(entry) && cluesOf(r) === cluesOf(entry)),
     /* One tap per region. Guessing again after a miss is how you *narrow* an
        answer, and narrowing is exactly what this scoring is trying to price: a
        second guess three regions closer would post a better distance than the
@@ -164,6 +169,12 @@ let SCORING = SCORINGS.count;
    are the thing counted; the cap is a rule about them, and it now depends on
    both axes: three misses, or one full map. */
 const budget = () => (MODE.capped ? SCORING.budget : Infinity);
+
+/* What a run starts holding, which is the same number without the mode's rule
+   on top. Distance is shown as a countdown from it — a run begins with a
+   hundred points and a miss takes some — so Practice needs it too, even though
+   Practice may spend straight past zero and finish owing. */
+const purse = () => SCORING.budget;
 
 /* Shared by both policies: keep one entry per bucket, replacing only on an
    improvement. */

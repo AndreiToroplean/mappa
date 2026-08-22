@@ -69,6 +69,7 @@ src/js/03-run.js    run lifecycle: queue, lives, clock, guesses
 src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
 src/js/05-lens.js   the press-and-hold magnifier
 src/js/06-board.js  storage, leaderboard, end of run
+src/js/11-review.js reading the finished map: facts on tap and under the lens
 DESIGN.md           why it is the way it is, and the mistakes behind that
 check.py            regression harness for the pure logic (no browser needed)
 render.py           rasterises a geography as the game shows it, for eyeballing
@@ -325,7 +326,44 @@ The rung is skipped entirely when the two regions are not on the same landmass �
 one on the mainland and one in an inset, or two different insets — since an arrow
 across a gap that does not exist on the ground would be a lie.
 
-## Full screen
+## Reviewing the map
+
+The end card covers the map at the moment it is most worth looking at: every
+region resolved, the answers revealed, and under distance scoring every one of
+them coloured by what it cost. **Review map**, under *Play again*, hides the card
+and hands that map back unchanged — `finish()` paints nothing new, so there is
+nothing to restore.
+
+Every region then answers instead of asking. Tapping one, or aiming the
+magnifier at it, flashes its name over the middle of the map and writes the name,
+its grouping and its capital along the bottom. Those are the clue ladder's facts,
+in the ladder's order; rationing them is what makes a clue cost something, and
+the run is over, so they are simply given. **Results** in the footer, or Escape,
+brings the card back — it was only ever hidden.
+
+Amber throughout, since none of it is a verdict any more: the flashed name, the
+outline on the shape that answered, the magnifier's caption.
+
+Three things make this reuse rather than a second implementation:
+
+- `selectable()` gains a branch rather than a parallel path. In a run a region is
+  worth resolving to while picking it would still do something; in review it is
+  worth resolving to precisely because it is resolved. The resolver, the snap
+  threshold and the magnifier need no other change.
+- `flashMiss` and `markMiss` generalise into `flashName(name, help)` and
+  `markRegion(name, cls)`, so the miss report and the review report are one
+  vocabulary in two colours.
+- One `factsHTML()` feeds both the ticker and the magnifier's caption, which in
+  review has no instruction worth carrying — a lift there costs nothing.
+
+The outline on the picked shape is there because the answer is not always the
+shape under the finger: a tap in the sea resolves to the coast beside it, and the
+name that flashes would otherwise be unattached to anything. It is an animation
+without `forwards`, not a class: a scored region carries its colour as an inline
+style, which a class cannot outrank but an animation can, and ending the
+animation rather than freezing it hands the region its own colour back.
+
+
 
 An icon on the title line of the menu and of the pause card, since the
 Fullscreen API only fires from a user gesture. It is never entered on your

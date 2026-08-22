@@ -292,6 +292,15 @@
     box-shadow:inset 0 0 0 1px var(--line)}
   button.ghost:hover{filter:none;background:rgba(255,255,255,.06)}
   button.danger{background:var(--red);color:#fff}
+  /* The import card's running commentary. It is the whole point of that card:
+     a file chooser can hand back nothing at all and never say why, so there is
+     always a line here saying where the import has got to. */
+  .impnote{margin-top:12px;font-size:11px;line-height:1.45;color:var(--muted);
+    min-height:16px;font-family:var(--mono)}
+  .impnote.warn{color:var(--amber)}
+  .impnote.ok{color:var(--foundline)}
+  #impPick{margin-top:14px}
+  #impGo:disabled{opacity:.45}
   .card.narrow{max-width:340px}
   .storenote{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
     color:var(--muted);margin-top:12px;line-height:1.45}

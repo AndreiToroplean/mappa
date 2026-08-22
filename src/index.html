@@ -80,16 +80,21 @@ __CSS__</style>
 
 <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
 
-<div class="overlay" id="impConfirm" hidden>
+<div class="overlay" id="impCard" hidden>
   <div class="card narrow">
-    <h2>Import this data?</h2>
-    <div class="sub" id="impSub"></div>
-    <p class="rules">The boards in the file replace the ones saved here. Boards
-      it does not mention are left alone.</p>
+    <h2>Import data</h2>
+    <div class="sub">Boards in the file replace the ones saved here</div>
+    <button class="ghost" id="impPick">Choose a file…</button>
+    <div class="impnote" id="impNote"></div>
     <div class="btnrow">
-      <button class="ghost" id="impNo">Cancel</button>
-      <button id="impYes">Import</button>
+      <button class="ghost" id="impCancel">Cancel</button>
+      <button id="impGo" disabled>Import</button>
     </div>
+    <!-- No accept filter: some Android pickers report an unknown type for a
+         .json file and grey it out, which is a dead end with nothing on screen
+         to explain it. Anything else chosen here is refused by name, with a
+         reason. -->
+    <input type="file" id="importFile" hidden>
   </div>
 </div>
 
@@ -130,11 +135,6 @@ __CSS__</style>
       <button class="ghost" id="exportBtn">Export data</button>
       <button class="ghost" id="importBtn">Import data</button>
     </div>
-    <!-- No accept filter: some Android pickers report an unknown type for a
-         .json file and grey it out, which is a dead end with nothing on screen
-         to explain it. Anything else chosen here is refused by name, with a
-         reason. -->
-    <input type="file" id="importFile" hidden>
   </div>
 </div>
 

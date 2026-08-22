@@ -458,8 +458,10 @@ to the regions they found and show a dash.
 
 ## Exporting and importing
 
-**Export data** and **Import data**, under Start on the main menu, move
-everything the game keeps — eight boards and three preferences — as indented
+**Export data** and **Import data** live behind the dots beside the full screen
+button on the main menu — both are things you do to your data rather than to a
+run, and neither is frequent enough to sit next to Start. They move everything
+the game keeps — eight boards and three preferences — as indented
 JSON. The storage keys are spelled out as they really are, legacy US spellings
 included, so a file cannot misroute on the way back in and there is only one
 naming scheme to keep in step. Empty boards are left out: an import replaces what

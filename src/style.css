@@ -245,16 +245,31 @@
      space it needs and the icon sits at the end of the same line. Positioning it
      over the card meant guessing where the title ended, and in the two-column
      menu it landed on top of the board's own controls. */
-  .cardhead{display:flex;align-items:center;justify-content:space-between;
-    gap:14px;margin:0 0 6px}
+  /* Positioned so the menu below can hang off the buttons in the corner. */
+  .cardhead{position:relative;display:flex;align-items:center;
+    justify-content:space-between;gap:14px;margin:0 0 6px}
   .cardhead h2{margin:0}
-  .fsbtn{flex:none;width:34px;height:34px;margin:0;
+  .headbtns{display:flex;gap:8px;flex:none}
+  .headbtn{flex:none;width:34px;height:34px;margin:0;
     padding:0;display:flex;align-items:center;justify-content:center;
     border-radius:9px;background:transparent;color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line)}
-  .fsbtn:hover{filter:none;color:var(--text)}
-  .fsbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+  .headbtn:hover{filter:none;color:var(--text)}
+  .headbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
   .fsbtn[hidden]{display:none}
+
+  /* The menu behind the dots. Everything here is something you do to your data
+     rather than to a run, which is why it is not on the card with the things
+     you do to a run — it would sit next to Start looking like a way to play. */
+  .pop{position:absolute;top:calc(100% + 8px);right:0;z-index:5;
+    min-width:162px;padding:5px;background:var(--panel);
+    border:1px solid var(--line);border-radius:11px;
+    box-shadow:0 12px 28px rgba(0,0,0,.5)}
+  .pop[hidden]{display:none}
+  .pop button{margin:0;width:100%;text-align:left;background:transparent;
+    color:var(--text);font-size:13px;font-weight:500;padding:9px 11px;
+    border-radius:7px}
+  .pop button:hover{filter:none;background:var(--land)}
   .fsbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .modes button{margin:0;flex:1;padding:9px;font-size:13px;font-weight:500;

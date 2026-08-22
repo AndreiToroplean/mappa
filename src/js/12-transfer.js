@@ -238,8 +238,42 @@ function closeImport() {
   el.impCard.hidden = true;
 }
 
-if (el.exportBtn) el.exportBtn.addEventListener('click', exportData);
-if (el.importBtn) el.importBtn.addEventListener('click', openImport);
+/* ---- the menu behind the dots -------------------------------------------
+   Export and Import were two buttons under Start, where they competed with the
+   one thing the menu is for. They are also the two things on that card you do
+   to your data rather than to a run, and they are rare — so they go behind the
+   dots beside the full screen button, where the card's other utilities already
+   live. */
+function showDataMenu(on) {
+  if (!el.dataMenu) return;
+  el.dataMenu.hidden = !on;
+  el.dataBtn.classList.toggle('on', on);
+  el.dataBtn.setAttribute('aria-expanded', String(!!on));
+}
+
+if (el.dataBtn) {
+  el.dataBtn.addEventListener('click', () => showDataMenu(el.dataMenu.hidden));
+  /* Anywhere else dismisses it, and does only that. Caught on the way down and
+     stopped there, because the nearest thing to tap when dismissing this menu
+     is Start, and a run beginning because you were putting a menu away is a
+     worse outcome than an extra tap. */
+  document.addEventListener('click', e => {
+    if (el.dataMenu.hidden) return;
+    if (el.dataBtn.contains(e.target) || el.dataMenu.contains(e.target)) return;
+    showDataMenu(false);
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+}
+
+if (el.exportBtn) el.exportBtn.addEventListener('click', () => {
+  showDataMenu(false);
+  exportData();
+});
+if (el.importBtn) el.importBtn.addEventListener('click', () => {
+  showDataMenu(false);
+  openImport();
+});
 if (el.impCancel) el.impCancel.addEventListener('click', closeImport);
 
 if (el.impPick) el.impPick.addEventListener('click', () => {
@@ -282,5 +316,7 @@ if (el.impGo) el.impGo.addEventListener('click', async () => {
 });
 
 addEventListener('keydown', e => {
-  if (e.key === 'Escape' && el.impCard && !el.impCard.hidden) closeImport();
+  if (e.key !== 'Escape') return;
+  if (el.impCard && !el.impCard.hidden) closeImport();
+  else showDataMenu(false);
 });

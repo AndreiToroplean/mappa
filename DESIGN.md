@@ -821,6 +821,25 @@ comma.
 boards · saved 2026-08-12*. That is the one moment where the file can be told
 apart from the wrong file, and it costs one tap.
 
+**Every path ends in a sentence,** which the first version did not manage. It
+had no card of its own until the file had been read and understood, and reported
+its failures in the storage note under the board — small grey text somewhere
+else on the screen. Then a phone picked a file and nothing happened at all: no
+summary, no error, nothing to distinguish a silent failure from a slow one. A
+chooser can come back empty for reasons the page never sees — cancelled, refused
+by the file provider, or the page discarded while it sat in the background
+behind the picker and reloaded. None of those throw, so none of them reached the
+crash bar either. The card now exists from the moment the button is pressed and
+always has a line on it.
+
+**And a file is only one way in.** The card takes an export pasted straight into
+the box, which asks nothing of the browser but a clipboard: no chooser, no file
+provider, no permission, nothing that backgrounds the page. A chosen file lands
+in the same box, so what arrived is visible before it is imported and there is
+one path through the rest of it. Two of the global rules had to be undone on
+that box — the page disables text selection and the long-press callout, which
+between them would have left a text field on a phone that cannot be pasted into.
+
 ## Ideas not built
 
 Blind mode — no borders drawn, landmasses only — was the idea on this list that

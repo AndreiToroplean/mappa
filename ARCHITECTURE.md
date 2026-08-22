@@ -148,6 +148,12 @@ SVG has no `z-index`; it paints in document order. Resolved states therefore
 base  <  found  <  missed  <  answer  <  labels  <  hit targets
 ```
 
+Overlays are the same problem one level up. They all share `z-index:10`, so
+which is on top comes down to which is written later — and a card that asks about
+another card is written near what it belongs to, not last. `.overlay.ask` lifts
+those to 30; `check.py` holds the list of which overlays are which, so adding one
+makes someone decide.
+
 Without this, a neighbouring unsolved state drawn later clips the outline of one
 you've already solved. Hit targets stay topmost so clicks still land, which means
 the handler has to explicitly ignore clicks on already-found states.

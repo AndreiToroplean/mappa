@@ -389,7 +389,15 @@
   .lens path.miss{fill:var(--red);stroke:#FF9296}
   .lens path.aim{fill:var(--landhi);stroke:var(--amber);stroke-width:2.5}
 
-  #confirm{z-index:30}
+  /* An overlay that interrupts another overlay. Every overlay sits at the same
+     z-index, so which one is on top comes down to which is written later in the
+     file — and a card that asks about the card underneath it is always written
+     near the thing it belongs to rather than last. The clear confirmation was
+     given a layer of its own for that reason and the import card, added later
+     and written earlier, opened *behind* the menu and looked like a button that
+     did nothing at all. It is a class rather than a list of ids so the next one
+     inherits the answer. check.py has the list. */
+  .overlay.ask{z-index:30}
   /* Celebration. Above the overlay so the last of the confetti can still be
      falling as the leaderboard arrives; both clear themselves. */
   /* Names the region you got wrong, big enough to actually register. The

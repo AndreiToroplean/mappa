@@ -832,6 +832,16 @@ behind the picker and reloaded. None of those throw, so none of them reached the
 crash bar either. The card now exists from the moment the button is pressed and
 always has a line on it.
 
+**The card has to be *in front*,** which cost a second bug report. Every overlay
+in the game sits at the same z-index, so the one on top is whichever is written
+later in the file — and a card that asks about another card gets written next to
+what it belongs to, near the top, not last. So the import card opened behind the
+menu: rendered, correct, and invisible, which on a phone is a button that does
+nothing at all. The clear confirmation had been given a layer of its own long ago
+and nobody wrote down why. It is `.overlay.ask` now, a class rather than an id,
+and `check.py` names which overlays are which so the next one has to be decided
+rather than discovered.
+
 **And a file is only one way in.** The card takes an export pasted straight into
 the box, which asks nothing of the browser but a clipboard: no chooser, no file
 provider, no permission, nothing that backgrounds the page. A chosen file lands

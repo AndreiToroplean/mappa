@@ -679,6 +679,65 @@ time; the US, which is a single wide panel, is unchanged at 35% on a phone and
 91% on a laptop — a 1.7:1 map in a 0.6:1 area cannot do better without splitting
 Alaska and Hawaii into their own panels, which is a deliberate no.
 
+## Reviewing the map after the run
+
+The game never told you the answer. It told you *that* you were wrong — a red
+outline, a name flashed for a second and a half, a colour on the shape — and then
+named the next region, because a run that stops to teach is not a run. By the end
+card the moment for asking has gone: the card covers the map at exactly the point
+the map has the most to say, with every region resolved and, under distance
+scoring, every one of them coloured by what it cost.
+
+So the card gets out of the way on request. Review is not a mode and does not
+change what happened; it hides the overlay and leaves the map alone. `finish()`
+paints nothing new, which is why there is nothing to restore — the map behind the
+card *is* the map at the end of the run, and giving it back is a matter of
+`hidden = true`.
+
+What changes is what a tap means. During a run a tap is an answer and costs
+something; here it is a question and costs nothing, so the region names itself,
+along with its grouping and its capital. Those are the clue ladder's facts, in
+the ladder's order. Rationing them is the whole reason a clue is worth counting,
+and there is no longer a run to protect.
+
+Three choices worth recording:
+
+**Amber, not green.** Green means correct, and reviewing a region you got wrong
+in green would be a small lie every time it mattered most. Amber is already the
+colour of help everywhere in this game — the revealed answer, the miss arrow, the
+grouping outline — so review borrows the vocabulary rather than inventing one.
+
+**Selectable inverts rather than gets bypassed.** During a run a region is worth
+resolving to only while picking it would still do something, which is why solved
+regions are excluded. In review the regions worth asking about are precisely the
+resolved ones, so the same predicate takes a branch and everything downstream —
+the 40-unit snap, the containment rule, the magnifier's aim — carries over
+untouched. Adding a second resolver would have been the obvious move and would
+have meant two things to keep in step, which is the mistake this codebase has
+already made twice.
+
+**The magnifier's caption changes what it carries.** Mid-run it deliberately
+never names what is under the crosshair, because naming it would answer the only
+question the game asks; it says *lift to pick* instead. In review there is
+nothing left to give away and nothing to promise — a lift costs nothing — so the
+caption holds the facts, and press-and-hold becomes a way to read the map by
+dragging across it. Same line as the ticker, from the same function, so the two
+cannot come to disagree.
+
+The outline on the picked shape was not asked for and is not decoration: the
+resolver snaps a tap in open water to the nearest coast, so the name that flashes
+is not always the shape under the finger, and without the outline the two are
+unattached. It is an animation rather than a class because a scored region
+carries its colour as an inline style — a class cannot outrank that, an animation
+can — and it deliberately does not use `forwards`, so ending hands the region its
+own colour back at the moment the class is removed.
+
+The one thing that is now load-bearing where it was not: the clue data. The
+ladder can skip a rung it has no facts for, so a gap there degraded quietly.
+Review has nothing else to say, so the same gap is a region that names itself and
+stops. `check.py` checks the shipped data files for it, not just `build-clues.py`
+at build time.
+
 ## Ideas not built
 
 Blind mode — no borders drawn, landmasses only — was the idea on this list that

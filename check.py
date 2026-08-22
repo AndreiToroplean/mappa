@@ -664,6 +664,13 @@ eq('a spent trial row leads with what it revealed',
    rowParts({f:9,v:31,e:100,c:0,t:1}).tally, '31 of 50');
 eq('and carries what was left of the purse',
    rowParts({f:9,v:31,e:88,c:0,t:1}).errs, '<span class="errs">12 pts</span>');
+eq('a trial that reached the bottom says so rather than showing a zero',
+   [rowParts({f:9,v:31,e:100,c:0,t:1}).errs,
+    rowParts({f:9,v:31,e:140,c:0,t:1}).errs],
+   ['<span class="errs">Ran out</span>', '<span class="errs">Ran out</span>']);
+// two runs that both ran out are the same run as far as the board is concerned
+eq('the overshoot on a last miss is not stored',
+   [Math.min(140, purse()), Math.min(100, purse())], [100, 100]);
 // boards written before revealed was recorded: found is the only lower bound
 eq('an older trial entry ranks on what is known', revealedOf({f:22,e:100}), 22);
 eq('and shows no tally rather than inventing one',
@@ -718,7 +725,7 @@ bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
 eq('board keys are all distinct', new Set(keys).size, 8);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '45/45 pass'));
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '47/47 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

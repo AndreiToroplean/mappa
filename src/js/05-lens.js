@@ -63,10 +63,22 @@ function moveLens(x, y) {
     aim = name;
     if (name) lensPaths[name].classList.add('aim');
     trail.push({ name: name, t0: now, t1: now, u: u });
-    // Deliberately never the state's name. Naming what you are hovering would
-    // answer the only question the game asks. The amber fill already says
-    // *which shape* is aimed, which is all the magnifier needs to promise.
-    lensCap.textContent = name ? 'lift to pick' : 'lift to cancel';
+    /* Deliberately never the state's name during a run. Naming what you are
+       hovering would answer the only question the game asks. The amber fill
+       already says *which shape* is aimed, which is all the magnifier needs to
+       promise.
+
+       In review there is nothing left to give away, and the caption has no
+       instruction worth carrying — a lift there costs nothing. So it holds the
+       facts instead, the same line the ticker shows, and the magnifier becomes
+       a way to read the map by dragging over it. */
+    if (reviewing) {
+      if (name) lensCap.innerHTML = factsHTML(name);
+      else lensCap.textContent = `no ${GEO.noun} here`;
+    } else {
+      lensCap.textContent = name ? 'lift to pick' : 'lift to cancel';
+    }
+    lensCap.classList.toggle('facts', reviewing && !!name);
     lensCap.classList.toggle('none', !name);
   }
 }
@@ -110,13 +122,21 @@ function closeLens(commit) {
   lensBox.hidden = true;
   aim = null;
   trail = [];
-  if (pick && pick.name) guess(pick.name, pick.u);
+  if (pick && pick.name) choose(pick.name, pick.u);
   return true;
+}
+
+/* One name for "the player picked this region", because the map is live in two
+   different states and both the tap path and the magnifier path have to reach
+   the right one. In a run a pick is an answer; in review it is a question. */
+function choose(name, at) {
+  if (reviewing) inspect(name);
+  else guess(name, at);
 }
 
 svg.addEventListener('pointerdown', e => {
   swallowClick = false;
-  if (!running) return;
+  if (!running && !reviewing) return;
   downX = e.clientX;
   downY = e.clientY;
   try { svg.setPointerCapture(e.pointerId); } catch (err) {}
@@ -154,6 +174,6 @@ svg.addEventListener('click', e => {
   // anything else goes through the shared resolver.
   const tapped = e.target.dataset && e.target.dataset.name;
   const at = userPoint(e.clientX, e.clientY);
-  guess(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY), at);
+  choose(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY), at);
 });
 

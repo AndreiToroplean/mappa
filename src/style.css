@@ -74,6 +74,21 @@
     60%{stroke:var(--red);stroke-width:2.4}
     100%{stroke:var(--ink);stroke-width:1}
   }
+  /* The same mark in the colour of help: which shape answered a review tap.
+     Worth drawing because the answer is not always the shape under the finger —
+     a tap in the sea resolves to the coast beside it, and the name that flashes
+     would otherwise be unattached to anything.
+
+     Animated rather than set, and without `forwards`. A scored region carries
+     its colour as an inline style, which a class cannot outrank but an
+     animation can; ending the animation rather than freezing it hands the
+     region its own colour back at the moment the class is removed. */
+  path.state.pickflash{animation:pickfade 1600ms ease-out}
+  @keyframes pickfade{
+    0%{stroke:#FFDFA6;stroke-width:3.4}
+    60%{stroke:var(--amber);stroke-width:2.4}
+    100%{stroke:var(--amber);stroke-width:1}
+  }
   circle.hit{fill:transparent;cursor:pointer}
   /* The miss arrow. Amber rather than red: red is the colour of the mistake
      itself, and this is the help. */
@@ -105,6 +120,16 @@
   body.practice .cluebtn:hover{filter:none;background:rgba(255,194,75,.12)}
   body.practice .cluebtn:disabled{color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line);background:transparent}
+  /* Back to the card, from the corner the clue button had during the run. One
+     button in that corner at a time: a clue belongs to a run and review happens
+     after one, so the rule below simply takes the slot over. Neutral rather
+     than amber — this one navigates, it does not help. */
+  .backbtn{display:none}
+  body.reviewing .backbtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
+    padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;
+    color:var(--text);box-shadow:inset 0 0 0 1px var(--line);font-weight:600}
+  body.reviewing .backbtn:hover{filter:none;background:rgba(255,255,255,.06)}
+  body.reviewing .cluebtn{display:none}
   path.nudge{stroke:var(--amber);stroke-linecap:round;stroke-linejoin:round;
     fill:none;opacity:.95}
   path.nudgehead{fill:var(--amber);stroke:none;opacity:.95}
@@ -303,6 +328,12 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lens .cap.none{background:var(--panel);border:1px solid var(--line);
     color:var(--muted);font-weight:400}
+  /* In review the caption carries the facts rather than an instruction, so it
+     wraps rather than ellipsising: 'Alpes-de-Haute-Provence · Provence-Alpes-
+     Côte d'Azur · Digne-les-Bains' does not fit on one line of a 184px disc,
+     and a truncated fact teaches nothing. */
+  .lens .cap.facts{white-space:normal;max-width:230px;line-height:1.4;
+    letter-spacing:.02em}
   .lens path{fill:var(--land);stroke:var(--ink);stroke-width:1;
     vector-effect:non-scaling-stroke}
   .lens path.found{fill:var(--found);stroke:var(--foundline)}
@@ -333,6 +364,12 @@
     100%{transform:scale(1.01);opacity:0}
   }
   body.longnames .flash span{font-size:38px}
+  /* Review names a region rather than scoring one, so it arrives in the colour
+     of help rather than the colour of a mistake. */
+  .flash.help span{color:var(--amber)}
+  /* The end card's second offer, quieter than the first: the main thing to do
+     after a run is another run. Same gap as within a button row. */
+  #reviewBtn{margin-top:10px}
 
   /* Shown only when something threw; selectable so it can be quoted back. */
   .crash{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px;
@@ -452,6 +489,9 @@
        must not shuffle when it does. */
     body.playing .pausebtn{position:fixed;top:12px;right:10px;margin:0;z-index:8}
     body.practice .cluebtn{position:fixed;bottom:14px;right:10px;margin:0;
+      z-index:8;width:72px;padding:7px 4px;font-size:11px;line-height:1.25;
+      white-space:normal}
+    body.reviewing .backbtn{position:fixed;bottom:14px;right:10px;margin:0;
       z-index:8;width:72px;padding:7px 4px;font-size:11px;line-height:1.25;
       white-space:normal}
 

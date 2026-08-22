@@ -192,8 +192,11 @@ function rowParts(r) {
       const v = revealedOf(r), full = v === TOTAL;
       return {
         tier: full ? 'full' : 'partial',
+        /* One word for it whatever the geography — "All fifty" only ever fit
+           one board. Reaching the end here means the purse never ran out, so
+           Perfect is what it is. */
         tally: typeof r.v === 'number' || full
-          ? (full ? GEO.all : `${v} of ${TOTAL}`) : '—',
+          ? (full ? 'Perfect' : `${v} of ${TOTAL}`) : '—',
         errs: `<span class="errs${known && p === purse() ? ' perfect' : ''}">`
             + `${known ? ptWords(p) : '—'}</span>`,
       };
@@ -225,8 +228,10 @@ function rowParts(r) {
   return {
     tier: r.f === TOTAL ? 'full' : 'partial',
     // "31 of 101" rather than "31 départements": the noun does not fit the
-    // row on a phone, and the total is the more useful half anyway
-    tally: r.f === TOTAL ? GEO.all : `${r.f} of ${TOTAL}`,
+    // row on a phone, and the total is the more useful half anyway.
+    // Complete rather than Perfect for a full set, because a counting run can
+    // be one and not the other — the column beside it says "2 misses".
+    tally: r.f === TOTAL ? 'Complete' : `${r.f} of ${TOTAL}`,
     errs: `<span class="errs${cls}">${words}</span>`,
   };
 }

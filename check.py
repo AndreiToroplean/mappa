@@ -658,8 +658,8 @@ let fb = [];
 eq('finished distance trials coexist, ranked on points then time',
    rankBoard(fb.slice()).map(r=>[r.e,r.t/1000]),
    [[12,200],[12,500],[50,900],[80,100]]);
-eq('a finished trial row leads with the geography',
-   rowParts({f:50,v:50,e:12,c:0,t:1}).tally, 'All fifty');
+eq('a finished trial row says so in one word, whatever the geography',
+   rowParts({f:50,v:50,e:12,c:0,t:1}).tally, 'Perfect');
 eq('a spent trial row leads with what it revealed',
    rowParts({f:9,v:31,e:100,c:0,t:1}).tally, '31 of 50');
 eq('and carries what was left of the purse',
@@ -669,6 +669,11 @@ eq('an older trial entry ranks on what is known', revealedOf({f:22,e:100}), 22);
 eq('and shows no tally rather than inventing one',
    rowParts({f:22,e:100,c:0,t:1}).tally, '\u2014');
 
+eq('a full counting row says Complete, not Perfect, since it can carry misses',
+   (SCORING = SCORINGS.count, MODE = MODES.trial,
+    [rowParts({f:50,e:2,c:0,t:1}).tally, rowParts({f:31,e:1,c:0,t:1}).tally]),
+   ['Complete', '31 of 50']);
+SCORING = SCORINGS.drift;
 MODE = MODES.practice;
 eq('a perfect practice row says so',
    rowParts({f:50,v:50,e:0,c:0,t:1}).tally, 'Perfect');
@@ -713,7 +718,7 @@ bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
 eq('board keys are all distinct', new Set(keys).size, 8);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '44/44 pass'));
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '45/45 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

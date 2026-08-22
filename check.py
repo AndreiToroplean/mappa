@@ -754,4 +754,26 @@ for geo in GEOS:
           ' have both a capital and a grouping')
 fails += 1 if missing else 0
 
+# --------------------------------------------------- lens tiers
+# The magnifier stacks its paths the way the map stacks its layers, so the aimed
+# region's outline is not clipped by a neighbour drawn after it. Its tier list is
+# written out by hand rather than collected from STATUS, which is the right way
+# round — but it means a status added with a new lens class would be seated
+# nowhere. These are the two halves of that, checked against each other.
+print('tiers')
+map_src = (ROOT / 'src/js/02-map.js').read_text()
+lens_src = (ROOT / 'src/js/05-lens.js').read_text()
+status_js = map_src[map_src.index('const STATUS = {'):map_src.index('/* Green at nothing')]
+tiers_js = lens_src[lens_src.index('const LENS_TIERS'):lens_src.index('let lensLayers')]
+probe = status_js + tiers_js + """
+const orphan = Object.keys(STATUS).filter(k => LENS_TIERS.indexOf(STATUS[k].lens) < 0);
+console.log(orphan.length ? 'ORPHAN ' + orphan.join(',') : 'ok ' + Object.keys(STATUS).length);
+process.exitCode = orphan.length ? 1 : 0;
+"""
+pathlib.Path('/tmp/fifty-tiers.js').write_text(probe)
+r = subprocess.run(['node', '/tmp/fifty-tiers.js'], capture_output=True, text=True)
+out = (r.stdout or r.stderr).strip()
+print(f'  every status has a lens tier to sit in: {out}')
+fails += r.returncode
+
 sys.exit(1 if fails else 0)

@@ -18,14 +18,38 @@ const lensBox = $('lens'), lensMap = $('lensMap'), lensCap = $('lensCap');
 // one throwaway path per state, built once; only the classes change per open
 let lensPaths = {};
 
+/* The disc paints in document order exactly as the map does, and had the bug
+   the map's layers were added to fix: a neighbour drawn later paints over the
+   shared border, so the amber outline of the aimed region came out with pieces
+   missing wherever a region later in the list touched it. Same fix, same
+   order — a resolved state moves up the stack, and the aimed one moves above
+   all of them, since it is the one thing the disc exists to show.
+
+   The tiers are the lens classes STATUS hands out, written down rather than
+   collected from it: a new status whose lens class is not on this list would
+   otherwise be seated nowhere at all. check.py holds the two together. */
+const LENS_TIERS = ['', 'found', 'miss'];
+let lensLayers = {};
+
 function buildLens() {
   while (lensMap.firstChild) lensMap.removeChild(lensMap.firstChild);
+  lensLayers = {};
+  LENS_TIERS.concat('aim').forEach(t => {
+    lensLayers[t] = lensMap.appendChild(document.createElementNS(NS, 'g'));
+  });
   lensPaths = {};
   REGIONS.forEach(r => {
     const p = document.createElementNS(NS, 'path');   // compose() sets the path
-    lensMap.appendChild(p);
+    lensLayers[''].appendChild(p);
     lensPaths[r.name] = p;
   });
+}
+
+// back to the layer its status earns it, whatever it was borrowing
+function seat(name) {
+  if (!lensPaths[name]) return;
+  const tier = lensLayers[STATUS[status(name)].lens] || lensLayers[''];
+  tier.appendChild(lensPaths[name]);
 }
 
 let holdTimer = null, lensOn = false, swallowClick = false;
@@ -38,8 +62,11 @@ let boxW = DISC_R * 2, boxH = DISC_R * 2;
 function openLens(x, y) {
   lensOn = true;
   // the STATUS table decides how a status looks in the disc too, so the disc
-  // and the map can never drift apart
-  for (const nm in lensPaths) lensPaths[nm].setAttribute('class', STATUS[status(nm)].lens);
+  // and the map can never drift apart — and where it sits, for the same reason
+  for (const nm in lensPaths) {
+    lensPaths[nm].setAttribute('class', STATUS[status(nm)].lens);
+    seat(nm);
+  }
   trail = [];
   aim = undefined;          // force the first update to register a segment
   lensBox.hidden = false;
@@ -92,9 +119,15 @@ function moveLens(x, y) {
   if (name !== aim) {
     const now = Date.now();
     if (trail.length) trail[trail.length - 1].t1 = now;
-    if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
+    if (aim && lensPaths[aim]) {
+      lensPaths[aim].classList.remove('aim');
+      seat(aim);                  // it was on top; put it back where it belongs
+    }
     aim = name;
-    if (name) lensPaths[name].classList.add('aim');
+    if (name) {
+      lensPaths[name].classList.add('aim');
+      lensLayers.aim.appendChild(lensPaths[name]);   // nothing paints over it
+    }
     trail.push({ name: name, t0: now, t1: now, u: u });
     /* Deliberately never the state's name during a run. Naming what you are
        hovering would answer the only question the game asks. The amber fill
@@ -149,7 +182,7 @@ function closeLens(commit) {
   holdTimer = null;
   if (!lensOn) return false;
   const pick = commit ? settled() : null;
-  if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
+  if (aim && lensPaths[aim]) { lensPaths[aim].classList.remove('aim'); seat(aim); }
   lensOn = false;
   lensBox.hidden = true;
   aim = null;

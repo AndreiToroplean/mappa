@@ -197,8 +197,11 @@ function rowParts(r) {
            Perfect is what it is. */
         tally: typeof r.v === 'number' || full
           ? (full ? 'Perfect' : `${v} of ${TOTAL}`) : '—',
+        /* What it had left, when it had any. A run that reached the bottom of
+           the purse is described by that rather than by a zero: nothing was
+           left, and the number stopped being the point the moment it ran out. */
         errs: `<span class="errs${known && p === purse() ? ' perfect' : ''}">`
-            + `${known ? ptWords(p) : '—'}</span>`,
+            + `${!known ? '—' : p > 0 ? ptWords(p) : 'Ran out'}</span>`,
       };
     }
     /* Practice reveals everything by definition, so the points are the run.
@@ -300,7 +303,12 @@ async function finish(won, lastClick) {
       ? `${ptWords(points())}${MODE.capped ? ' left' : ''} · ${fmt(ms)}`
       : `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`;
 
-  const entry = { f: found, v: revealed, e: spent(), c: cluesUsed, t: ms,
+  /* Capped runs store the spend clamped to what there was to spend. A trial
+     that overshot on its last miss is not a worse run than one that landed
+     exactly on zero — both ran out — and leaving the overshoot in would rank
+     them apart on a number neither player could feel. */
+  const e = MODE.capped ? Math.min(spent(), purse()) : spent();
+  const entry = { f: found, v: revealed, e: e, c: cluesUsed, t: ms,
                   d: Date.now() };
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);

@@ -19,8 +19,16 @@ const busted = () => MODE.capped && errors >= budget() - 1e-9;
    arithmetic is untouched — `errors` still accumulates the spend, and it is
    still the spend that gets stored and ranked — but nothing in front of the
    player says "error points" any more, because holding a hundred and watching
-   it go is a clearer thing to feel than watching a debt climb. */
-const points = () => Math.round(purse() - errors);
+   it go is a clearer thing to feel than watching a debt climb.
+
+   A Trial stops at zero. The last miss can cost more than there was left to
+   pay it with, and by how much is not something the run is about: it ended,
+   and −38 says nothing 0 does not. Practice is the mode where the number keeps
+   meaning something below zero, so only there is it allowed to go. */
+const points = () => {
+  const p = Math.round(purse() - errors);
+  return MODE.capped ? Math.max(0, p) : p;
+};
 
 /* A fifth of the purse. In a Trial that is one bad miss from the end, which is
    worth saying before it happens rather than after. */

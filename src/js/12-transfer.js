@@ -160,7 +160,13 @@ async function applyData(clean) {
    A picker can come back empty for reasons the page never sees: the chooser
    cancelled, the file provider refused, or Android discarded the page while it
    was in the background and reloaded it behind the picker. None of those throw.
-   So the rule here is that every path through this card ends in a sentence. */
+   So the rule here is that every path through this card ends in a sentence.
+
+   And the file is only one way in. The box takes the text of an export pasted
+   straight into it, which asks nothing of the browser but a clipboard — no
+   chooser, no file provider, no permission, nothing to background the page for.
+   A file that is chosen lands in the same box, so what arrived is visible
+   before it is imported, and there is one path through the rest of this. */
 let pending = null;      // the validated file, waiting on the button
 
 function note(msg, kind) {
@@ -199,25 +205,31 @@ function accept(text, from) {
    builds, and a collected reader fires neither onload nor onerror. */
 let reader = null;
 
+function landed(text, from) {
+  if (el.impText) el.impText.value = text;
+  accept(text, from);
+}
+
 function readFile(file) {
   note(`Reading ${file.name}…`);
   // Blob.text() is a promise and cannot be collected out from under us; the
   // FileReader is the fallback for browsers old enough not to have it.
   if (file.text) {
-    file.text().then(t => accept(t, file.name),
+    file.text().then(t => landed(t, file.name),
                      e => reject('Could not read that file: ' + e.message));
     return;
   }
   reader = new FileReader();
   reader.onerror = () => reject('Could not read that file.');
-  reader.onload = () => accept(String(reader.result), file.name);
+  reader.onload = () => landed(String(reader.result), file.name);
   reader.readAsText(file);
 }
 
 function openImport() {
   pending = null;
   el.impGo.disabled = true;
-  note('Choose an exported file to see what is in it.');
+  if (el.impText) el.impText.value = '';
+  note('Choose a file, or paste one in, to see what is in it.');
   el.impCard.hidden = false;
 }
 
@@ -244,6 +256,16 @@ if (el.importFile) el.importFile.addEventListener('change', () => {
     readFile(f);
   } catch (e) { reject('Could not read that file: ' + e.message); }
 });
+
+/* Typed or pasted, the box is read as it changes. Cheap — an export is a few
+   kilobytes — and it means the summary appears the moment the paste lands
+   rather than after another tap. */
+if (el.impText) ['input', 'change'].forEach(ev =>
+  el.impText.addEventListener(ev, () => {
+    const text = el.impText.value.trim();
+    if (!text) return reject('Nothing pasted yet.');
+    accept(text);
+  }));
 
 if (el.impGo) el.impGo.addEventListener('click', async () => {
   const clean = pending;

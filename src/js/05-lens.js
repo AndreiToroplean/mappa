@@ -11,6 +11,7 @@ const DISC_R   = 92;    // disc radius in CSS px — must match .lens .disc
 const GUARD_MS = 180;   // trailing window discarded: the twitch on lift-off
 const DWELL_MS = 120;   // rest this long on a state for it to read as intent
 const SLOP     = 10;    // px of drift still counted as holding still
+const FINGER   = 40;    // px of clearance between the block and the fingertip
 
 const lensBox = $('lens'), lensMap = $('lensMap'), lensCap = $('lensCap');
 
@@ -29,6 +30,10 @@ function buildLens() {
 
 let holdTimer = null, lensOn = false, swallowClick = false;
 let downX = 0, downY = 0, aim = null, trail = [], moveRaf = 0, lastPt = null;
+/* The block's size, measured once when it opens rather than every frame: a
+   layout read per pointermove is a forced reflow, and the size cannot change
+   while it is open. */
+let boxW = DISC_R * 2, boxH = DISC_R * 2;
 
 function openLens(x, y) {
   lensOn = true;
@@ -38,7 +43,39 @@ function openLens(x, y) {
   trail = [];
   aim = undefined;          // force the first update to register a segment
   lensBox.hidden = false;
+  /* Which caption this open is going to carry, before anything is measured: it
+     decides the block's size, and the size decides where the block goes. */
+  lensCap.classList.toggle('facts', reviewing);
+  boxW = lensBox.offsetWidth || DISC_R * 2;
+  boxH = lensBox.offsetHeight || DISC_R * 2;
   moveLens(x, y);
+}
+
+/* Where the block goes, given where the finger is.
+
+   The disc and its caption are placed together. Placing the disc alone and
+   letting the caption hang off the bottom was fine while the caption was one
+   short line of instruction — 40px of clearance covered it — but in review it
+   carries the facts, wraps to three lines, and landed square under the finger
+   it was supposed to clear.
+
+   Above the finger by preference, below when the top edge is too near, and
+   beside it when the window is too short for either — which is a landscape
+   phone, where 184px of disc plus its clearance is most of the height. */
+function placeLens(x, y) {
+  const vw = innerWidth, vh = innerHeight;
+  const above = y - FINGER - boxH, below = y + FINGER;
+  let left = x - boxW / 2, top;
+
+  if (above >= 8) top = above;
+  else if (below + boxH <= vh - 8) top = below;
+  else {
+    top = y - boxH / 2;
+    left = x < vw / 2 ? x + FINGER : x - FINGER - boxW;
+  }
+  const fit = (v, span, limit) => Math.min(Math.max(v, 8), Math.max(8, limit - span - 8));
+  lensBox.style.left = fit(left, boxW, vw) + 'px';
+  lensBox.style.top = fit(top, boxH, vh) + 'px';
 }
 
 function moveLens(x, y) {
@@ -48,12 +85,8 @@ function moveLens(x, y) {
   lensMap.setAttribute('viewBox',
     (u.x - half) + ' ' + (u.y - half) + ' ' + (half * 2) + ' ' + (half * 2));
 
-  // float the disc clear of the finger, flipping below it near the top edge
-  const vw = innerWidth, vh = innerHeight, D = DISC_R * 2;
-  lensBox.style.left = Math.min(Math.max(x - DISC_R, 8), Math.max(8, vw - D - 8)) + 'px';
-  let top = y - D - 40;
-  if (top < 8) top = Math.min(y + 40, Math.max(8, vh - D - 46));
-  lensBox.style.top = top + 'px';
+  // float the block clear of the finger, on whichever side has the room
+  placeLens(x, y);
 
   const name = resolve(x, y);   // exactly what a release would pick
   if (name !== aim) {
@@ -78,7 +111,6 @@ function moveLens(x, y) {
     } else {
       lensCap.textContent = name ? 'lift to pick' : 'lift to cancel';
     }
-    lensCap.classList.toggle('facts', reviewing && !!name);
     lensCap.classList.toggle('none', !name);
   }
 }

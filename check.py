@@ -810,4 +810,19 @@ else:
         print('  FAIL nothing lifts an interrupting overlay')
         fails += 1
 
+# --------------------------------------------------- corner buttons
+# .headbtn is the look of a small square button in a card's top corner;
+# .fsbtn is which button it is, and what the fullscreen code selects on. They
+# were one class until the dots menu needed the look without the identity, and
+# splitting them left the pause card's button carrying identity alone — which
+# falls through to the base button rule and comes out amber and full width.
+print('corner buttons')
+loose = re.findall(r'<button class="([^"]*\bfsbtn\b[^"]*)"', html_src)
+missing = [c for c in loose if 'headbtn' not in c.split()]
+if missing:
+    print(f'  FAIL {len(missing)} full screen button(s) without the .headbtn look')
+    fails += 1
+else:
+    print(f'  {len(loose)} full screen buttons, all styled as corner buttons')
+
 sys.exit(1 if fails else 0)

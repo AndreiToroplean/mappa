@@ -2,7 +2,7 @@
 
 A geography drill. You're named a region, you click it on the map.
 
-Two geographies — the 50 US states and the 101 French départements — and two modes: Trial, where a run can end early, and Practice, where nothing does and clues are there if you ask. Wrong taps are either counted, or measured — scored by how far off you were rather than whether you were right. One self-contained HTML file: no network calls, no dependencies at runtime, no ads.
+Two geographies — the 50 US states and the 101 French départements — and two modes: Trial, where a run can end early, and Practice, where nothing does and clues are there if you ask. Wrong taps are either counted, or measured — scored by how far off you were rather than whether you were right. One self-contained HTML file: no network calls, no dependencies at runtime, no ads. Scores stay in your browser, and you can export them to a file and load them back on another device.
 
 **[Play](https://andreitoroplean.github.io/fifty/)** · [Play beta](https://andreitoroplean.github.io/fifty/beta/)
 

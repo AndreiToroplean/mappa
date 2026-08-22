@@ -37,6 +37,14 @@ Working habits that have earned their place:
 - Before adding a field to the build, check whether the number is already implied
   by the geometry. It usually is; see the `span` that was added and reverted.
 - `render.py` before trusting any argument about layout.
+- When something new "does nothing", check that it can be *seen* before rewriting
+  what it does. The import card was correct from the first version and opened
+  behind the menu; a round of hardening the file reading went into a bug that was
+  one `z-index` line. Rendered and invisible looks exactly like broken.
+- `npm install jsdom` works here, and a throwaway script that loads
+  `dist/fifty.html` and drives the real handlers is the only way to check a flow
+  that lives in the DOM — the end card, the import card, the magnifier. `check.py`
+  stays browser-free on purpose; these probes are scratch, not committed.
 
 Regenerating the source data needs downloads that are not in the repo — see the
 docstrings at the top of `build-us.py`, `build-fr.py` and `build-clues.py`. Both
@@ -857,6 +865,12 @@ Blind mode — no borders drawn, landmasses only — was the idea on this list t
 every region revealed, no click wrong. What is left of the original is only the
 part about not drawing the borders, which is now a rendering option rather than a
 mode.
+
+A quirk to know about before blind mode: on the last region of a distance run
+every other region has been consumed, so a tap anywhere resolves to the only
+selectable region — the answer. The last turn is free and the second to last
+nearly so. Harmless under counting, where a solved region is simply not a
+target; worth deciding about when regions stop being visible.
 
 Smaller ones, never started: region mode (drill one area rather than the whole
 set), reverse mode (highlight a region, pick its name from four options),

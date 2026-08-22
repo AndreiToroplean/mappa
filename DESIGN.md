@@ -355,7 +355,7 @@ was wanted. All three share `MISS_MS`, because they are one statement about one
 tap and it read as a bug when the arrow stayed behind. The flash says the name
 and nothing else, as in every other mode: the cost lived under it for a version
 and that was one event reporting itself twice at once. The footer has room to say
-it properly — *~~Arkansas~~ Missouri · Off by 1,850 km (+43 EPs)*.
+it properly — *~~Arkansas~~ Missouri · Off by 1,850 km (−43 pts)*.
 
 **The wrongly tapped region keeps its status, and only its outline is marked.**
 Marking it would take it out of play, and it may well be the region just named —
@@ -396,12 +396,56 @@ there is no honest number to report across a gap the map invented.
 
 **Always whole,** but the running total is kept unrounded until it is shown or
 stored — rounding each miss as it lands would let a run of small ones cost
-nothing. **Trial spends 100, one full map.** `MODE.lives` is gone: it conflated
+nothing. **A run holds 100, one full map.** `MODE.lives` is gone: it conflated
 "a run can end early" with "at what", now `MODE.capped` and `SCORING.budget`.
 
-**One name for the unit.** Error points, spelled out where there is room — the
-header column, the end card — and *EPs* wherever a row must stay on one line. It
-was briefly *pts*, which named nothing.
+**One name for the unit.** Points, abbreviated to *pts* where a row must stay on
+one line. It was *error points* for a version, and *EPs* in the rows.
+
+### A purse, not a debt
+
+Same arithmetic, opposite direction. A run starts holding a hundred points and a
+miss takes some; the header counts down, and a Trial ends when there is nothing
+left. That end condition is not new — spending a hundred and running out were
+always the same moment — but watching something you hold disappear is a different
+feeling from watching a debt climb, and the second one gave a good run nothing to
+be proud of. A hundred at the end is now a score rather than the absence of one.
+
+Practice holds the same hundred and is simply allowed to spend past it, so a run
+there can finish owing five hundred. That is a real result and reads as one: red,
+and told in full rather than clamped at zero.
+
+The stored quantity is still the spend. Points are the purse minus it, computed
+where they are shown, so every board saved under the old reading ranks and reads
+correctly under the new one.
+
+**What a distance board is about depends on the mode**, which it did not before.
+Practice reaches the last region whatever happens, so the tally is constant and
+the points are the run. A Trial is *stopped* by the purse, so the points are near
+enough a hundred for every run that ran out and say nothing; how many regions the
+purse got you through is the whole story. So a Trial ranks on regions revealed —
+one entry per count, full sets coexisting and ranked on what they kept — exactly
+the shape counting-Trial already had, with `byTally()` asking `tallyOf()` which
+number it is looking at rather than reading `f` off the entry.
+
+Runs saved before the board recorded a revealed count fall back to the regions
+they found. That is a true lower bound rather than a guess, so it under-ranks
+them instead of promoting them, and the row shows a dash rather than a number
+nobody measured.
+
+**The answer to a miss is flashed amber before it settles into its score
+colour.** Late in a run most of the map is already coloured, and a region turning
+one more shade of amber-to-red is easy to lose among the ones that did the same
+thing three turns ago. So it is revealed the way every other mode reveals an
+answer, and then becomes its score in front of you — which also puts the colour
+scale in front of someone learning to read it.
+
+Ending on the region's *own* colour is the awkward part: it differs per region
+and is set inline, and a class cannot outrank an inline style. An animation can,
+so `paintScore()` publishes the colour as a custom property and the keyframes
+read it back off the element. The three temporary marks — the wrong region's
+outline, the answer's flood, review's pick — now share one clock, since a miss
+starts two of them in the same instant and they are one report.
 
 ### Fixed insets, and the arrow that lied
 

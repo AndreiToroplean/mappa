@@ -88,30 +88,40 @@ function scoreColour(pts) {
            line: mix(SCALE[lo].line, SCALE[hi].line, t) };
 }
 
+/* The colour is set inline and also published as a pair of custom properties.
+   The answer flash has to *end* on it — see .answerflash — and an animation is
+   the only thing that outranks an inline style, so the keyframes read the
+   colour back off the element rather than being told it. */
 function paintScore(name, pts) {
   setStatus(name, 'scored');
   const c = scoreColour(pts);
-  shapes[name].style.fill = c.fill;
-  shapes[name].style.stroke = c.line;
-  if (lensPaths[name]) {
-    lensPaths[name].style.fill = c.fill;
-    lensPaths[name].style.stroke = c.line;
-  }
+  wear(shapes[name], c);
+  if (lensPaths[name]) wear(lensPaths[name], c);
+}
+
+function wear(node, c) {
+  node.style.fill = c.fill;
+  node.style.stroke = c.line;
+  node.style.setProperty('--scorefill', c.fill);
+  node.style.setProperty('--scoreline', c.line);
 }
 const LAYERS = { FOUND: L_FOUND, MISS: L_MISS, ANSWER: L_ANSWER };
 
 let statusOf = {};     // region name -> key of STATUS
 
+function strip(node) {
+  node.style.fill = '';
+  node.style.stroke = '';
+  node.style.removeProperty('--scorefill');
+  node.style.removeProperty('--scoreline');
+}
+
 function setStatus(name, key) {
   const spec = STATUS[key];
   statusOf[name] = key;
   if (key !== 'scored') {          // only paintScore() sets these
-    shapes[name].style.fill = '';
-    shapes[name].style.stroke = '';
-    if (lensPaths[name]) {
-      lensPaths[name].style.fill = '';
-      lensPaths[name].style.stroke = '';
-    }
+    strip(shapes[name]);
+    if (lensPaths[name]) strip(lensPaths[name]);
   }
   shapes[name].setAttribute('class', spec.cls);
   (spec.layer ? LAYERS[spec.layer] : L_BASE).appendChild(shapes[name]);

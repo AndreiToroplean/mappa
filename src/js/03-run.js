@@ -217,6 +217,11 @@ function missByDistance(name, at) {
                             : `Off by ${fmtKm(km)} (\u2212${charged} pts)`;
   flashMiss(name);
   paintScore(target, charged);      // consumed: it will not be asked again
+  /* Amber first, then the colour it cost. Late in a run most of the map is
+     already coloured and the region that just resolved is easy to lose among
+     the ones that resolved before it — so the answer arrives in the colour
+     every other mode reveals an answer in, and settles into its score. */
+  markAnswer(target);
   revealed++;
   drawProgress();
   drawDrift(from, target, name);

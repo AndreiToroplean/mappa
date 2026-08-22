@@ -365,28 +365,29 @@ function clearDrift() {
    open, and may be the region just named. */
 /* Review marks a region the same way and for a related reason — there, the
    question is which shape answered the tap, since a tap in the sea resolves to
-   the coast beside it. One mark, two colours, one timer: they belong to
-   different halves of the same screen's life and can never overlap. */
-const MARKS = '.wrongflash,.pickflash';
+   the coast beside it. A distance miss uses a third: the answer, flooded amber
+   before it settles into the colour it cost.
+
+   One clock for all of them. Several can be alive at once — a distance miss
+   outlines what was hit and floods what was wanted in the same instant — and
+   they are one report, so they should leave together the way they arrived. */
+const MARKS = '.wrongflash,.pickflash,.answerflash';
 let missTimer = null;
 
 function markRegion(name, cls) {
   clearTimeout(missTimer);
-  const node = shapes[name];
-  if (node) node.classList.add(cls);
-  missTimer = setTimeout(() => {
-    // setStatus may have repainted it since; only ever remove the class
-    if (shapes[name]) shapes[name].classList.remove(cls);
-    clearDrift();
-  }, MISS_MS);
+  if (shapes[name]) shapes[name].classList.add(cls);
+  missTimer = setTimeout(clearMissMarks, MISS_MS);
 }
 
 const markMiss = name => markRegion(name, 'wrongflash');
 const markPick = name => markRegion(name, 'pickflash');
+const markAnswer = name => markRegion(name, 'answerflash');
 
 function clearMissMarks() {
   clearTimeout(missTimer);
-  document.querySelectorAll(MARKS)
-    .forEach(n => n.classList.remove('wrongflash', 'pickflash'));
+  // a repaint may have moved a marked shape between layers; find them by class
+  document.querySelectorAll(MARKS).forEach(n =>
+    n.classList.remove('wrongflash', 'pickflash', 'answerflash'));
   clearDrift();
 }

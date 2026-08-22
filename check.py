@@ -4,7 +4,7 @@
 Runs without a browser. Every geography is checked separately, because the
 geometry code is shared but the data is not.
 """
-import json, math, pathlib, random, subprocess, sys
+import json, math, pathlib, random, re, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
 JS = ROOT / 'src' / 'js'
@@ -783,5 +783,31 @@ r = subprocess.run(['node', '/tmp/fifty-tiers.js'], capture_output=True, text=Tr
 out = (r.stdout or r.stderr).strip()
 print(f'  every status has a lens tier to sit in: {out}')
 fails += r.returncode
+
+# --------------------------------------------------- overlay layers
+# Every overlay shares one z-index, so an overlay that opens on top of another
+# has to be told to. The import card was not, and opened behind the menu — which
+# on screen is a button that does nothing. Named here rather than derived from
+# the markup: the point is that adding an overlay makes someone decide.
+print('overlays')
+LAYERS = {
+    'paused':  'base',   # only ever over a running map
+    'intro':   'base',
+    'overlay': 'base',
+    'confirm': 'ask',    # asks about the board on the card underneath it
+    'impCard': 'ask',    # opens from the menu, over the menu
+}
+html_src = (ROOT / 'src/index.html').read_text()
+found = {m[1]: ('ask' if m[0].strip() else 'base')
+         for m in re.findall(r'<div class="overlay( ask)?" id="(\w+)"', html_src)}
+if found != LAYERS:
+    print(f'  FAIL overlays are {found}, expected {LAYERS}')
+    fails += 1
+else:
+    asks = sorted(k for k, v in LAYERS.items() if v == 'ask')
+    print(f'  {len(LAYERS)} overlays, {len(asks)} of them above the rest: {", ".join(asks)}')
+    if '.overlay.ask{z-index:' not in (ROOT / 'src/style.css').read_text():
+        print('  FAIL nothing lifts an interrupting overlay')
+        fails += 1
 
 sys.exit(1 if fails else 0)

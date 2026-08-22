@@ -569,7 +569,7 @@ pathlib.Path('/tmp/fifty-modes.js').write_text(
     + data_src[data_src.index('function byTally'):]
     + board_src[board_src.index('const LEGACY_US'):board_src.index('/* One key-value layer')]
     + board_src[board_src.index('const errorsOf'):board_src.index('const addEntry')]
-    + board_src[board_src.index('function missWords'):board_src.index('function rowParts')]
+    + board_src[board_src.index('function missWords'):board_src.index('function renderBoard')]
     + """
 const addEntry = (board, entry) => (SCORING.insert || MODE.insert)(board, entry);
 let fail = 0;
@@ -603,6 +603,7 @@ for (const sc of ['count','drift'])
     GEO = {id:g}; MODE = MODES[m]; SCORING = SCORINGS[sc]; keys.push(boardKey());
   }
 SCORING = SCORINGS.count; MODE = MODES.trial;
+GEO = {id:'us', all:'All fifty', noun:'state'};   // the key loop above blanked it
 eq('board keys unchanged for counting', keys.slice(0,4),
    ['fifty:board2','fifty:practice1','fifty:fr:trial','fifty:fr:practice']);
 eq('distance boards are separate', keys.slice(4),
@@ -625,7 +626,57 @@ eq('clues break a distance tie', rankBoard([
   {f:50,e:12,c:4,t:100,d:1}, {f:50,e:12,c:1,t:900,d:2},
 ]).map(r=>r.d), [2,1]);
 eq('perfect reads as perfect', missWords(0), 'Perfect');
-eq('and a miss reads as error points', missWords(37), '37 EPs');
+eq('a point total says what is left', [ptWords(100), ptWords(1), ptWords(-50)],
+   ['100 pts', '1 pt', '\u221250 pts']);
+eq('points are the purse less the spend',
+   [pointsOf({e:0}), pointsOf({e:37}), pointsOf({e:150})], [100, 63, -50]);
+
+/* Distance is played as a purse: a hundred to start in either mode, and only a
+   trial is stopped by reaching the bottom of it. */
+eq('a distance run starts with a hundred either way',
+   (MODE = MODES.trial, [purse(), budget()]), [100, 100]);
+eq('practice holds the same hundred and may spend past it',
+   (MODE = MODES.practice, [purse(), budget()]), [100, Infinity]);
+
+/* A distance trial ends when the purse does, so what it has to show for itself
+   is how many regions it revealed before that — not the points, which are near
+   enough a hundred for every run that ran out. */
+MODE = MODES.trial;
+let tb = [];
+[[18,300],[25,400],[18,250],[25,900]].forEach(([v,t],i) => {
+  tb = addEntry(tb, {f:v-3,v:v,e:100,c:0,t:t*1000,d:i}).board; });
+eq('distance trial: one entry per revealed count',
+   rankBoard(tb.slice()).map(r=>[r.v,r.t/1000]), [[25,400],[18,250]]);
+eq('distance trial ranks on regions revealed, not on points',
+   rankBoard([{f:9,v:40,e:100,c:0,t:100,d:1},
+              {f:30,v:31,e:62,c:0,t:100,d:2}]).map(r=>r.d), [1,2]);
+eq('a distance trial that revealed nothing does not post',
+   addEntry([], {f:0,v:0,e:100,c:0,t:1,d:1}).kept, false);
+let fb = [];
+[[50,900],[12,500],[12,200],[80,100]].forEach(([e,t],i) => {
+  fb = addEntry(fb, {f:50,v:50,e:e,c:0,t:t*1000,d:i}).board; });
+eq('finished distance trials coexist, ranked on points then time',
+   rankBoard(fb.slice()).map(r=>[r.e,r.t/1000]),
+   [[12,200],[12,500],[50,900],[80,100]]);
+eq('a finished trial row leads with the geography',
+   rowParts({f:50,v:50,e:12,c:0,t:1}).tally, 'All fifty');
+eq('a spent trial row leads with what it revealed',
+   rowParts({f:9,v:31,e:100,c:0,t:1}).tally, '31 of 50');
+eq('and carries what was left of the purse',
+   rowParts({f:9,v:31,e:88,c:0,t:1}).errs, '<span class="errs">12 pts</span>');
+// boards written before revealed was recorded: found is the only lower bound
+eq('an older trial entry ranks on what is known', revealedOf({f:22,e:100}), 22);
+eq('and shows no tally rather than inventing one',
+   rowParts({f:22,e:100,c:0,t:1}).tally, '\u2014');
+
+MODE = MODES.practice;
+eq('a perfect practice row says so',
+   rowParts({f:50,v:50,e:0,c:0,t:1}).tally, 'Perfect');
+eq('a practice row leads with the points it kept',
+   rowParts({f:50,v:50,e:90,c:2,t:1}).tally, '<span class="">10 pts</span>');
+eq('a practice run that finished owing reads as one',
+   rowParts({f:50,v:50,e:150,c:0,t:1}).tally,
+   '<span class="neg">\u221250 pts</span>');
 
 /* Distance ignores the tally completely: every run is asked every region, so how
    many came out right is the same fact told coarsely. One entry per score. */
@@ -662,7 +713,7 @@ bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
 eq('board keys are all distinct', new Set(keys).size, 8);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '30/30 pass'));
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '44/44 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

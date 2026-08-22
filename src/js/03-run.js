@@ -12,6 +12,19 @@ let queue, current, errors, found, revealed, t0, raf, running;
 const spendLeft = () => budget() - errors;
 const spent = () => Math.round(errors);
 const busted = () => MODE.capped && errors >= budget() - 1e-9;
+
+/* The same number said the other way round. Distance is played as a purse you
+   are spending rather than a debt you are running up: a run starts with a
+   hundred, a miss takes some, and a Trial ends when there is nothing left. The
+   arithmetic is untouched — `errors` still accumulates the spend, and it is
+   still the spend that gets stored and ranked — but nothing in front of the
+   player says "error points" any more, because holding a hundred and watching
+   it go is a clearer thing to feel than watching a debt climb. */
+const points = () => Math.round(purse() - errors);
+
+/* A fifth of the purse. In a Trial that is one bad miss from the end, which is
+   worth saying before it happens rather than after. */
+const LOW = 20;
 /* Every element the game touches, looked up once. These were a mix of cached
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
@@ -48,13 +61,19 @@ function drawProgress() {
 
 function drawCounter() {
   const pips = SCORING.pips && MODE.capped;
+  const drift = SCORING.id === 'drift';
   document.body.classList.toggle('numeric', !pips);
-  el.counterLabel.textContent = SCORING.id === 'drift' ? 'Error points'
+  el.counterLabel.textContent = drift ? 'Points'
     : MODE.capped ? 'Lives' : 'Misses';
 
   if (!pips) {
-    el.missCount.textContent = MODE.capped ? `${spent()}/${budget()}` : spent();
-    el.missCount.classList.toggle('bad', errors > 0);
+    /* Counting shows what has been spent against the cap. Distance shows what
+       is left, which needs no cap beside it — the number *is* the budget, and
+       it is the same number in Practice, where it is simply allowed to go
+       under. */
+    el.missCount.textContent = drift ? points()
+      : MODE.capped ? `${spent()}/${budget()}` : spent();
+    el.missCount.classList.toggle('bad', drift ? points() <= LOW : errors > 0);
     return;
   }
   el.lives.innerHTML = Array.from({ length: budget() }, (_, i) =>
@@ -193,11 +212,11 @@ function missByDistance(name, at) {
   errors += cost;
   drawCounter();
 
-  const points = Math.round(cost);
-  const cost_ = km === null ? `A different landmass (+${points} EPs)`
-                            : `Off by ${fmtKm(km)} (+${points} EPs)`;
+  const charged = Math.round(cost);
+  const cost_ = km === null ? `A different landmass (\u2212${charged} pts)`
+                            : `Off by ${fmtKm(km)} (\u2212${charged} pts)`;
   flashMiss(name);
-  paintScore(target, points);       // consumed: it will not be asked again
+  paintScore(target, charged);      // consumed: it will not be asked again
   revealed++;
   drawProgress();
   drawDrift(from, target, name);

@@ -108,6 +108,24 @@ const errorsOf = r => typeof r.e === 'number' ? r.e
   : (MODE.capped ? budget() - 1 : Infinity);
 const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
 
+/* How many regions the run put on the map. Under distance that is every region
+   it was asked, right or wrong, and it is what a Trial has to show for itself:
+   a run there ends when the purse does, so the achievement is how far the purse
+   got you. Practice is asked every region by definition, so it is TOTAL there
+   and drops out of the ranking on its own.
+
+   Entries written before the board recorded it fall back to what is known: a
+   run revealed at least as many as it found. That under-ranks them rather than
+   inventing a number, and the row says so by showing no tally. */
+const revealedOf = r => typeof r.v === 'number' ? r.v
+  : (MODE.capped ? r.f : TOTAL);
+const tallyOf = r => SCORING.id === 'drift' ? revealedOf(r) : r.f;
+
+/* What a run has left of the purse. Negative is a real result in Practice,
+   which cannot end early and so can spend past the hundred it started with. */
+const pointsOf = r => purse() - errorsOf(r);
+const signed = p => (p < 0 ? '\u2212' + Math.abs(p) : String(p));
+
 /* The one definition of "better": more found first, then fewer errors, then
    quicker. It serves both modes unchanged — every practice run is a completed
    set, so the first term is always a tie there and the ordering falls through
@@ -123,12 +141,13 @@ const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
 const helpOf = r => SCORING.id === 'drift'
   ? errorsOf(r) : errorsOf(r) + cluesOf(r);
 
-/* Distance drops the first term entirely. Every run is asked every region, so
-   how many came out right is not an achievement separate from the score — it is
-   the same fact told coarsely, and ranking on it first would put a run that
-   guessed forty by a hair above one that got thirty dead on. The points already
-   say everything the tally would. */
-const better = (a, c) => (SCORING.id === 'drift' ? 0 : c.f - a.f)
+/* Distance used to drop the first term entirely, on the grounds that every run
+   was asked every region and the tally was the same fact told coarsely. That is
+   still true of Practice, and no longer true of Trial: a distance Trial ends
+   when the purse runs out, so the regions it revealed are the whole story and
+   the points are near enough a constant. tallyOf() reads the right one of the
+   two, and in Practice it is TOTAL for every entry and ties out of the way. */
+const better = (a, c) => tallyOf(c) - tallyOf(a)
   || helpOf(a) - helpOf(c)
   || (SCORING.id === 'drift' ? cluesOf(a) - cluesOf(c) : 0) || a.t - c.t;
 const rankBoard = b => b.sort(better);
@@ -143,9 +162,9 @@ function showBoards(board, mine) {
   showNote();
 }
 
-/* One name for the unit, two lengths of it. Spelled out where there is room —
-   the header column and the end card — and "EPs" wherever a row has to stay on
-   one line. It was briefly "pts", which named nothing.
+/* One name for each unit. Counting says misses. Distance says points, and says
+   what is left rather than what was spent — a run holds a hundred and a miss
+   takes from it — abbreviated to "pts" wherever a row has to stay on one line.
 
    A bare count with a symbol read as "1x", which means nothing unless you
    already know the column is errors. Spell it out instead, and let a clean run
@@ -153,10 +172,10 @@ function showBoards(board, mine) {
    achievement rather than as the number below one. */
 function missWords(e) {
   if (typeof e !== 'number') return '—';
-  if (e === 0) return 'Perfect';
-  return SCORING.id === 'drift' ? `${e} EPs`
-                                : `${e} miss${e === 1 ? '' : 'es'}`;
+  return e === 0 ? 'Perfect' : `${e} miss${e === 1 ? '' : 'es'}`;
 }
+
+const ptWords = p => `${signed(p)} pt${Math.abs(p) === 1 ? '' : 's'}`;
 
 /* Classic rows lead with how far you got and carry the misses alongside.
    Every practice run is a completed set, so leading with "All fifty" on every
@@ -164,14 +183,30 @@ function missWords(e) {
 function rowParts(r) {
   const words = missWords(r.e);
 
-  /* Distance rows lead with the points and say nothing about the tally. Every
-     run is asked every region, so there is one number worth comparing and it is
-     this one. Zero is a perfect run: every tap inside the region it named. */
   if (SCORING.id === 'drift') {
+    const p = pointsOf(r), known = typeof r.e === 'number';
+    /* A distance Trial is ranked on how far the purse got, so that is the
+       headline and the points left ride alongside — which for a run that ran
+       out is nothing much, and for one that finished is the whole story. */
+    if (MODE.capped) {
+      const v = revealedOf(r), full = v === TOTAL;
+      return {
+        tier: full ? 'full' : 'partial',
+        tally: typeof r.v === 'number' || full
+          ? (full ? GEO.all : `${v} of ${TOTAL}`) : '—',
+        errs: `<span class="errs${known && p === purse() ? ' perfect' : ''}">`
+            + `${known ? ptWords(p) : '—'}</span>`,
+      };
+    }
+    /* Practice reveals everything by definition, so the points are the run.
+       They can go under: a hundred is a perfect run, ten is a good one, and
+       minus five hundred is a story of its own — worth reading as a loss rather
+       than as a small number. */
     const c = cluesOf(r);
     return {
-      tier: r.e === 0 ? 'full' : 'partial',
-      tally: words,
+      tier: p === purse() ? 'full' : 'partial',
+      tally: p === purse() ? 'Perfect'
+        : `<span class="${p < 0 ? 'neg' : ''}">${ptWords(p)}</span>`,
       errs: MODE.clues
         ? `<span class="errs${c ? '' : ' perfect'}">${c} clue${c === 1 ? '' : 's'}</span>`
         : '<span class="errs"></span>',
@@ -235,27 +270,33 @@ async function finish(won, lastClick) {
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';
-    el.target.textContent = SCORING.id === 'drift' ? 'Too far off' : 'Out of lives';
+    el.target.textContent = SCORING.id === 'drift' ? 'Out of points' : 'Out of lives';
     el.target.classList.add('lost');
     clock.classList.add('lost');
     setStatus(current, 'answer');
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +
-      (SCORING.id === 'drift' ? 'Out of room; ' : 'Out of lives; ') +
+      (SCORING.id === 'drift' ? 'Out of points; ' : 'Out of lives; ') +
       `you were looking for <b>${current}</b>.`;
     pause = 2600;   // time to read the miss and see the real answer
   }
 
   el.ovTitle.textContent = !won
-      ? (SCORING.id === 'drift' ? 'Too far off.' : 'Out of lives.')
+      ? (SCORING.id === 'drift' ? 'Out of points.' : 'Out of lives.')
     : spent() === 0 ? 'Perfect run.'
     : SCORING.id === 'drift' ? 'Finished.' : tally() + '.';
+  /* A distance run that ran out is described by how far it got — that is the
+     number its board ranks on. One that finished is described by what it has
+     left, which is the number its board ranks on instead. */
   el.ovSub.textContent = !won
-      ? `${found} of ${TOTAL} found · ${fmt(ms)}`
+      ? (SCORING.id === 'drift'
+          ? `${revealed} of ${TOTAL} revealed · ${fmt(ms)}`
+          : `${found} of ${TOTAL} found · ${fmt(ms)}`)
     : SCORING.id === 'drift'
-      ? `${spent()} error points · ${fmt(ms)}`
+      ? `${ptWords(points())}${MODE.capped ? ' left' : ''} · ${fmt(ms)}`
       : `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`;
 
-  const entry = { f: found, e: spent(), c: cluesUsed, t: ms, d: Date.now() };
+  const entry = { f: found, v: revealed, e: spent(), c: cluesUsed, t: ms,
+                  d: Date.now() };
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);
   showBoards(res.board, res.kept ? entry.d : null);

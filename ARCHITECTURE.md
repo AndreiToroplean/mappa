@@ -465,11 +465,19 @@ live ones and `boardKeys()` walks all eight, so the export needs no second copy
 of the scheme. `check.py` holds the enumeration against the keys the game reads
 through.
 
+Import happens on its own card, which takes a chosen file *or* the text of an
+export pasted into the box — a chooser can hand back nothing at all and never say
+why, so there is a route that needs no chooser. A chosen file lands in the same
+box, so there is one path through validation whichever way it arrived, and the
+card always carries a line saying where the import has got to.
+
 Import validates before it writes anything: the format number, every board key
 against `boardKeys()`, every row for the `f`/`t`/`d` the board code reads without
 checking, and each row rebuilt field by field so nothing else in the file is
-carried in. A failure throws a sentence worth showing and leaves storage
-untouched. It confirms first, with the run count and the date on the file.
+carried in. A failure is a sentence on the card and leaves storage untouched.
+The Import button stays disabled until something has passed, and what passed is
+summarised — run count, board count, the date on the file — before it is
+pressed.
 
 ## Version stamp
 

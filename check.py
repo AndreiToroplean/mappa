@@ -669,4 +669,26 @@ r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=Tr
 print(r.stdout.rstrip() or r.stderr)
 fails += r.returncode
 
+# --------------------------------------------------- clue facts
+# The clue ladder can skip a rung it has no data for, so a missing capital or
+# grouping used to degrade quietly. Review cannot skip anything: the facts are
+# the whole of what it says, and a region without them names itself and stops.
+# build-clues.py asserts this at build time, but the built files are what ship.
+print('facts')
+missing = 0
+for geo in GEOS:
+    regions = json.loads((ROOT / 'data' / f'{geo}.json').read_text())['regions']
+    clues = json.loads((ROOT / 'data' / f'clues-{geo}.json').read_text())
+    gaps = 0
+    for r in regions:
+        f = clues.get(r['n']) or {}
+        if not f.get('capital') or not f.get('group'):
+            gaps += 1
+            print(f'  FAIL {geo}: {r["n"]} has no ' +
+                  ('capital' if not f.get('capital') else 'grouping'))
+    missing += gaps
+    print(f'  {geo}: {len(regions) - gaps}/{len(regions)} regions'
+          ' have both a capital and a grouping')
+fails += 1 if missing else 0
+
 sys.exit(1 if fails else 0)

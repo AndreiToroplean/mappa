@@ -81,6 +81,37 @@
     60%{stroke:var(--red);stroke-width:2.4}
     100%{stroke:var(--ink);stroke-width:1}
   }
+  /* The same mark in the colour of help: which shape answered a review tap.
+     Worth drawing because the answer is not always the shape under the finger —
+     a tap in the sea resolves to the coast beside it, and the name that flashes
+     would otherwise be unattached to anything.
+
+     Animated rather than set, and without `forwards`. A scored region carries
+     its colour as an inline style, which a class cannot outrank but an
+     animation can; ending the animation rather than freezing it hands the
+     region its own colour back at the moment the class is removed. */
+  path.state.pickflash{animation:pickfade 1600ms ease-out}
+  @keyframes pickfade{
+    0%{stroke:#FFDFA6;stroke-width:3.4}
+    60%{stroke:var(--amber);stroke-width:2.4}
+    100%{stroke:var(--amber);stroke-width:1}
+  }
+  /* The answer to a distance miss: revealed in the amber every other mode
+     reveals an answer in, then settling into the colour it cost. Late in a run
+     most of the map is already coloured and the region that just resolved is
+     easy to lose among the ones that resolved before it.
+
+     It has to end on that region's own score colour, which differs per region
+     and is set inline. paintScore() publishes it as --scorefill/--scoreline for
+     exactly this, since keyframes can read a custom property off the element
+     and an animation is the only thing that outranks an inline style. */
+  path.state.answerflash{animation:answerfade 1600ms ease-out}
+  @keyframes answerfade{
+    0%{fill:var(--amber);stroke:#FFDFA6;stroke-width:2.6}
+    58%{fill:var(--amber);stroke:#FFDFA6;stroke-width:2.6}
+    100%{fill:var(--scorefill,var(--amber));
+         stroke:var(--scoreline,#FFDFA6);stroke-width:1}
+  }
   circle.hit{fill:transparent;cursor:pointer}
   /* The miss arrow. Amber rather than red: red is the colour of the mistake
      itself, and this is the help. */
@@ -112,6 +143,16 @@
   body.practice .cluebtn:hover{filter:none;background:rgba(255,194,75,.12)}
   body.practice .cluebtn:disabled{color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line);background:transparent}
+  /* Back to the card, from the corner the clue button had during the run. One
+     button in that corner at a time: a clue belongs to a run and review happens
+     after one, so the rule below simply takes the slot over. Neutral rather
+     than amber — this one navigates, it does not help. */
+  .backbtn{display:none}
+  body.reviewing .backbtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
+    padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;
+    color:var(--text);box-shadow:inset 0 0 0 1px var(--line);font-weight:600}
+  body.reviewing .backbtn:hover{filter:none;background:rgba(255,255,255,.06)}
+  body.reviewing .cluebtn{display:none}
   path.nudge{stroke:var(--amber);stroke-linecap:round;stroke-linejoin:round;
     fill:none;opacity:.95}
   path.nudgehead{fill:var(--amber);stroke:none;opacity:.95}
@@ -183,6 +224,9 @@
   .row.full .tally::before{content:"◆ ";font-size:9px;vertical-align:2px}
   .row.partial .tally{color:var(--muted)}
   .row.partial .tally::before{content:"◇ ";font-size:9px;vertical-align:2px}
+  /* A distance practice run can finish owing. That is a different kind of row
+     from a merely unremarkable one, so it says so. */
+  .row .tally .neg{color:var(--red)}
   .row.you{background:rgba(255,194,75,.09);box-shadow:inset 2px 0 0 var(--amber);
     padding-left:8px;margin-left:-8px}
   .row.you .rank,.row.you .time{color:var(--amber)}
@@ -208,16 +252,31 @@
      space it needs and the icon sits at the end of the same line. Positioning it
      over the card meant guessing where the title ended, and in the two-column
      menu it landed on top of the board's own controls. */
-  .cardhead{display:flex;align-items:center;justify-content:space-between;
-    gap:14px;margin:0 0 6px}
+  /* Positioned so the menu below can hang off the buttons in the corner. */
+  .cardhead{position:relative;display:flex;align-items:center;
+    justify-content:space-between;gap:14px;margin:0 0 6px}
   .cardhead h2{margin:0}
-  .fsbtn{flex:none;width:34px;height:34px;margin:0;
+  .headbtns{display:flex;gap:8px;flex:none}
+  .headbtn{flex:none;width:34px;height:34px;margin:0;
     padding:0;display:flex;align-items:center;justify-content:center;
     border-radius:9px;background:transparent;color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line)}
-  .fsbtn:hover{filter:none;color:var(--text)}
-  .fsbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+  .headbtn:hover{filter:none;color:var(--text)}
+  .headbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
   .fsbtn[hidden]{display:none}
+
+  /* The menu behind the dots. Everything here is something you do to your data
+     rather than to a run, which is why it is not on the card with the things
+     you do to a run — it would sit next to Start looking like a way to play. */
+  .pop{position:absolute;top:calc(100% + 8px);right:0;z-index:5;
+    min-width:162px;padding:5px;background:var(--panel);
+    border:1px solid var(--line);border-radius:11px;
+    box-shadow:0 12px 28px rgba(0,0,0,.5)}
+  .pop[hidden]{display:none}
+  .pop button{margin:0;width:100%;text-align:left;background:transparent;
+    color:var(--text);font-size:13px;font-weight:500;padding:9px 11px;
+    border-radius:7px}
+  .pop button:hover{filter:none;background:var(--land)}
   .fsbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .modes button{margin:0;flex:1;padding:9px;font-size:13px;font-weight:500;
@@ -255,6 +314,27 @@
     box-shadow:inset 0 0 0 1px var(--line)}
   button.ghost:hover{filter:none;background:rgba(255,255,255,.06)}
   button.danger{background:var(--red);color:#fff}
+  /* The paste box. Two of the global rules have to be undone here: the whole
+     page disables selection so a stray drag on a label does not highlight it,
+     and disables the long-press callout so the map does not offer a context
+     menu — which between them would leave a text box on a phone that cannot be
+     selected into or pasted into, the one thing it exists for. */
+  #impText{width:100%;margin-top:10px;padding:8px 10px;resize:vertical;
+    background:var(--ink);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;font:400 11px/1.45 var(--mono);
+    -webkit-user-select:text;user-select:text;
+    -webkit-touch-callout:default}
+  #impText:focus{outline:none;border-color:var(--amber)}
+  #impText::placeholder{color:var(--muted)}
+  /* The import card's running commentary. It is the whole point of that card:
+     a file chooser can hand back nothing at all and never say why, so there is
+     always a line here saying where the import has got to. */
+  .impnote{margin-top:12px;font-size:11px;line-height:1.45;color:var(--muted);
+    min-height:16px;font-family:var(--mono)}
+  .impnote.warn{color:var(--amber)}
+  .impnote.ok{color:var(--foundline)}
+  #impPick{margin-top:14px}
+  #impGo:disabled{opacity:.45}
   .card.narrow{max-width:340px}
   .storenote{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
     color:var(--muted);margin-top:12px;line-height:1.45}
@@ -291,7 +371,8 @@
   /* Press-and-hold magnifier. Never in hit testing itself — aiming is done
      against the real map underneath, so the disc can float over the finger
      without ever intercepting what it is pointing at. */
-  .lens{position:fixed;z-index:15;pointer-events:none}
+  .lens{position:fixed;z-index:15;pointer-events:none;
+    display:flex;flex-direction:column;align-items:center}
   .lens[hidden]{display:none}
   .lens .disc{position:relative;width:184px;height:184px;border-radius:50%;
     overflow:hidden;background:var(--ink);
@@ -310,13 +391,35 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lens .cap.none{background:var(--panel);border:1px solid var(--line);
     color:var(--muted);font-weight:400}
+  /* In review the caption carries the facts rather than an instruction, so it
+     wraps rather than ellipsising: 'Alpes-de-Haute-Provence · Provence-Alpes-
+     Côte d'Azur · Digne-les-Bains' does not fit on one line, and a truncated
+     fact teaches nothing.
+
+     Its size is fixed rather than fitted to the text, which is what lets the
+     disc and the caption be positioned as one block. A caption that grew and
+     shrank as the finger crossed from Ain to Alpes-de-Haute-Provence would move
+     the disc under it every time, and the disc is the thing being aimed. Three
+     lines is one more than the longest fact needs at this width. */
+  .lens .cap.facts{white-space:normal;line-height:1.4;letter-spacing:.02em;
+    font-size:11px;width:min(280px, calc(100vw - 24px));height:56px;
+    max-width:none;display:flex;align-items:center;justify-content:center;
+    overflow:hidden}
   .lens path{fill:var(--land);stroke:var(--ink);stroke-width:1;
     vector-effect:non-scaling-stroke}
   .lens path.found{fill:var(--found);stroke:var(--foundline)}
   .lens path.miss{fill:var(--red);stroke:#FF9296}
   .lens path.aim{fill:var(--landhi);stroke:var(--amber);stroke-width:2.5}
 
-  #confirm{z-index:30}
+  /* An overlay that interrupts another overlay. Every overlay sits at the same
+     z-index, so which one is on top comes down to which is written later in the
+     file — and a card that asks about the card underneath it is always written
+     near the thing it belongs to rather than last. The clear confirmation was
+     given a layer of its own for that reason and the import card, added later
+     and written earlier, opened *behind* the menu and looked like a button that
+     did nothing at all. It is a class rather than a list of ids so the next one
+     inherits the answer. check.py has the list. */
+  .overlay.ask{z-index:30}
   /* Celebration. Above the overlay so the last of the confetti can still be
      falling as the leaderboard arrives; both clear themselves. */
   /* Names the region you got wrong, big enough to actually register. The
@@ -340,6 +443,13 @@
     100%{transform:scale(1.01);opacity:0}
   }
   body.longnames .flash span{font-size:38px}
+  /* Review names a region rather than scoring one, so it arrives in the colour
+     of help rather than the colour of a mistake. */
+  .flash.help span{color:var(--amber)}
+  /* A menu card's second row is quieter than the button above it: another run
+     on the end card, Start on the main one. Same tight gap the pause card
+     uses. */
+  .card.menu .btnrow{margin-top:10px}
 
   /* Shown only when something threw; selectable so it can be quoted back. */
   .crash{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px;
@@ -461,6 +571,9 @@
     body.practice .cluebtn{position:fixed;bottom:14px;right:10px;margin:0;
       z-index:8;width:72px;padding:7px 4px;font-size:11px;line-height:1.25;
       white-space:normal}
+    body.reviewing .backbtn{position:fixed;bottom:14px;right:10px;margin:0;
+      z-index:8;width:72px;padding:7px 4px;font-size:11px;line-height:1.25;
+      white-space:normal}
 
     /* The menu has to fit the landscape rectangle rather than a tall one: as a
        single column it ran off both ends of the screen. The board moves beside
@@ -528,7 +641,7 @@
   <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
-<footer><span id="ticker">Pick a geography and press Start.</span><button id="clue" class="cluebtn">Clue</button></footer>
+<footer><span id="ticker">Pick a geography and press Start.</span><button id="clue" class="cluebtn">Clue</button><button id="backBtn" class="backbtn">Results</button></footer>
 
 <div class="lens" id="lens" hidden>
   <div class="disc">
@@ -550,7 +663,7 @@
   </div>
 </div>
 
-<div class="overlay" id="confirm" hidden>
+<div class="overlay ask" id="confirm" hidden>
   <div class="card narrow">
     <h2>Clear the board?</h2>
     <div class="sub">This cannot be undone</div>
@@ -572,11 +685,38 @@
 
 <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
 
+<div class="overlay ask" id="impCard" hidden>
+  <div class="card narrow">
+    <h2>Import data</h2>
+    <div class="sub">Boards in the file replace the ones saved here</div>
+    <button class="ghost" id="impPick">Choose a file…</button>
+    <textarea id="impText" rows="4" spellcheck="false" autocapitalize="off"
+              autocorrect="off" placeholder="…or paste an export here"></textarea>
+    <div class="impnote" id="impNote"></div>
+    <div class="btnrow">
+      <button class="ghost" id="impCancel">Cancel</button>
+      <button id="impGo" disabled>Import</button>
+    </div>
+    <!-- No accept filter: some Android pickers report an unknown type for a
+         .json file and grey it out, which is a dead end with nothing on screen
+         to explain it. Anything else chosen here is refused by name, with a
+         reason. -->
+    <input type="file" id="importFile" hidden>
+  </div>
+</div>
+
 <div class="overlay" id="intro">
   <div class="card menu">
     <div class="cardhead"><h2>Fifty</h2>
-      <button class="fsbtn" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 4H4v5.5M14.5 4H20v5.5M14.5 20H20v-5.5M9.5 20H4v-5.5"/></svg></button></div>
-    <div class="sub">A geography drill<span class="ver">7fe93e1</span></div>
+      <div class="headbtns">
+        <button class="headbtn fsbtn" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 4H4v5.5M14.5 4H20v5.5M14.5 20H20v-5.5M9.5 20H4v-5.5"/></svg></button>
+        <button class="headbtn dotsbtn" id="dataBtn" title="Your data" aria-label="Your data" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
+      </div>
+      <div class="pop" id="dataMenu" hidden>
+        <button id="exportBtn">Export data</button>
+        <button id="importBtn">Import data</button>
+      </div></div>
+    <div class="sub">A geography drill<span class="ver">v1.2.0</span></div>
       <select class="geoSel" aria-label="Which geography">
         <option value="us">United States — states</option>
         <option value="fr">France — départements</option>
@@ -638,6 +778,10 @@
       <div class="storenote"></div>
     </div>
     <button id="again">Play again</button>
+    <div class="btnrow">
+      <button class="ghost" id="reviewBtn">Review map</button>
+      <button class="ghost" id="menuBtn">Main menu</button>
+    </div>
   </div>
 </div>
 
@@ -722,18 +866,19 @@ function useGeo(id) {
    without competing with a 12. Full runs are the exception: up to five coexist,
    ranked against each other.
 
-   Shared by Trial and by distance scoring in either mode. Distance needs it even
-   in Practice, because a distance run can reach the end of the queue having
-   found half — how many you got right is the first thing about it. */
+   What counts as the tally depends on the scoring — regions found under
+   counting, regions revealed under distance — so it is asked for rather than
+   read off the entry. See tallyOf(). */
 function byTally(board, entry) {
-  if (entry.f === 0) return { board, kept: false };
-  if (entry.f === TOTAL) {
+  const t = tallyOf(entry);
+  if (t === 0) return { board, kept: false };
+  if (t === TOTAL) {
     board.push(entry);
-    const full = board.filter(r => r.f === TOTAL).sort(better).slice(0, 5);
-    return { board: full.concat(board.filter(r => r.f < TOTAL)),
+    const full = board.filter(r => tallyOf(r) === TOTAL).sort(better).slice(0, 5);
+    return { board: full.concat(board.filter(r => tallyOf(r) < TOTAL)),
              kept: full.includes(entry) };
   }
-  return replaceBy(board, entry, r => r.f === entry.f);
+  return replaceBy(board, entry, r => tallyOf(r) === t);
 }
 
 const MODES = {
@@ -808,13 +953,17 @@ const SCORINGS = {
   drift: {
     id: 'drift',
     label: 'Distance',
-    budget: 100,          // one full width of the geography
+    budget: 100,          // the purse: one full width of the geography
     pips: false,
-    /* One entry per score, the way counting-practice keeps one per miss count.
-       Not the tally: a distance run is asked every region, so the tally is not
-       an axis anyone competes on. */
-    insert: (board, entry) => replaceBy(board, entry,
-      r => errorsOf(r) === errorsOf(entry) && cluesOf(r) === cluesOf(entry)),
+    /* Trial ends the moment the purse runs out, so what a run has to show for
+       itself is how far it got before that: one entry per revealed count,
+       exactly as counting keeps one per tally, with the full sets ranked among
+       themselves. Practice cannot end early and always reaches the last region,
+       so there the tally is constant and the score is the only axis — one entry
+       per score, the way counting-practice keeps one per miss count. */
+    insert: (board, entry) => MODE.capped ? byTally(board, entry)
+      : replaceBy(board, entry,
+          r => errorsOf(r) === errorsOf(entry) && cluesOf(r) === cluesOf(entry)),
     /* One tap per region. Guessing again after a miss is how you *narrow* an
        answer, and narrowing is exactly what this scoring is trying to price: a
        second guess three regions closer would post a better distance than the
@@ -831,6 +980,12 @@ let SCORING = SCORINGS.count;
    are the thing counted; the cap is a rule about them, and it now depends on
    both axes: three misses, or one full map. */
 const budget = () => (MODE.capped ? SCORING.budget : Infinity);
+
+/* What a run starts holding, which is the same number without the mode's rule
+   on top. Distance is shown as a countdown from it — a run begins with a
+   hundred points and a miss takes some — so Practice needs it too, even though
+   Practice may spend straight past zero and finish owing. */
+const purse = () => SCORING.budget;
 
 /* Shared by both policies: keep one entry per bucket, replacing only on an
    improvement. */
@@ -933,30 +1088,40 @@ function scoreColour(pts) {
            line: mix(SCALE[lo].line, SCALE[hi].line, t) };
 }
 
+/* The colour is set inline and also published as a pair of custom properties.
+   The answer flash has to *end* on it — see .answerflash — and an animation is
+   the only thing that outranks an inline style, so the keyframes read the
+   colour back off the element rather than being told it. */
 function paintScore(name, pts) {
   setStatus(name, 'scored');
   const c = scoreColour(pts);
-  shapes[name].style.fill = c.fill;
-  shapes[name].style.stroke = c.line;
-  if (lensPaths[name]) {
-    lensPaths[name].style.fill = c.fill;
-    lensPaths[name].style.stroke = c.line;
-  }
+  wear(shapes[name], c);
+  if (lensPaths[name]) wear(lensPaths[name], c);
+}
+
+function wear(node, c) {
+  node.style.fill = c.fill;
+  node.style.stroke = c.line;
+  node.style.setProperty('--scorefill', c.fill);
+  node.style.setProperty('--scoreline', c.line);
 }
 const LAYERS = { FOUND: L_FOUND, MISS: L_MISS, ANSWER: L_ANSWER };
 
 let statusOf = {};     // region name -> key of STATUS
 
+function strip(node) {
+  node.style.fill = '';
+  node.style.stroke = '';
+  node.style.removeProperty('--scorefill');
+  node.style.removeProperty('--scoreline');
+}
+
 function setStatus(name, key) {
   const spec = STATUS[key];
   statusOf[name] = key;
   if (key !== 'scored') {          // only paintScore() sets these
-    shapes[name].style.fill = '';
-    shapes[name].style.stroke = '';
-    if (lensPaths[name]) {
-      lensPaths[name].style.fill = '';
-      lensPaths[name].style.stroke = '';
-    }
+    strip(shapes[name]);
+    if (lensPaths[name]) strip(lensPaths[name]);
   }
   shapes[name].setAttribute('class', spec.cls);
   (spec.layer ? LAYERS[spec.layer] : L_BASE).appendChild(shapes[name]);
@@ -1371,6 +1536,27 @@ let queue, current, errors, found, revealed, t0, raf, running;
 const spendLeft = () => budget() - errors;
 const spent = () => Math.round(errors);
 const busted = () => MODE.capped && errors >= budget() - 1e-9;
+
+/* The same number said the other way round. Distance is played as a purse you
+   are spending rather than a debt you are running up: a run starts with a
+   hundred, a miss takes some, and a Trial ends when there is nothing left. The
+   arithmetic is untouched — `errors` still accumulates the spend, and it is
+   still the spend that gets stored and ranked — but nothing in front of the
+   player says "error points" any more, because holding a hundred and watching
+   it go is a clearer thing to feel than watching a debt climb.
+
+   A Trial stops at zero. The last miss can cost more than there was left to
+   pay it with, and by how much is not something the run is about: it ended,
+   and −38 says nothing 0 does not. Practice is the mode where the number keeps
+   meaning something below zero, so only there is it allowed to go. */
+const points = () => {
+  const p = Math.round(purse() - errors);
+  return MODE.capped ? Math.max(0, p) : p;
+};
+
+/* A fifth of the purse. In a Trial that is one bad miss from the end, which is
+   worth saying before it happens rather than after. */
+const LOW = 20;
 /* Every element the game touches, looked up once. These were a mix of cached
    consts and repeated getElementById calls scattered through the code. */
 const el = {};
@@ -1379,7 +1565,10 @@ const el = {};
  'pause', 'paused', 'resumeBtn', 'restartBtn', 'quitBtn',
  'progress', 'clock', 'ticker',
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
- 'boardList', 'confirm', 'again', 'startBtn', 'clearNo', 'clearYes',
+ 'boardList', 'confirm', 'again', 'reviewBtn', 'menuBtn', 'backBtn', 'startBtn',
+ 'clearNo', 'clearYes',
+ 'dataBtn', 'dataMenu', 'exportBtn', 'importBtn', 'importFile', 'impCard', 'impPick', 'impText',
+ 'impNote', 'impCancel', 'impGo',
 ].forEach(id => { el[id] = $(id); });
 
 const clock = el.clock, ticker = el.ticker, overlay = el.overlay;
@@ -1406,13 +1595,19 @@ function drawProgress() {
 
 function drawCounter() {
   const pips = SCORING.pips && MODE.capped;
+  const drift = SCORING.id === 'drift';
   document.body.classList.toggle('numeric', !pips);
-  el.counterLabel.textContent = SCORING.id === 'drift' ? 'Error points'
+  el.counterLabel.textContent = drift ? 'Points'
     : MODE.capped ? 'Lives' : 'Misses';
 
   if (!pips) {
-    el.missCount.textContent = MODE.capped ? `${spent()}/${budget()}` : spent();
-    el.missCount.classList.toggle('bad', errors > 0);
+    /* Counting shows what has been spent against the cap. Distance shows what
+       is left, which needs no cap beside it — the number *is* the budget, and
+       it is the same number in Practice, where it is simply allowed to go
+       under. */
+    el.missCount.textContent = drift ? points()
+      : MODE.capped ? `${spent()}/${budget()}` : spent();
+    el.missCount.classList.toggle('bad', drift ? points() <= LOW : errors > 0);
     return;
   }
   el.lives.innerHTML = Array.from({ length: budget() }, (_, i) =>
@@ -1551,11 +1746,16 @@ function missByDistance(name, at) {
   errors += cost;
   drawCounter();
 
-  const points = Math.round(cost);
-  const cost_ = km === null ? `A different landmass (+${points} EPs)`
-                            : `Off by ${fmtKm(km)} (+${points} EPs)`;
+  const charged = Math.round(cost);
+  const cost_ = km === null ? `A different landmass (\u2212${charged} pts)`
+                            : `Off by ${fmtKm(km)} (\u2212${charged} pts)`;
   flashMiss(name);
-  paintScore(target, points);       // consumed: it will not be asked again
+  paintScore(target, charged);      // consumed: it will not be asked again
+  /* Amber first, then the colour it cost. Late in a run most of the map is
+     already coloured and the region that just resolved is easy to lose among
+     the ones that resolved before it — so the answer arrives in the colour
+     every other mode reveals an answer in, and settles into its score. */
+  markAnswer(target);
   revealed++;
   drawProgress();
   drawDrift(from, target, name);
@@ -1620,8 +1820,13 @@ const SNAP_UNITS = 40;   // reach in map units — see DESIGN.md for why not px
    compose(), which is the only thing that knows how panels were placed. */
 let borders = {};
 
+/* Reviewing inverts the rule rather than bending it. During a run a region is
+   worth resolving to only while picking it would still do something; in review
+   picking it asks a question instead of answering one, and the regions worth
+   asking about are precisely the resolved ones. So everything is selectable
+   there, and the resolver, the snap and the magnifier need no other change. */
 function selectable(name) {
-  return !!name && !!shapes[name] && status(name) === 'open';
+  return !!name && !!shapes[name] && (reviewing || status(name) === 'open');
 }
 
 function segDist2(px, py, ax, ay, bx, by) {
@@ -1779,34 +1984,98 @@ const DISC_R   = 92;    // disc radius in CSS px — must match .lens .disc
 const GUARD_MS = 180;   // trailing window discarded: the twitch on lift-off
 const DWELL_MS = 120;   // rest this long on a state for it to read as intent
 const SLOP     = 10;    // px of drift still counted as holding still
+const FINGER   = 40;    // px of clearance between the block and the fingertip
 
 const lensBox = $('lens'), lensMap = $('lensMap'), lensCap = $('lensCap');
 
 // one throwaway path per state, built once; only the classes change per open
 let lensPaths = {};
 
+/* The disc paints in document order exactly as the map does, and had the bug
+   the map's layers were added to fix: a neighbour drawn later paints over the
+   shared border, so the amber outline of the aimed region came out with pieces
+   missing wherever a region later in the list touched it. Same fix, same
+   order — a resolved state moves up the stack, and the aimed one moves above
+   all of them, since it is the one thing the disc exists to show.
+
+   The tiers are the lens classes STATUS hands out, written down rather than
+   collected from it: a new status whose lens class is not on this list would
+   otherwise be seated nowhere at all. check.py holds the two together. */
+const LENS_TIERS = ['', 'found', 'miss'];
+let lensLayers = {};
+
 function buildLens() {
   while (lensMap.firstChild) lensMap.removeChild(lensMap.firstChild);
+  lensLayers = {};
+  LENS_TIERS.concat('aim').forEach(t => {
+    lensLayers[t] = lensMap.appendChild(document.createElementNS(NS, 'g'));
+  });
   lensPaths = {};
   REGIONS.forEach(r => {
     const p = document.createElementNS(NS, 'path');   // compose() sets the path
-    lensMap.appendChild(p);
+    lensLayers[''].appendChild(p);
     lensPaths[r.name] = p;
   });
 }
 
+// back to the layer its status earns it, whatever it was borrowing
+function seat(name) {
+  if (!lensPaths[name]) return;
+  const tier = lensLayers[STATUS[status(name)].lens] || lensLayers[''];
+  tier.appendChild(lensPaths[name]);
+}
+
 let holdTimer = null, lensOn = false, swallowClick = false;
 let downX = 0, downY = 0, aim = null, trail = [], moveRaf = 0, lastPt = null;
+/* The block's size, measured once when it opens rather than every frame: a
+   layout read per pointermove is a forced reflow, and the size cannot change
+   while it is open. */
+let boxW = DISC_R * 2, boxH = DISC_R * 2;
 
 function openLens(x, y) {
   lensOn = true;
   // the STATUS table decides how a status looks in the disc too, so the disc
-  // and the map can never drift apart
-  for (const nm in lensPaths) lensPaths[nm].setAttribute('class', STATUS[status(nm)].lens);
+  // and the map can never drift apart — and where it sits, for the same reason
+  for (const nm in lensPaths) {
+    lensPaths[nm].setAttribute('class', STATUS[status(nm)].lens);
+    seat(nm);
+  }
   trail = [];
   aim = undefined;          // force the first update to register a segment
   lensBox.hidden = false;
+  /* Which caption this open is going to carry, before anything is measured: it
+     decides the block's size, and the size decides where the block goes. */
+  lensCap.classList.toggle('facts', reviewing);
+  boxW = lensBox.offsetWidth || DISC_R * 2;
+  boxH = lensBox.offsetHeight || DISC_R * 2;
   moveLens(x, y);
+}
+
+/* Where the block goes, given where the finger is.
+
+   The disc and its caption are placed together. Placing the disc alone and
+   letting the caption hang off the bottom was fine while the caption was one
+   short line of instruction — 40px of clearance covered it — but in review it
+   carries the facts, wraps to three lines, and landed square under the finger
+   it was supposed to clear.
+
+   Above the finger by preference, below when the top edge is too near, and
+   beside it when the window is too short for either — which is a landscape
+   phone, where 184px of disc plus its clearance is most of the height. */
+function placeLens(x, y) {
+  const vw = innerWidth, vh = innerHeight;
+  const above = y - FINGER - boxH, below = y + FINGER;
+  let left = x - boxW / 2, top;
+
+  if (above >= 8) top = above;
+  else if (below + boxH <= vh - 8) top = below;
+  else {
+    top = y - boxH / 2;
+    left = x < vw / 2 ? x + FINGER : x - FINGER - boxW;
+  }
+  const fit = (v, span, limit) => Math.min(Math.max(v, 8), Math.max(8, limit - span - 8));
+  lensBox.style.left = fit(left, boxW, vw) + 'px';
+  lensBox.style.top = fit(top, boxH, vh) + 'px';
 }
 
 function moveLens(x, y) {
@@ -1816,25 +2085,38 @@ function moveLens(x, y) {
   lensMap.setAttribute('viewBox',
     (u.x - half) + ' ' + (u.y - half) + ' ' + (half * 2) + ' ' + (half * 2));
 
-  // float the disc clear of the finger, flipping below it near the top edge
-  const vw = innerWidth, vh = innerHeight, D = DISC_R * 2;
-  lensBox.style.left = Math.min(Math.max(x - DISC_R, 8), Math.max(8, vw - D - 8)) + 'px';
-  let top = y - D - 40;
-  if (top < 8) top = Math.min(y + 40, Math.max(8, vh - D - 46));
-  lensBox.style.top = top + 'px';
+  // float the block clear of the finger, on whichever side has the room
+  placeLens(x, y);
 
   const name = resolve(x, y);   // exactly what a release would pick
   if (name !== aim) {
     const now = Date.now();
     if (trail.length) trail[trail.length - 1].t1 = now;
-    if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
+    if (aim && lensPaths[aim]) {
+      lensPaths[aim].classList.remove('aim');
+      seat(aim);                  // it was on top; put it back where it belongs
+    }
     aim = name;
-    if (name) lensPaths[name].classList.add('aim');
+    if (name) {
+      lensPaths[name].classList.add('aim');
+      lensLayers.aim.appendChild(lensPaths[name]);   // nothing paints over it
+    }
     trail.push({ name: name, t0: now, t1: now, u: u });
-    // Deliberately never the state's name. Naming what you are hovering would
-    // answer the only question the game asks. The amber fill already says
-    // *which shape* is aimed, which is all the magnifier needs to promise.
-    lensCap.textContent = name ? 'lift to pick' : 'lift to cancel';
+    /* Deliberately never the state's name during a run. Naming what you are
+       hovering would answer the only question the game asks. The amber fill
+       already says *which shape* is aimed, which is all the magnifier needs to
+       promise.
+
+       In review there is nothing left to give away, and the caption has no
+       instruction worth carrying — a lift there costs nothing. So it holds the
+       facts instead, the same line the ticker shows, and the magnifier becomes
+       a way to read the map by dragging over it. */
+    if (reviewing) {
+      if (name) lensCap.innerHTML = factsHTML(name);
+      else lensCap.textContent = `no ${GEO.noun} here`;
+    } else {
+      lensCap.textContent = name ? 'lift to pick' : 'lift to cancel';
+    }
     lensCap.classList.toggle('none', !name);
   }
 }
@@ -1873,18 +2155,26 @@ function closeLens(commit) {
   holdTimer = null;
   if (!lensOn) return false;
   const pick = commit ? settled() : null;
-  if (aim && lensPaths[aim]) lensPaths[aim].classList.remove('aim');
+  if (aim && lensPaths[aim]) { lensPaths[aim].classList.remove('aim'); seat(aim); }
   lensOn = false;
   lensBox.hidden = true;
   aim = null;
   trail = [];
-  if (pick && pick.name) guess(pick.name, pick.u);
+  if (pick && pick.name) choose(pick.name, pick.u);
   return true;
+}
+
+/* One name for "the player picked this region", because the map is live in two
+   different states and both the tap path and the magnifier path have to reach
+   the right one. In a run a pick is an answer; in review it is a question. */
+function choose(name, at) {
+  if (reviewing) inspect(name);
+  else guess(name, at);
 }
 
 svg.addEventListener('pointerdown', e => {
   swallowClick = false;
-  if (!running) return;
+  if (!running && !reviewing) return;
   downX = e.clientX;
   downY = e.clientY;
   try { svg.setPointerCapture(e.pointerId); } catch (err) {}
@@ -1922,7 +2212,7 @@ svg.addEventListener('click', e => {
   // anything else goes through the shared resolver.
   const tapped = e.target.dataset && e.target.dataset.name;
   const at = userPoint(e.clientX, e.clientY);
-  guess(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY), at);
+  choose(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY), at);
 });
 
 // leaderboard: one best time per regions-found tally, many entries at a full set
@@ -1942,9 +2232,22 @@ const PREF_SCORING = 'fifty:scoring';
    the unsuffixed spelling, since suffixing it would orphan every board anyone
    has. */
 const LEGACY_US = { trial: 'fifty:board2', practice: 'fifty:practice1' };
-const boardKey = () => SCORING.id !== 'count'
-  ? `fifty:${GEO.id}:${MODE.id}:${SCORING.id}`
-  : (GEO.id === 'us' ? LEGACY_US[MODE.id] : `fifty:${GEO.id}:${MODE.id}`);
+/* Taking the axes as arguments rather than reading the live ones, so the export
+   can walk every key the game could ever have written without a second copy of
+   the scheme — legacy spellings and all. */
+const keyFor = (geo, mode, scoring) => scoring !== 'count'
+  ? `fifty:${geo}:${mode}:${scoring}`
+  : (geo === 'us' ? LEGACY_US[mode] : `fifty:${geo}:${mode}`);
+const boardKey = () => keyFor(GEO.id, MODE.id, SCORING.id);
+
+const PREF_KEYS = [PREF_GEO, PREF_MODE, PREF_SCORING];
+function boardKeys() {
+  const keys = [];
+  for (const g in GEOS) for (const m in MODES) for (const s in SCORINGS) {
+    keys.push(keyFor(g, m, s));
+  }
+  return keys;
+}
 const mem = {};   // last resort backend
 
 /* Three backends, tried in order, because the file gets run two very different
@@ -2027,6 +2330,19 @@ function showNote() {
   });
 }
 
+/* The line under the board already exists to say something true about where the
+   scores live, which makes it the right place to say what just happened to
+   them. It goes back to saying the usual thing on its own. */
+let noteTimer = null;
+function flashNote(msg, bad) {
+  clearTimeout(noteTimer);
+  document.querySelectorAll('.storenote').forEach(el => {
+    el.textContent = msg;
+    el.classList.toggle('warn', !!bad);
+  });
+  noteTimer = setTimeout(showNote, 7000);
+}
+
 /* A completed run whose error count predates this feature is ranked as the
    worst a completed run could be — a full run cannot have spent all its lives,
    so the ceiling is one short of them. It can then never outrank a run we know
@@ -2034,6 +2350,24 @@ function showNote() {
 const errorsOf = r => typeof r.e === 'number' ? r.e
   : (MODE.capped ? budget() - 1 : Infinity);
 const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
+
+/* How many regions the run put on the map. Under distance that is every region
+   it was asked, right or wrong, and it is what a Trial has to show for itself:
+   a run there ends when the purse does, so the achievement is how far the purse
+   got you. Practice is asked every region by definition, so it is TOTAL there
+   and drops out of the ranking on its own.
+
+   Entries written before the board recorded it fall back to what is known: a
+   run revealed at least as many as it found. That under-ranks them rather than
+   inventing a number, and the row says so by showing no tally. */
+const revealedOf = r => typeof r.v === 'number' ? r.v
+  : (MODE.capped ? r.f : TOTAL);
+const tallyOf = r => SCORING.id === 'drift' ? revealedOf(r) : r.f;
+
+/* What a run has left of the purse. Negative is a real result in Practice,
+   which cannot end early and so can spend past the hundred it started with. */
+const pointsOf = r => purse() - errorsOf(r);
+const signed = p => (p < 0 ? '\u2212' + Math.abs(p) : String(p));
 
 /* The one definition of "better": more found first, then fewer errors, then
    quicker. It serves both modes unchanged — every practice run is a completed
@@ -2050,12 +2384,13 @@ const cluesOf = r => typeof r.c === 'number' ? r.c : 0;
 const helpOf = r => SCORING.id === 'drift'
   ? errorsOf(r) : errorsOf(r) + cluesOf(r);
 
-/* Distance drops the first term entirely. Every run is asked every region, so
-   how many came out right is not an achievement separate from the score — it is
-   the same fact told coarsely, and ranking on it first would put a run that
-   guessed forty by a hair above one that got thirty dead on. The points already
-   say everything the tally would. */
-const better = (a, c) => (SCORING.id === 'drift' ? 0 : c.f - a.f)
+/* Distance used to drop the first term entirely, on the grounds that every run
+   was asked every region and the tally was the same fact told coarsely. That is
+   still true of Practice, and no longer true of Trial: a distance Trial ends
+   when the purse runs out, so the regions it revealed are the whole story and
+   the points are near enough a constant. tallyOf() reads the right one of the
+   two, and in Practice it is TOTAL for every entry and ties out of the way. */
+const better = (a, c) => tallyOf(c) - tallyOf(a)
   || helpOf(a) - helpOf(c)
   || (SCORING.id === 'drift' ? cluesOf(a) - cluesOf(c) : 0) || a.t - c.t;
 const rankBoard = b => b.sort(better);
@@ -2070,9 +2405,9 @@ function showBoards(board, mine) {
   showNote();
 }
 
-/* One name for the unit, two lengths of it. Spelled out where there is room —
-   the header column and the end card — and "EPs" wherever a row has to stay on
-   one line. It was briefly "pts", which named nothing.
+/* One name for each unit. Counting says misses. Distance says points, and says
+   what is left rather than what was spent — a run holds a hundred and a miss
+   takes from it — abbreviated to "pts" wherever a row has to stay on one line.
 
    A bare count with a symbol read as "1x", which means nothing unless you
    already know the column is errors. Spell it out instead, and let a clean run
@@ -2080,10 +2415,10 @@ function showBoards(board, mine) {
    achievement rather than as the number below one. */
 function missWords(e) {
   if (typeof e !== 'number') return '—';
-  if (e === 0) return 'Perfect';
-  return SCORING.id === 'drift' ? `${e} EPs`
-                                : `${e} miss${e === 1 ? '' : 'es'}`;
+  return e === 0 ? 'Perfect' : `${e} miss${e === 1 ? '' : 'es'}`;
 }
+
+const ptWords = p => `${signed(p)} pt${Math.abs(p) === 1 ? '' : 's'}`;
 
 /* Classic rows lead with how far you got and carry the misses alongside.
    Every practice run is a completed set, so leading with "All fifty" on every
@@ -2091,14 +2426,36 @@ function missWords(e) {
 function rowParts(r) {
   const words = missWords(r.e);
 
-  /* Distance rows lead with the points and say nothing about the tally. Every
-     run is asked every region, so there is one number worth comparing and it is
-     this one. Zero is a perfect run: every tap inside the region it named. */
   if (SCORING.id === 'drift') {
+    const p = pointsOf(r), known = typeof r.e === 'number';
+    /* A distance Trial is ranked on how far the purse got, so that is the
+       headline and the points left ride alongside — which for a run that ran
+       out is nothing much, and for one that finished is the whole story. */
+    if (MODE.capped) {
+      const v = revealedOf(r), full = v === TOTAL;
+      return {
+        tier: full ? 'full' : 'partial',
+        /* One word for it whatever the geography — "All fifty" only ever fit
+           one board. Reaching the end here means the purse never ran out, so
+           Perfect is what it is. */
+        tally: typeof r.v === 'number' || full
+          ? (full ? 'Perfect' : `${v} of ${TOTAL}`) : '—',
+        /* What it had left, when it had any. A run that reached the bottom of
+           the purse is described by that rather than by a zero: nothing was
+           left, and the number stopped being the point the moment it ran out. */
+        errs: `<span class="errs${known && p === purse() ? ' perfect' : ''}">`
+            + `${!known ? '—' : p > 0 ? ptWords(p) : 'Ran out'}</span>`,
+      };
+    }
+    /* Practice reveals everything by definition, so the points are the run.
+       They can go under: a hundred is a perfect run, ten is a good one, and
+       minus five hundred is a story of its own — worth reading as a loss rather
+       than as a small number. */
     const c = cluesOf(r);
     return {
-      tier: r.e === 0 ? 'full' : 'partial',
-      tally: words,
+      tier: p === purse() ? 'full' : 'partial',
+      tally: p === purse() ? 'Perfect'
+        : `<span class="${p < 0 ? 'neg' : ''}">${ptWords(p)}</span>`,
       errs: MODE.clues
         ? `<span class="errs${c ? '' : ' perfect'}">${c} clue${c === 1 ? '' : 's'}</span>`
         : '<span class="errs"></span>',
@@ -2117,8 +2474,10 @@ function rowParts(r) {
   return {
     tier: r.f === TOTAL ? 'full' : 'partial',
     // "31 of 101" rather than "31 départements": the noun does not fit the
-    // row on a phone, and the total is the more useful half anyway
-    tally: r.f === TOTAL ? GEO.all : `${r.f} of ${TOTAL}`,
+    // row on a phone, and the total is the more useful half anyway.
+    // Complete rather than Perfect for a full set, because a counting run can
+    // be one and not the other — the column beside it says "2 misses".
+    tally: r.f === TOTAL ? 'Complete' : `${r.f} of ${TOTAL}`,
     errs: `<span class="errs${cls}">${words}</span>`,
   };
 }
@@ -2162,27 +2521,38 @@ async function finish(won, lastClick) {
   } else {
     el.bar.classList.add('lost');
     el.promptLabel.textContent = 'Run over';
-    el.target.textContent = SCORING.id === 'drift' ? 'Too far off' : 'Out of lives';
+    el.target.textContent = SCORING.id === 'drift' ? 'Out of points' : 'Out of lives';
     el.target.classList.add('lost');
     clock.classList.add('lost');
     setStatus(current, 'answer');
     ticker.innerHTML = `<span class="no">Miss</span> — that was <b>${lastClick}</b>. ` +
-      (SCORING.id === 'drift' ? 'Out of room; ' : 'Out of lives; ') +
+      (SCORING.id === 'drift' ? 'Out of points; ' : 'Out of lives; ') +
       `you were looking for <b>${current}</b>.`;
     pause = 2600;   // time to read the miss and see the real answer
   }
 
   el.ovTitle.textContent = !won
-      ? (SCORING.id === 'drift' ? 'Too far off.' : 'Out of lives.')
+      ? (SCORING.id === 'drift' ? 'Out of points.' : 'Out of lives.')
     : spent() === 0 ? 'Perfect run.'
     : SCORING.id === 'drift' ? 'Finished.' : tally() + '.';
+  /* A distance run that ran out is described by how far it got — that is the
+     number its board ranks on. One that finished is described by what it has
+     left, which is the number its board ranks on instead. */
   el.ovSub.textContent = !won
-      ? `${found} of ${TOTAL} found · ${fmt(ms)}`
+      ? (SCORING.id === 'drift'
+          ? `${revealed} of ${TOTAL} revealed · ${fmt(ms)}`
+          : `${found} of ${TOTAL} found · ${fmt(ms)}`)
     : SCORING.id === 'drift'
-      ? `${spent()} error points · ${fmt(ms)}`
+      ? `${ptWords(points())}${MODE.capped ? ' left' : ''} · ${fmt(ms)}`
       : `Complete in ${fmt(ms)} · ${missWords(spent()).toLowerCase()}`;
 
-  const entry = { f: found, e: spent(), c: cluesUsed, t: ms, d: Date.now() };
+  /* Capped runs store the spend clamped to what there was to spend. A trial
+     that overshot on its last miss is not a worse run than one that landed
+     exactly on zero — both ran out — and leaving the overshoot in would rank
+     them apart on a number neither player could feel. */
+  const e = MODE.capped ? Math.min(spent(), purse()) : spent();
+  const entry = { f: found, v: revealed, e: e, c: cluesUsed, t: ms,
+                  d: Date.now() };
   const res = addEntry(await loadBoard(), entry);
   if (res.kept) await saveBoard(res.board);
   showBoards(res.board, res.kept ? entry.d : null);
@@ -2304,6 +2674,12 @@ document.querySelectorAll('.geoSel').forEach(s =>
 
 el.again.addEventListener('click', beginRun);
 el.startBtn.addEventListener('click', beginRun);
+/* Play again repeats the run you just had; this is the way out of it, for
+   changing geography and coming back to a fresh Start rather than dropping
+   straight into another countdown. It is the pause card's exit reused, which
+   already resets the run and puts the intro up — the end card and the pause
+   card are leaving the same thing. */
+if (el.menuBtn) el.menuBtn.addEventListener('click', quitToMenu);
 
 // show any existing best runs on the intro screen
 /* Startup. The geography is remembered between visits; the mode is not, since
@@ -2467,10 +2843,15 @@ function celebrate(title) {
 const flashBox = $('flash');
 let flashTimer = null;
 
-function flashMiss(name) {
+/* Two things put a name up now: a miss, in red, and a review tap, in amber —
+   naming a region once the run is over is help rather than a verdict, and amber
+   is the colour of help everywhere else in the game. Same animation either way;
+   only the colour differs, because only the reason does. */
+function flashName(name, help) {
   if (!flashBox) return;
   const span = flashBox.firstElementChild;
   clearTimeout(flashTimer);
+  flashBox.classList.toggle('help', !!help);
   // restart the animation from the top, in case this is a second miss in a row
   flashBox.hidden = true;
   span.style.animation = 'none';
@@ -2483,6 +2864,8 @@ function flashMiss(name) {
   flashBox.hidden = false;
   flashTimer = setTimeout(() => { flashBox.hidden = true; }, MISS_MS);
 }
+
+const flashMiss = name => flashName(name, false);
 
 function clearFlash() {
   clearTimeout(flashTimer);
@@ -2687,23 +3070,32 @@ function clearDrift() {
    lasts. Outline and not fill: a filled shape is what every other mode uses to
    mean a state the region is *in*, and this one is in no state at all — it stays
    open, and may be the region just named. */
+/* Review marks a region the same way and for a related reason — there, the
+   question is which shape answered the tap, since a tap in the sea resolves to
+   the coast beside it. A distance miss uses a third: the answer, flooded amber
+   before it settles into the colour it cost.
+
+   One clock for all of them. Several can be alive at once — a distance miss
+   outlines what was hit and floods what was wanted in the same instant — and
+   they are one report, so they should leave together the way they arrived. */
+const MARKS = '.wrongflash,.pickflash,.answerflash';
 let missTimer = null;
 
-function markMiss(name) {
+function markRegion(name, cls) {
   clearTimeout(missTimer);
-  const node = shapes[name];
-  if (node) node.classList.add('wrongflash');
-  missTimer = setTimeout(() => {
-    // setStatus may have repainted it since; only ever remove the class
-    if (shapes[name]) shapes[name].classList.remove('wrongflash');
-    clearDrift();
-  }, MISS_MS);
+  if (shapes[name]) shapes[name].classList.add(cls);
+  missTimer = setTimeout(clearMissMarks, MISS_MS);
 }
+
+const markMiss = name => markRegion(name, 'wrongflash');
+const markPick = name => markRegion(name, 'pickflash');
+const markAnswer = name => markRegion(name, 'answerflash');
 
 function clearMissMarks() {
   clearTimeout(missTimer);
-  document.querySelectorAll('.wrongflash')
-    .forEach(n => n.classList.remove('wrongflash'));
+  // a repaint may have moved a marked shape between layers; find them by class
+  document.querySelectorAll(MARKS).forEach(n =>
+    n.classList.remove('wrongflash', 'pickflash', 'answerflash'));
   clearDrift();
 }
 
@@ -2953,6 +3345,398 @@ document.querySelectorAll('.fsbtn').forEach(b => b.addEventListener('click', asy
 }));
 addEventListener('fullscreenchange', drawFsButton);
 addEventListener('webkitfullscreenchange', drawFsButton);
+/* ---- reviewing the finished map -----------------------------------------
+   The end card arrives on top of the map at the moment the map is most worth
+   looking at: every region resolved, the answers revealed, and under distance
+   scoring every one of them coloured by what it cost. Review hides the card and
+   hands that map back, unchanged — finish() paints nothing new, so there is
+   nothing to restore — with one difference: every region now answers instead of
+   asking. Tap one, or drag the magnifier over it, and it names itself along
+   with its grouping and its capital.
+
+   That is the same information the clue ladder rations during a run, and
+   rationing it is what makes a clue cost something. The run is over here, so
+   there is nothing left to protect and it is simply given.
+
+   The point is the errors. A run tells you how many you got wrong and paints
+   where; it never tells you what the right answer was called, and by the end
+   card the moment for asking has passed. This is that moment, put back.
+*/
+let reviewing = false;
+
+/* One line, in two places at once: the ticker along the bottom and the
+   magnifier's caption, which in review has nothing else to say. Both read this,
+   so they cannot come to disagree about what a region is.
+
+   Unlabelled and separated by dots rather than spelled out as "grouping" and
+   "capital". The order is the clue ladder's order, and a city name after a
+   region name reads as a city without being told. */
+function factsHTML(name) {
+  const f = clueTable(name);
+  return [`<b>${name}</b>`, f.group, f.capital].filter(Boolean).join(' · ');
+}
+
+/* What a tap means once the run is over. Same shape as a miss report — a name
+   in the middle, an outline on the map, a line along the bottom — because it is
+   the same act of reading, and the game should not have two vocabularies for
+   it. Amber throughout, since none of this is a verdict any more. */
+function inspect(name) {
+  if (!reviewing || !name) return;
+  clearMissMarks();          // the last tap's outline has had its moment
+  flashName(name, true);
+  markPick(name);
+  ticker.innerHTML = factsHTML(name);
+}
+
+function enterReview() {
+  reviewing = true;
+  document.body.classList.add('reviewing');
+  overlay.hidden = true;
+  clearFlash();
+  ticker.innerHTML = `Tap a ${GEO.noun} to name it, or press and hold to browse.`;
+}
+
+/* The card is not rebuilt on the way back: it is still sitting there with the
+   run's score and board on it, exactly as it was left. Review only ever hid
+   it. */
+function leaveReview() {
+  if (!reviewing) return;
+  closeLens(false);
+  reviewing = false;
+  document.body.classList.remove('reviewing');
+  clearMissMarks();
+  clearFlash();
+  overlay.hidden = false;
+}
+
+if (el.reviewBtn) el.reviewBtn.addEventListener('click', enterReview);
+if (el.backBtn) el.backBtn.addEventListener('click', leaveReview);
+// Escape closes what is open, which here is the map over the card.
+addEventListener('keydown', e => {
+  if (e.key === 'Escape' && reviewing) leaveReview();
+});
+/* ---- taking your data with you -------------------------------------------
+   Everything the game knows about a player is eight boards and three
+   preferences, and all of it lives in one browser's storage — which is a
+   fragile place to keep a year of runs. Chrome treats every file:// page as one
+   origin, so a downloaded copy shares a bucket with every other downloaded
+   copy; the artifact runtime scopes storage to a build, so a rebuild starts
+   empty; and clearing site data takes the lot. None of that is fixable from
+   inside the page. What is fixable is being able to get the data out and put it
+   back.
+
+   JSON, and readable JSON at that: indented, with the storage keys spelled out
+   as they really are. Someone should be able to open the file and see what the
+   game has been keeping about them, which is half the point of offering it.
+
+   The keys are the real ones rather than a prettier scheme invented for the
+   file. They are ugly in two places — `fifty:board2` and `fifty:practice1`, the
+   spellings from before geographies existed — but a file that says what the
+   storage says cannot misroute on the way back in, and inventing a second
+   naming scheme would mean two of them to keep in step.
+*/
+const DATA_FORMAT = 1;
+
+/* An export is only worth having if it survives the trip, so the import treats
+   the file as something a stranger wrote: every key checked against the ones
+   the game actually uses, every value checked for the shape the board code
+   assumes, and every row rebuilt field by field rather than trusted whole.
+   A hand-edited file with a typo should be refused, not half-loaded. */
+const ROW_FIELDS = ['f', 'v', 'e', 'c', 't', 'd'];
+
+function buildVersion() {
+  const v = document.querySelector('.ver');
+  return v ? v.textContent.trim() : '';
+}
+
+async function readKey(key) {
+  try { return await kvGet(key); } catch (e) { return null; }
+}
+
+async function collectData() {
+  const data = {
+    fifty: DATA_FORMAT,
+    exported: new Date().toISOString(),
+    build: buildVersion(),
+    prefs: {},
+    boards: {},
+  };
+  for (const k of PREF_KEYS) {
+    const v = await readKey(k);
+    if (v) data.prefs[k] = v;
+  }
+  // Empty boards are left out rather than written as []. An import replaces
+  // what the file mentions, so an empty one would quietly wipe a board that
+  // only exists on the other device.
+  for (const k of boardKeys()) {
+    const rows = parse(await readKey(k));
+    if (rows.length) data.boards[k] = rows;
+  }
+  return data;
+}
+
+function saveFile(name, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const stamp = () => new Date().toISOString().slice(0, 10);
+
+async function exportData() {
+  try {
+    const data = await collectData();
+    const runs = Object.keys(data.boards)
+      .reduce((n, k) => n + data.boards[k].length, 0);
+    saveFile(`fifty-data-${stamp()}.json`, JSON.stringify(data, null, 2));
+    flashNote(`Exported ${runs} run${runs === 1 ? '' : 's'} from `
+            + `${Object.keys(data.boards).length} board`
+            + `${Object.keys(data.boards).length === 1 ? '' : 's'}.`);
+  } catch (e) {
+    flashNote('Could not export: ' + e.message, true);
+  }
+}
+
+/* ---- reading one back ---------------------------------------------------- */
+
+/* Returns the cleaned data, or throws with a sentence worth showing. Nothing is
+   written until all of it has passed, so a bad file leaves the boards alone.
+   Parsing lives here too: "that file is not JSON" is a better thing to read
+   than whatever the browser calls a stray comma. */
+function validate(text) {
+  let raw;
+  try { raw = JSON.parse(text); }
+  catch (e) { throw new Error('that file is not JSON'); }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('that is not a Fifty export');
+  }
+  if (raw.fifty !== DATA_FORMAT) {
+    throw new Error(raw.fifty > DATA_FORMAT
+      ? 'that file was written by a newer version'
+      : 'that is not a Fifty export');
+  }
+
+  const prefs = {};
+  const known = { [PREF_GEO]: GEOS, [PREF_MODE]: MODES, [PREF_SCORING]: SCORINGS };
+  for (const k of PREF_KEYS) {
+    const v = raw.prefs && raw.prefs[k];
+    if (typeof v === 'string' && known[k][v]) prefs[k] = v;
+  }
+
+  const boards = {};
+  const allowed = boardKeys();
+  let runs = 0;
+  for (const k in (raw.boards || {})) {
+    if (allowed.indexOf(k) < 0) throw new Error('unknown board "' + k + '"');
+    const rows = raw.boards[k];
+    if (!Array.isArray(rows)) throw new Error('board "' + k + '" is not a list');
+    boards[k] = rows.map(r => {
+      if (!r || typeof r !== 'object') throw new Error('a run in "' + k + '" is not a run');
+      // f, t and d are the three the board code reads without checking
+      for (const f of ['f', 't', 'd']) {
+        if (typeof r[f] !== 'number' || !isFinite(r[f])) {
+          throw new Error('a run in "' + k + '" is missing its ' + f);
+        }
+      }
+      const out = {};
+      // rebuilt field by field: anything else in the file is not carried over
+      for (const f of ROW_FIELDS) if (typeof r[f] === 'number') out[f] = r[f];
+      return out;
+    });
+    runs += boards[k].length;
+  }
+  return { prefs: prefs, boards: boards, runs: runs, exported: raw.exported };
+}
+
+async function applyData(clean) {
+  for (const k in clean.boards) await kvSet(k, JSON.stringify(clean.boards[k]));
+  for (const k in clean.prefs) await kvSet(k, clean.prefs[k]);
+
+  /* The live state has to follow the file, or the menu would go on showing the
+     board of whatever was selected before while claiming the data changed. The
+     ordinary switchers do it, and they save the preference again on the way
+     through, which is what was just written anyway. */
+  if (clean.prefs[PREF_MODE]) await setMode(clean.prefs[PREF_MODE]);
+  if (clean.prefs[PREF_SCORING]) await setScoring(clean.prefs[PREF_SCORING]);
+  if (clean.prefs[PREF_GEO]) await setGeo(clean.prefs[PREF_GEO]);
+  showBoards(await loadBoard(), null);
+}
+
+/* ---- the import card -----------------------------------------------------
+   Everything about an import now happens on one card with a line on it that is
+   always saying something. The first version put the file straight into a
+   confirmation and reported its failures in the storage note under the board —
+   which meant that when a phone's picker handed back nothing at all, there was
+   no card, no message, and no way to tell a silent failure from a slow one.
+
+   A picker can come back empty for reasons the page never sees: the chooser
+   cancelled, the file provider refused, or Android discarded the page while it
+   was in the background and reloaded it behind the picker. None of those throw.
+   So the rule here is that every path through this card ends in a sentence.
+
+   And the file is only one way in. The box takes the text of an export pasted
+   straight into it, which asks nothing of the browser but a clipboard — no
+   chooser, no file provider, no permission, nothing to background the page for.
+   A file that is chosen lands in the same box, so what arrived is visible
+   before it is imported, and there is one path through the rest of this. */
+let pending = null;      // the validated file, waiting on the button
+
+function note(msg, kind) {
+  if (!el.impNote) return;
+  el.impNote.textContent = msg;
+  el.impNote.className = 'impnote' + (kind ? ' ' + kind : '');
+}
+
+function offer(clean) {
+  pending = clean;
+  const n = Object.keys(clean.boards).length;
+  const when = clean.exported ? String(clean.exported).slice(0, 10) : 'an unknown date';
+  note(`${clean.runs} run${clean.runs === 1 ? '' : 's'} across `
+     + `${n} board${n === 1 ? '' : 's'} · saved ${when}`, 'ok');
+  el.impGo.disabled = false;
+}
+
+function reject(msg) {
+  pending = null;
+  el.impGo.disabled = true;
+  note(msg, 'warn');
+}
+
+function accept(text, from) {
+  let clean;
+  try { clean = validate(text); }
+  catch (e) { return reject((from ? from + ': ' : '') + e.message); }
+  if (!clean.runs && !Object.keys(clean.prefs).length) {
+    return reject((from ? from + ' has' : 'That has') + ' nothing in it.');
+  }
+  offer(clean);
+}
+
+/* Held in a variable rather than left to the local scope: a FileReader with no
+   reference to it can be collected before the read finishes on some Android
+   builds, and a collected reader fires neither onload nor onerror. */
+let reader = null;
+
+function landed(text, from) {
+  if (el.impText) el.impText.value = text;
+  accept(text, from);
+}
+
+function readFile(file) {
+  note(`Reading ${file.name}…`);
+  // Blob.text() is a promise and cannot be collected out from under us; the
+  // FileReader is the fallback for browsers old enough not to have it.
+  if (file.text) {
+    file.text().then(t => landed(t, file.name),
+                     e => reject('Could not read that file: ' + e.message));
+    return;
+  }
+  reader = new FileReader();
+  reader.onerror = () => reject('Could not read that file.');
+  reader.onload = () => landed(String(reader.result), file.name);
+  reader.readAsText(file);
+}
+
+function openImport() {
+  pending = null;
+  el.impGo.disabled = true;
+  if (el.impText) el.impText.value = '';
+  note('Choose a file, or paste one in, to see what is in it.');
+  el.impCard.hidden = false;
+}
+
+function closeImport() {
+  pending = null;
+  el.impCard.hidden = true;
+}
+
+/* ---- the menu behind the dots -------------------------------------------
+   Export and Import were two buttons under Start, where they competed with the
+   one thing the menu is for. They are also the two things on that card you do
+   to your data rather than to a run, and they are rare — so they go behind the
+   dots beside the full screen button, where the card's other utilities already
+   live. */
+function showDataMenu(on) {
+  if (!el.dataMenu) return;
+  el.dataMenu.hidden = !on;
+  el.dataBtn.classList.toggle('on', on);
+  el.dataBtn.setAttribute('aria-expanded', String(!!on));
+}
+
+if (el.dataBtn) {
+  el.dataBtn.addEventListener('click', () => showDataMenu(el.dataMenu.hidden));
+  /* Anywhere else dismisses it, and does only that. Caught on the way down and
+     stopped there, because the nearest thing to tap when dismissing this menu
+     is Start, and a run beginning because you were putting a menu away is a
+     worse outcome than an extra tap. */
+  document.addEventListener('click', e => {
+    if (el.dataMenu.hidden) return;
+    if (el.dataBtn.contains(e.target) || el.dataMenu.contains(e.target)) return;
+    showDataMenu(false);
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+}
+
+if (el.exportBtn) el.exportBtn.addEventListener('click', () => {
+  showDataMenu(false);
+  exportData();
+});
+if (el.importBtn) el.importBtn.addEventListener('click', () => {
+  showDataMenu(false);
+  openImport();
+});
+if (el.impCancel) el.impCancel.addEventListener('click', closeImport);
+
+if (el.impPick) el.impPick.addEventListener('click', () => {
+  try {
+    el.importFile.value = '';   // or choosing the same file twice fires nothing
+    el.importFile.click();
+  } catch (e) { reject('This browser would not open a file chooser.'); }
+});
+
+if (el.importFile) el.importFile.addEventListener('change', () => {
+  try {
+    const f = el.importFile.files && el.importFile.files[0];
+    if (!f) return reject('The chooser came back without a file.');
+    readFile(f);
+  } catch (e) { reject('Could not read that file: ' + e.message); }
+});
+
+/* Typed or pasted, the box is read as it changes. Cheap — an export is a few
+   kilobytes — and it means the summary appears the moment the paste lands
+   rather than after another tap. */
+if (el.impText) ['input', 'change'].forEach(ev =>
+  el.impText.addEventListener(ev, () => {
+    const text = el.impText.value.trim();
+    if (!text) return reject('Nothing pasted yet.');
+    accept(text);
+  }));
+
+if (el.impGo) el.impGo.addEventListener('click', async () => {
+  const clean = pending;
+  if (!clean) return;
+  el.impGo.disabled = true;
+  note('Importing…');
+  try {
+    await applyData(clean);
+    closeImport();
+    flashNote(`Imported ${clean.runs} run${clean.runs === 1 ? '' : 's'}.`);
+  } catch (e) {
+    reject('Could not import: ' + e.message);
+  }
+});
+
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (el.impCard && !el.impCard.hidden) closeImport();
+  else showDataMenu(false);
+});
 </script>
 </body>
 </html>

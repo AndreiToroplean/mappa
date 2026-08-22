@@ -43,7 +43,8 @@ const el = {};
  'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'reviewBtn', 'menuBtn', 'backBtn', 'startBtn',
  'clearNo', 'clearYes',
- 'exportBtn', 'importBtn', 'importFile', 'impConfirm', 'impSub', 'impNo', 'impYes',
+ 'exportBtn', 'importBtn', 'importFile', 'impCard', 'impPick', 'impNote',
+ 'impCancel', 'impGo',
 ].forEach(id => { el[id] = $(id); });
 
 const clock = el.clock, ticker = el.ticker, overlay = el.overlay;

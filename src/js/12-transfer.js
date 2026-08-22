@@ -150,62 +150,115 @@ async function applyData(clean) {
   showBoards(await loadBoard(), null);
 }
 
-let pending = null;      // a validated file, waiting on the confirmation
+/* ---- the import card -----------------------------------------------------
+   Everything about an import now happens on one card with a line on it that is
+   always saying something. The first version put the file straight into a
+   confirmation and reported its failures in the storage note under the board —
+   which meant that when a phone's picker handed back nothing at all, there was
+   no card, no message, and no way to tell a silent failure from a slow one.
 
-function askImport(clean) {
+   A picker can come back empty for reasons the page never sees: the chooser
+   cancelled, the file provider refused, or Android discarded the page while it
+   was in the background and reloaded it behind the picker. None of those throw.
+   So the rule here is that every path through this card ends in a sentence. */
+let pending = null;      // the validated file, waiting on the button
+
+function note(msg, kind) {
+  if (!el.impNote) return;
+  el.impNote.textContent = msg;
+  el.impNote.className = 'impnote' + (kind ? ' ' + kind : '');
+}
+
+function offer(clean) {
   pending = clean;
   const n = Object.keys(clean.boards).length;
   const when = clean.exported ? String(clean.exported).slice(0, 10) : 'an unknown date';
-  el.impSub.textContent = `${clean.runs} run${clean.runs === 1 ? '' : 's'} across `
-    + `${n} board${n === 1 ? '' : 's'} · saved ${when}`;
-  el.impConfirm.hidden = false;
+  note(`${clean.runs} run${clean.runs === 1 ? '' : 's'} across `
+     + `${n} board${n === 1 ? '' : 's'} · saved ${when}`, 'ok');
+  el.impGo.disabled = false;
 }
 
+function reject(msg) {
+  pending = null;
+  el.impGo.disabled = true;
+  note(msg, 'warn');
+}
+
+function accept(text, from) {
+  let clean;
+  try { clean = validate(text); }
+  catch (e) { return reject((from ? from + ': ' : '') + e.message); }
+  if (!clean.runs && !Object.keys(clean.prefs).length) {
+    return reject((from ? from + ' has' : 'That has') + ' nothing in it.');
+  }
+  offer(clean);
+}
+
+/* Held in a variable rather than left to the local scope: a FileReader with no
+   reference to it can be collected before the read finishes on some Android
+   builds, and a collected reader fires neither onload nor onerror. */
+let reader = null;
+
 function readFile(file) {
-  const fr = new FileReader();
-  fr.onerror = () => flashNote('Could not read that file.', true);
-  fr.onload = () => {
-    let clean;
-    try { clean = validate(fr.result); }
-    catch (e) { return flashNote('Could not import: ' + e.message, true); }
-    if (!clean.runs && !Object.keys(clean.prefs).length) {
-      return flashNote('That file has nothing in it.', true);
-    }
-    askImport(clean);
-  };
-  fr.readAsText(file);
+  note(`Reading ${file.name}…`);
+  // Blob.text() is a promise and cannot be collected out from under us; the
+  // FileReader is the fallback for browsers old enough not to have it.
+  if (file.text) {
+    file.text().then(t => accept(t, file.name),
+                     e => reject('Could not read that file: ' + e.message));
+    return;
+  }
+  reader = new FileReader();
+  reader.onerror = () => reject('Could not read that file.');
+  reader.onload = () => accept(String(reader.result), file.name);
+  reader.readAsText(file);
+}
+
+function openImport() {
+  pending = null;
+  el.impGo.disabled = true;
+  note('Choose an exported file to see what is in it.');
+  el.impCard.hidden = false;
+}
+
+function closeImport() {
+  pending = null;
+  el.impCard.hidden = true;
 }
 
 if (el.exportBtn) el.exportBtn.addEventListener('click', exportData);
-if (el.importBtn) {
-  el.importBtn.addEventListener('click', () => {
+if (el.importBtn) el.importBtn.addEventListener('click', openImport);
+if (el.impCancel) el.impCancel.addEventListener('click', closeImport);
+
+if (el.impPick) el.impPick.addEventListener('click', () => {
+  try {
     el.importFile.value = '';   // or choosing the same file twice fires nothing
     el.importFile.click();
-  });
-  el.importFile.addEventListener('change', () => {
-    const f = el.importFile.files && el.importFile.files[0];
-    if (f) readFile(f);
-  });
-}
-if (el.impNo) el.impNo.addEventListener('click', () => {
-  pending = null;
-  el.impConfirm.hidden = true;
+  } catch (e) { reject('This browser would not open a file chooser.'); }
 });
-if (el.impYes) el.impYes.addEventListener('click', async () => {
+
+if (el.importFile) el.importFile.addEventListener('change', () => {
+  try {
+    const f = el.importFile.files && el.importFile.files[0];
+    if (!f) return reject('The chooser came back without a file.');
+    readFile(f);
+  } catch (e) { reject('Could not read that file: ' + e.message); }
+});
+
+if (el.impGo) el.impGo.addEventListener('click', async () => {
   const clean = pending;
-  pending = null;
-  el.impConfirm.hidden = true;
   if (!clean) return;
+  el.impGo.disabled = true;
+  note('Importing…');
   try {
     await applyData(clean);
+    closeImport();
     flashNote(`Imported ${clean.runs} run${clean.runs === 1 ? '' : 's'}.`);
   } catch (e) {
-    flashNote('Could not import: ' + e.message, true);
+    reject('Could not import: ' + e.message);
   }
 });
+
 addEventListener('keydown', e => {
-  if (e.key === 'Escape' && el.impConfirm && !el.impConfirm.hidden) {
-    pending = null;
-    el.impConfirm.hidden = true;
-  }
+  if (e.key === 'Escape' && el.impCard && !el.impCard.hidden) closeImport();
 });

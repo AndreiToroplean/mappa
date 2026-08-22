@@ -566,8 +566,9 @@ fails += r.returncode
 # --------------------------------------------------- modes and board keying
 pathlib.Path('/tmp/fifty-modes.js').write_text(
     "let TOTAL = 50;\nlet GEO = {id:'us', all:'All fifty', noun:'state'};\n"
+    "let GEOS = {us:{id:'us'}, fr:{id:'fr'}};\n"
     + data_src[data_src.index('function byTally'):]
-    + board_src[board_src.index('const LEGACY_US'):board_src.index('/* One key-value layer')]
+    + board_src[board_src.index('const PROBE'):board_src.index('/* One key-value layer')]
     + board_src[board_src.index('const errorsOf'):board_src.index('const addEntry')]
     + board_src[board_src.index('function missWords'):board_src.index('function renderBoard')]
     + """
@@ -725,7 +726,14 @@ bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
 eq('board keys are all distinct', new Set(keys).size, 8);
-console.log('modes:   ' + (fail ? fail + ' FAILED' : '47/47 pass'));
+/* The export walks every key the game could have written. Enumerated through
+   keyFor() rather than listed, so the legacy US spellings come along, but it is
+   a second path to the same strings and the two must not part company. */
+eq('the export enumerates exactly the keys the game reads through',
+   boardKeys().slice().sort(), keys.slice().sort());
+eq('and the preferences alongside them',
+   PREF_KEYS, ['fifty:geo', 'fifty:mode', 'fifty:scoring']);
+console.log('modes:   ' + (fail ? fail + ' FAILED' : '49/49 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
 r = subprocess.run(['node', '/tmp/fifty-modes.js'], capture_output=True, text=True)

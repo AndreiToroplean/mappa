@@ -40,7 +40,7 @@ const el = {};
  'progressLabel',
  'pause', 'paused', 'resumeBtn', 'restartBtn', 'quitBtn',
  'progress', 'clock', 'ticker',
- 'countdown', 'countNum', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
+ 'countdown', 'countNum', 'tip', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'reviewBtn', 'menuBtn', 'backBtn', 'startBtn',
  'clearNo', 'clearYes',
  'dataBtn', 'dataMenu', 'exportBtn', 'importBtn', 'importFile', 'impCard', 'impPick', 'impText',

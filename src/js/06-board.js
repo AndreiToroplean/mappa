@@ -384,6 +384,31 @@ function afterSwitch() {
 
 /* Everything on the two cards that depends on which geography or mode is live.
    Kept in one place because these strings drifted out of step otherwise. */
+/* What a map is: how many places are in it, and what you are asked to do with
+   them. Built rather than written down per geography, so a new map needs a noun
+   and nothing else. */
+const mapNote = () =>
+  `${TOTAL} ${GEO.plural}. You'll be named one \u2014 tap it on the map.`;
+
+/* Said once, at the bottom of the screen, then gone.
+
+   These lines used to sit permanently under each row of buttons, which spent
+   four lines of card height forever on a question that is asked once and then
+   never again. The card is the one part of the game short of room, so the
+   answer moved to the moment it is wanted: the tap that raises the question. */
+let tipTimer = null;
+function showTip(text) {
+  if (!el.tip || !text) return;
+  const span = el.tip.firstElementChild;
+  clearTimeout(tipTimer);
+  el.tip.hidden = true;
+  span.textContent = text;
+  // restart the animation rather than letting a second tap ride the first
+  void el.tip.offsetWidth;
+  el.tip.hidden = false;
+  tipTimer = setTimeout(() => { el.tip.hidden = true; }, 3800);
+}
+
 function refreshCopy() {
   // The selected mode is part of the copy: it used to be set only by setMode(),
   // so on a fresh load no button looked selected at all.
@@ -391,12 +416,15 @@ function refreshCopy() {
     b.classList.toggle('on', b.dataset.mode === MODE.id));
   document.querySelectorAll('.scoreBtn').forEach(b =>
     b.classList.toggle('on', b.dataset.score === SCORING.id));
-  document.querySelectorAll('.modenote').forEach(n => { n.textContent = MODE.note; });
-  document.querySelectorAll('.scorenote').forEach(n => { n.textContent = SCORING.note; });
+  /* The same sentence the tip shows, parked on the control for a pointer to
+     find. A button's own line, not the selected one's: hovering Practice while
+     Test is on should say what Practice would do. */
+  document.querySelectorAll('.modeBtn').forEach(b => { b.title = MODES[b.dataset.mode].note; });
+  document.querySelectorAll('.scoreBtn').forEach(b => { b.title = SCORINGS[b.dataset.score].note; });
+  document.querySelectorAll('.geoSel').forEach(s => { s.title = mapNote(); });
   document.querySelectorAll('.clearLabel').forEach(n => {
     n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label} · ${SCORING.label}`;
   });
-  document.querySelectorAll('.geoNoun').forEach(n => { n.textContent = GEO.noun; });
   document.querySelectorAll('.geoSel').forEach(s => { s.value = GEO.id; });
   /* "Alpes-de-Haute-Provence" is 23 characters against "North Carolina"'s 14,
      and the prompt must never ellipsise — that was the first bug reported on a
@@ -435,12 +463,15 @@ function setGeo(id) {
   showBoards(loadBoard(), null);
 }
 
+/* The tip is raised here rather than inside setMode() and friends, because
+   those are also how an import applies a file — and an import that changed all
+   three would stack three tips on top of each other to say what nobody asked. */
 document.querySelectorAll('.modeBtn').forEach(b =>
-  b.addEventListener('click', () => setMode(b.dataset.mode)));
+  b.addEventListener('click', () => { setMode(b.dataset.mode); showTip(MODE.note); }));
 document.querySelectorAll('.scoreBtn').forEach(b =>
-  b.addEventListener('click', () => setScoring(b.dataset.score)));
+  b.addEventListener('click', () => { setScoring(b.dataset.score); showTip(SCORING.note); }));
 document.querySelectorAll('.geoSel').forEach(s =>
-  s.addEventListener('change', () => setGeo(s.value)));
+  s.addEventListener('change', () => { setGeo(s.value); showTip(mapNote()); }));
 
 el.again.addEventListener('click', beginRun);
 el.startBtn.addEventListener('click', beginRun);

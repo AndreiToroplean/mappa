@@ -4,9 +4,9 @@ The world, from memory. You're named a place, you tap it on the map.
 
 Two maps so far — the 50 US states and the 101 French départements — and two choices about how you play. **Mode** is Test, which can end early and offers no hints, or Practice, which cannot be failed and has clues if you ask. **Scoring** is Right or wrong, where nearly right counts for nothing and you keep tapping, or How close, where you get one tap per place and are scored on how near you landed. One self-contained HTML file: no network calls, no dependencies at runtime, no ads. Scores stay in your browser, and you can export everything to a file and load it back on another device.
 
-The name is from *mappa mundi*. The URL still says `fifty` — that was the original name, back when the only map was the fifty US states.
+The name is from *mappa mundi*. It was *Fifty* to begin with, back when the only map was the fifty US states.
 
-**[Play](https://andreitoroplean.github.io/fifty/)** · [Play beta](https://andreitoroplean.github.io/fifty/beta/)
+**[Play](https://andreitoroplean.github.io/mappa/)** · [Play beta](https://andreitoroplean.github.io/mappa/beta/)
 
 ## How it was made
 

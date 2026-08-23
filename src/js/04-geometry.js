@@ -15,8 +15,8 @@ function userPoint(x, y) {
   return scratch.matrixTransform(m.inverse());
 }
 
-// Geometry hit test rather than elementFromPoint: inside the disc we want the
-// true shape under the crosshair, never one of the oversized tap circles.
+// Geometry hit test rather than elementFromPoint: taps and the lens should
+// resolve the same true shape under the pointer.
 /* ---- resolving a pointer position to a state --------------------------
    One resolver, shared by taps and the magnifier, so the two can never
    disagree about what a position means.

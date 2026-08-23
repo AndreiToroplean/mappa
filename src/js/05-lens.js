@@ -235,10 +235,7 @@ svg.addEventListener('contextmenu', e => e.preventDefault());
 
 svg.addEventListener('click', e => {
   if (swallowClick) return;          // this press was consumed by the magnifier
-  // An enlarged hit circle still counts, but only for a state worth picking;
-  // anything else goes through the shared resolver.
-  const tapped = e.target.dataset && e.target.dataset.name;
   const at = userPoint(e.clientX, e.clientY);
-  choose(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY), at);
+  choose(resolve(e.clientX, e.clientY), at);
 });
 

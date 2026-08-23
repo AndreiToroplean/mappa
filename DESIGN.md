@@ -68,7 +68,7 @@ the shipped artifact is unchanged — single file, no external references.
 
 ```
 01-data.js    the region set and its short keys; MODES, SCORINGS, ranking
-02-map.js     SVG construction, paint layers, labels, tap targets, STATUS
+02-map.js     SVG construction, paint layers, labels, STATUS
 03-run.js     run lifecycle: queue, spending cap, clock, guess()
 04-geometry.js  screen->map coords, distance, resolving a position
 05-lens.js    the press-and-hold magnifier
@@ -118,23 +118,25 @@ the nearest edge, subdivide the most promising, prune any whose upper bound
 can't beat the current best. Runs per landmass for multi-part states; roomiest
 wins, which keeps Michigan's label in the lower peninsula.
 
-**Tap targets derived, not hardcoded.** polylabel also returns the inscribed
-radius. Any state under 12px gets an invisible circular tap target at the same
-point. This replaced a hand-written list of seven "small" states and immediately
-caught two omissions: Hawaii, and Maryland — which is large but never more than
-8px thick. Current set: CT DE HI MD MA NH NJ RI VT.
+**Tap targets, derived and then deleted.** polylabel also returns the inscribed
+radius, and any region under 12 units got an invisible circular tap target at
+its anchor. Deriving them was right — it replaced a hand-written list of seven
+"small" states and immediately caught two omissions, Hawaii and Maryland, which
+is large but never more than 8px thick — but the circles themselves are gone.
+See *The circles were a pre-magnifier answer* below.
 
-**Six SVG paint layers.** SVG has no `z-index`; it paints in document order.
-States physically move between `<g>` layers as their status changes:
+**Eight SVG paint layers.** SVG has no `z-index`; it paints in document order.
+States physically move between the first four as their status changes; the last
+four hold what is drawn over the map:
 
 ```
-base  <  found  <  missed  <  answer  <  labels  <  hit targets
+base  <  found  <  missed  <  answer  <  labels  <  grouping  <  arrow  <  drift
 ```
 
 Without this, an unsolved neighbour drawn later clips the outline of a state
-you've already solved. Consequence: hit targets sit above everything, so the
-click handler must explicitly ignore clicks on already-found states — otherwise
-tapping a small state you'd already got would silently cost a life.
+you've already solved. Nothing is stacked above the regions to catch a pointer,
+so there is no second place a tap can be refused: `resolve()` returns only
+selectable regions, and that is the whole of it.
 
 **Pinned layout.** Header and footer have fixed heights, stat columns have
 reserved widths, the prompt ellipsises rather than wraps, and the body doesn't
@@ -150,7 +152,8 @@ is ~196px of name in ~372px of usable width.
 
 **Press-and-hold magnifier.** Enlarged tap targets made the small states
 *reachable* but not *aimable* — the thumb covers the target and a tap commits
-instantly, so the first feedback is a lost life. Hold 250ms to open a 4x disc
+instantly, so the first feedback is a lost life. It is now the only answer for
+those states rather than the second one. Hold 250ms to open a 4x disc
 offset from the finger, drag to aim, lift to select; the aimed state is
 highlighted and named in the disc, so the choice is visible before it is
 committed. Lifting over water cancels for free. Tapping is untouched.
@@ -164,8 +167,10 @@ Three things here are not obvious:
   "lift to pick" / "lift to cancel" and nothing more. The label layer is never
   cloned into the disc for the same reason.
 - Aiming uses `isPointInFill` against the real paths, not `elementFromPoint`.
-  The tap circles are up to 10px wide and would answer for their neighbours,
-  which is exactly the ambiguity the magnifier exists to remove.
+  The disc must answer for the geometry rather than for whatever node is on
+  top — that is the ambiguity the magnifier exists to remove, and it was the
+  oversized tap circles that would have answered for their neighbours while
+  they existed.
 - The disc is `pointer-events:none` and sits above the map, so it can float
   over the finger without ever intercepting what it points at.
 - Lift-off resolution discards the last 180ms, because a thumb drifts as it
@@ -258,9 +263,10 @@ units, so the map fills the space instead of being letterboxed. A fixed 1.7:1
 frame in a 0.6:1 map area was wasting three fifths of a phone's height — see
 `render.py`, which is how that was finally noticed.
 
-`compose()` also rebuilds the tap targets, since whether a region is too small
-to hit depends on the scale it ended up at. Statuses survive a recompose because
-only geometry is rewritten and the classes live on the nodes being rewritten.
+Statuses survive a recompose because only geometry is rewritten and the classes
+live on the nodes being rewritten. `compose()` used to rebuild the tap circles
+too, since whether a region was too small to hit depended on the scale it ended
+up at; with them gone it rewrites paths, labels and anchors and nothing else.
 
 Anything new derived from `REGIONS` belongs in `buildMap`/`compose`, or it will
 silently keep the previous geography's data.
@@ -344,6 +350,40 @@ origin, so all downloaded copies share a single `localStorage` bucket; renaming
 or moving the file does not give a fresh board. The button sits by the board
 heading in both cards and routes through a confirm dialog, since it destroys
 full-fifty runs that took real effort.
+
+## The circles were a pre-magnifier answer
+
+The invisible tap circles were added when a tap was the only way to pick a
+region, and a region three units across could not be picked at all. The
+magnifier answered that same question properly a while later — press, aim, see
+what you are about to choose, lift — and the circles stayed on anyway, which is
+how one problem came to have two mechanisms.
+
+The complaint that surfaced it was about hover, not about tapping. `path.state`
+lights up under a pointer, and on exactly the regions that are hardest to make
+out the highlight never arrived, because an invisible circle was sitting over
+them collecting the pointer. Holes in the highlight precisely where the map is
+most confusing.
+
+They could have been hidden on pointer devices, or the highlight could have been
+driven from `resolve()` in JS. Both keep two answers to one question. Deleting
+them is the smaller thing to maintain, and it takes a real special case out with
+it: the click handler read `selectable(tapped) ? tapped : resolve(...)`, so a
+tap that landed on a circle skipped the shared resolver entirely. A second path
+that decides what a position means is the mistake this codebase has already made
+twice — see the magnifier bug above, and the two representations of "found".
+
+What it costs, plainly. At a 390x600 map area 12 US regions and 18 French ones
+were under the threshold, and their real inscribed circles are small: Rhode
+Island 2.0 units, Paris 2.3, Hauts-de-Seine 1.8, against a thumb that spans
+about 76. Those are the magnifier's now, and a bare tap on them will usually
+land on a neighbour. That is the trade, taken deliberately: the drill is meant
+to ask whether you know where a place is, and pressing to aim is a fair way to
+answer it, where a 10-unit circle silently answered for you.
+
+The inscribed radius is still emitted per region. Nothing reads it, and it is
+cheap enough to leave in the data rather than regenerate both geographies to
+take it out.
 
 ## Scoring by distance
 

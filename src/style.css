@@ -10,26 +10,26 @@
      agree on a dark ground and nowhere else, which is why they are separate. */
   :root{
     /* surfaces */
-    --base:#0A0E17;      /* the page itself */
-    --panel:#111823;     /* raised off it: header, footer, cards, the popover */
-    --well:#0A0E17;      /* recessed into it: the select, the paste box */
-    --line:#1F2A3A;      /* hairline rules, and the outline of quiet buttons */
-    --hairline:rgba(255,255,255,.04);  /* fainter still: between board rows */
-    --hover:rgba(255,255,255,.06);     /* a ghost button under the pointer */
-    --scrim:rgba(10,14,23,.92);        /* what an overlay puts the page behind */
-    --veil:rgba(10,14,23,.55);         /* the countdown, which lets the map through */
+    --base:#13100B;      /* the page itself */
+    --panel:#1E1810;     /* raised off it: header, footer, cards, the popover */
+    --well:#0D0B07;      /* recessed into it: the select, the paste box */
+    --line:#3A2F20;      /* hairline rules, and the outline of quiet buttons */
+    --hairline:rgba(242,233,216,.06);  /* fainter still: between board rows */
+    --hover:rgba(242,233,216,.07);     /* a ghost button under the pointer */
+    --scrim:rgba(14,11,7,.93);         /* what an overlay puts the page behind */
+    --veil:rgba(14,11,7,.58);          /* the countdown, which lets the map through */
     --shadow:rgba(0,0,0,.5);
     --shadowdeep:rgba(0,0,0,.6);
-    --haze:rgba(10,14,23,.92);         /* lifts text off the map behind it */
+    --haze:rgba(14,11,7,.92);          /* lifts text off the map behind it */
 
     /* the map */
-    --land:#26344A; --landhi:#374A66;
-    --edge:#0A0E17;      /* between two regions */
-    --halo:#0A0E17;      /* knocked out behind a label drawn over the map */
+    --land:#3E3426; --landhi:#564830;
+    --edge:#13100B;      /* between two regions */
+    --halo:#13100B;      /* knocked out behind a label drawn over the map */
 
     /* text */
-    --text:#E9EEF6; --muted:#7D8CA3;
-    --onaccent:#0A0E17;  /* on an amber ground */
+    --text:#F2E9D6; --muted:#9F8E74;
+    --onaccent:#13100B;  /* on an amber ground */
 
     /* the three that mean something, and stay meaning it in both themes */
     --found:#1D5348; --foundline:#4FCBA4; --foundmid:#37937C;
@@ -45,7 +45,7 @@
     /* a name written over one of those fills: the ink, and its knockout */
     --wrongink:#FFE4E5;  --wronghalo:#4A0D10;
     --answerink:#3A2600; --answerhalo:#FFE3AE;
-    --scoredink:#F1F5F9; --scoredhalo:rgba(10,14,23,.75);
+    --scoredink:#F6EEDD; --scoredhalo:rgba(14,11,7,.78);
 
     /* the distance ramp's three stops; scoreColour() reads them from here */
     --s0fill:#1D5348;   --s0line:#4FCBA4;
@@ -53,10 +53,10 @@
     --s100fill:#7A262B; --s100line:#E5484D;
 
     /* a whole surface briefly going the colour of the news */
-    --lossflash:#2C1114; --winflash:#123A31;
+    --lossflash:#2E1310; --winflash:#12362C;
     --crashbg:#4A1418;   --crashink:#FFD9DB;
 
-    --confetti:#4FCBA4,#FFC24B,#E9EEF6,#5AA6FF,#FF8FA8;
+    --confetti:#4FCBA4,#FFC24B,#F2E9D6,#D98E4A,#D97A7E;
 
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

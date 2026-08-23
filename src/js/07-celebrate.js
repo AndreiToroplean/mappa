@@ -17,12 +17,19 @@ const still = matchMedia('(prefers-reduced-motion: reduce)');
 const CONFETTI_MS = 2200;
 const PIECES = 150;
 const GRAVITY = 0.0013;       // px per ms squared
-const CONFETTI_COLORS = ['#4FCBA4', '#FFC24B', '#E9EEF6', '#5AA6FF', '#FF8FA8'];
+/* Read from the palette rather than listed here, since paper confetti has to
+   be dark to show on a light ground and bright to show on a dark one — and the
+   palette is where that decision already lives. Read at spawn time, not once,
+   so a run finished after a theme change throws the right colours. */
+const confetti = () =>
+  getComputedStyle(document.documentElement).getPropertyValue('--confetti')
+    .split(',').map(s => s.trim()).filter(Boolean);
 
 /* Two cannons, fired from the bottom corners inwards and up, which reads as
    celebratory in a way that a downward drift from the top does not. */
 function spawn(w, h) {
   const bits = [];
+  const colours = confetti();
   const tilt = 0.26 + 0.36 * Math.min(1, w / 1200);
   for (let i = 0; i < PIECES; i++) {
     const left = i % 2 === 0;
@@ -42,7 +49,7 @@ function spawn(w, h) {
       vrot: (Math.random() - 0.5) * 0.012,
       w: 5 + Math.random() * 6,
       h: 8 + Math.random() * 7,
-      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      color: colours[i % colours.length],
       drift: (Math.random() - 0.5) * 0.0006,
       // a second wave, so the burst sustains instead of emptying the screen
       // in under a second on a narrow phone

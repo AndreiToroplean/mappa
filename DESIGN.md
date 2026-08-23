@@ -34,6 +34,9 @@ Working habits that have earned their place:
 - Andrei does the looking. Render or screenshot when *you* need to see something
   to make a decision — the ramp against the land, two seas side by side — not to
   demonstrate a finished change back to him.
+- `npm install jsdom` writes `node_modules/`, which is gitignored; `package.json`
+  and the lockfile stay tracked so the dependency itself is recorded. Re-run the
+  install each session rather than assuming it survived — it will not have.
 - `check.py` is not decoration. Three real bugs were caught by writing the test
   before believing the code: the panel test that was in a comment and not in the
   code, the harness's private copy of `addEntry` that had drifted from the real

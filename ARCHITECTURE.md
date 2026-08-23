@@ -71,9 +71,10 @@ src/js/05-lens.js   the press-and-hold magnifier
 src/js/06-board.js  storage, leaderboard, end of run
 src/js/11-review.js reading the finished map: facts on tap and under the lens
 src/js/12-transfer.js  exporting and importing the player's data as JSON
+src/js/13-theme.js  choosing between the two palettes, and remembering it
 DESIGN.md           why it is the way it is, and the mistakes behind that
 check.py            regression harness for the pure logic (no browser needed)
-render.py           rasterises a geography as the game shows it, for eyeballing
+render.py           rasterises a geography as the game shows it, in either theme
 src/geo.py          shared build geometry: simplify, polylabel, emit
 src/build-us.py     US states from us-atlas TopoJSON
 src/build-fr.py     French départements from france-geojson, with overseas insets
@@ -491,6 +492,40 @@ carried in. A failure is a sentence on the card and leaves storage untouched.
 The Import button stays disabled until something has passed, and what passed is
 summarised — run count, board count, the date on the file — before it is
 pressed.
+
+## Themes
+
+Two palettes, both declared in `src/style.css` and nowhere else: `:root` is the
+dark one and `:root[data-theme="light"]` overrides it. Nothing outside that
+block names a colour, with one exception noted in the file — white text on the
+danger button, which is red on both grounds.
+
+Names are by role. `--base` is the page, `--panel` is what is raised off it,
+`--well` is what is recessed into it, `--edge` is the hairline drawn between two
+regions, `--halo` is the knockout behind a label drawn over the map, and
+`--onaccent` is text sitting on amber. The last four used to be one `--ink`,
+which works on a dark ground and on no other.
+
+Two things read the palette from JavaScript rather than being styled by it:
+
+- `scoreColour()` in `02-map.js` needs numbers to interpolate between, so it
+  reads `--s0fill` / `--s0line` / `--s50…` / `--s100…` at load and again when the
+  theme changes. A scored region wears its colour inline, which is the one thing
+  a variable cannot reach, so `paintScore()` records what each region cost and
+  `repaintScores()` puts the board back on the freshly read ramp.
+- the confetti reads `--confetti`, a comma-separated list, at the moment it
+  fires.
+
+`13-theme.js` owns the switch. The value lives in `localStorage` under
+`fifty:theme`, deliberately outside `kvGet`/`kvSet` and outside the export — see
+DESIGN.md. It is read by a four-line script in `<head>`, before the body
+renders, so a light-theme player never sees a frame of the dark one; that script
+and `THEME_KEY` name the same string and `check.py` holds them to it.
+
+`check.py` also holds the two palettes to declaring exactly the same set of
+names. A variable missing from the light block falls through to the dark value
+in silence, which on paper looks like a rendering bug rather than a missing
+line.
 
 ## Version stamp
 

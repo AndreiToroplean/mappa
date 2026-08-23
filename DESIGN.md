@@ -631,6 +631,9 @@ re-enters full screen on the tap that starts it, which is also a gesture and so
 also allowed. Android Chrome supports it; iPhone Safari does not, and the button
 hides itself rather than sitting there doing nothing.
 
+It shares its corner with the theme button now, on all three cards. See *Two
+grounds for the same plate*.
+
 The menu is a two-column grid in landscape, the board beside the rest rather than
 below it. As one column it ran off both ends of the screen. It scrolls if it
 still does not fit, with the scrollbar hidden — a visible one was a complaint the
@@ -857,6 +860,76 @@ in the same box, so what arrived is visible before it is imported and there is
 one path through the rest of it. Two of the global rules had to be undone on
 that box — the page disables text selection and the long-press callout, which
 between them would have left a text field on a phone that cannot be pasted into.
+
+## Two grounds for the same plate
+
+The palette that shipped with the first version was a blue-slate that arrived
+with the first prototype and was never argued for. The game is a geography
+drill, so the reference worth having is a printed map, and both themes are now
+the same plate in two lights: paper by lamplight, and paper in daylight. Ochre,
+umber, bistre, buff, sepia; madder red and verdigris green, which is also what
+an old map does with that pairing.
+
+The light one exists because the game is played outdoors on a phone, where the
+dark one is a mirror. It is also just a preference.
+
+**It is not the dark theme lightened.** A filled shape on paper is lighter than
+the ink around it, never darker, so every state inverts its construction: a pale
+wash carried by a saturated stroke here, a dark fill carried by a bright stroke
+there. Same two parts, opposite way round.
+
+Amber was the one that could not be reused at all. `#FFC24B` on cream is not a
+colour, it is a suggestion — so the accent on paper is a deep ochre, which flips
+what has to sit on top of it. That is the whole reason `--onaccent` exists as a
+name.
+
+**The refactor that had to come first.** The old `--ink` was doing three
+unrelated jobs at once: the page behind everything, the hairline drawn between
+two regions, and the text on an amber button. They agree on a dark ground and
+nowhere else. Until they were split into `--base`, `--edge` and `--onaccent`
+there was no light theme to write, only a light theme to fight. Worth looking
+for the same shape elsewhere: a variable used both as a background and as a
+foreground is a variable that is really two.
+
+**Where the fills nearly went wrong.** The dark ramp's stops are muted versions
+of their colours — dark enough for the map to still read as a map, with the
+strokes carrying the signal. Translating that literally to paper broke at the
+middle stop, because unclaimed land there is a mid-tan and a mid-tan is a
+desaturated yellow: a half-right answer came out almost exactly the colour of an
+unanswered one, which is the single distinction distance scoring exists to draw.
+The middle stop out-saturates the land instead. The two hex codes do not look
+alike written down; this was caught by putting swatches beside each other, which
+is the `render.py` lesson again in a different costume.
+
+**Why the theme is not player data.** It is the only preference that does not go
+through `kvGet`/`kvSet`, for two reasons that both point the same way. It has to
+be readable synchronously — by a script in `<head>`, before the body renders, or
+a light-theme player gets a frame of the dark one on every single load, and the
+kv layer is async by the time it has worked out which backend it has. And an
+export carries boards and how you like to play; importing a friend's file should
+not repaint your screen. So it is plain `localStorage`, out of `PREF_KEYS` and
+out of the transfer. The cost is that it does not persist where `localStorage`
+does not exist, which is one tap, and cheaper than keeping the value in two
+places.
+
+**The button.** Sun or moon, to the left of the full screen one, on every card
+that has a corner row. The icon is the theme you would *get*, not the one you
+are in, which is how the button beside it already reads — the expand icon
+expands. Checking where the full screen button actually was turned up that the
+end card had no corner row at all, and that is the card you sit on longest; it
+has one now, so full screen is reachable from there too.
+
+**Character.** Two touches, one value each so either can be turned off by
+setting it to `none`. `--grain` is a tiled turbulence, desaturated, at an
+opacity low enough that it is never seen as an image — only as the surface
+failing to be perfectly flat, which is most of the difference between cream and
+paper. `--vignette` is the falloff a printed plate has towards the edge of the
+sheet; it sits on the map area alone and starts late, because the insets live in
+the corners and dimming Guyane to make a mood would be a bad trade.
+
+**`render.py` had a third palette.** It had its own copy of the colours, drifted
+from the real ones. It reads `style.css` now and takes a theme as its fifth
+argument, which is the only way to look at both without a phone.
 
 ## Ideas not built
 

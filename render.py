@@ -5,23 +5,47 @@ Not part of the build. This exists because every earlier layout decision here
 was made by measuring numbers and hoping, and some of them were wrong in ways a
 glance would have caught immediately.
 
-    python3 render.py map fr 390 780     # the map area only
-    python3 render.py app fr 780 390     # the whole app, chrome included
+    python3 render.py map fr 390 780           # the map area only
+    python3 render.py app fr 780 390           # the whole app, chrome included
+    python3 render.py app fr 390 780 light     # ...on the other ground
 
 It reproduces what the map area actually gets: the viewport minus the header and
 footer, then the view box fitted inside that with preserveAspectRatio meet,
 which is where the wasted space shows up.
 """
-import json, pathlib, subprocess, sys
+import json, pathlib, re, subprocess, sys
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = pathlib.Path(__file__).resolve().parent
-INK = (10, 14, 23)
-LAND = (38, 52, 74)
-EDGE = (10, 14, 23)
-PANEL = (17, 24, 35)
-LINE = (31, 42, 58)
-FRAME = (255, 194, 75)
+
+# Read out of the stylesheet rather than copied here. These had drifted into a
+# third private palette once already, and the point of this tool is to show what
+# the game shows.
+CSS = (ROOT / 'src' / 'style.css').read_text()
+
+
+def palette(theme='dark'):
+    head = ':root{' if theme == 'dark' else ':root[data-theme="light"]{'
+    i = CSS.index(head)
+    block = CSS[i:CSS.index('\n  }', i)]
+    out = {}
+    for name, hexval in re.findall(r'(--[a-z0-9]+)\s*:\s*(#[0-9A-Fa-f]{6})\b', block):
+        out[name] = tuple(int(hexval[k:k + 2], 16) for k in (1, 3, 5))
+    if theme != 'dark':                       # a theme only states what it changes
+        return {**palette('dark'), **out}
+    return out
+
+
+def use(theme):
+    global INK, LAND, EDGE, PANEL, LINE, FRAME, MUTED, TEXT, AMBER
+    c = palette(theme)
+    INK, LAND, EDGE = c['--base'], c['--land'], c['--edge']
+    PANEL, LINE, FRAME = c['--panel'], c['--line'], c['--amber']
+    MUTED, TEXT, AMBER = c['--muted'], c['--text'], c['--amber']
+
+
+INK = LAND = EDGE = PANEL = LINE = FRAME = MUTED = TEXT = AMBER = None
+use('dark')
 
 
 LAYOUT_JS = None
@@ -62,9 +86,6 @@ def compose(geo, aspect):
 
 SANS = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 MONO = '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf'
-MUTED = (122, 138, 163)
-TEXT = (233, 238, 246)
-AMBER = (255, 194, 75)
 
 
 def font(path, size, scale):
@@ -165,7 +186,7 @@ def app(geo, vw, vh, scale=2, practice=True):
         box = (side + 8, 8, vw - side - rail - 8, vh - 16)
         _, cover = paint_map(dr, geo, box, scale)
         dr.line([(vw - rail) * scale, 0, (vw - rail) * scale, vh * scale],
-                fill=(30, 38, 52), width=scale)
+                fill=LINE, width=scale)
         pill(vw - 48, 12, 38, 38, 'II', MUTED)       # both flush right
         if practice:
             pill(vw - 82, vh - 50, 72, 36, 'Clue')
@@ -199,4 +220,5 @@ if __name__ == '__main__':
     geo = sys.argv[2] if len(sys.argv) > 2 else 'fr'
     vw = int(sys.argv[3]) if len(sys.argv) > 3 else 390
     vh = int(sys.argv[4]) if len(sys.argv) > 4 else 780
+    use(sys.argv[5] if len(sys.argv) > 5 else 'dark')
     (app if mode == 'app' else render)(geo, vw, vh)

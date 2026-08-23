@@ -124,8 +124,12 @@
     --answerink:#4A3208; --answerhalo:#FBEBC8;
     --scoredink:#33281A; --scoredhalo:rgba(255,252,244,.82);
 
-    --s0fill:#A6C9B2;   --s0line:#17573E;
-    --s50fill:#E8C689;  --s50line:#8A5A10;
+    /* Unclaimed land here is a mid-tan, which is a desaturated yellow — so the
+       middle of the ramp is the one stop that cannot be a muted version of its
+       colour the way the dark theme's stops are. It has to out-saturate the
+       land instead, or a half-right answer reads as an unanswered one. */
+    --s0fill:#9FC4AE;   --s0line:#175A40;
+    --s50fill:#EFBB55;  --s50line:#8A5A10;
     --s100fill:#E0A098; --s100line:#9E2B26;
 
     --lossflash:#F3D8D4; --winflash:#D7E9DE;

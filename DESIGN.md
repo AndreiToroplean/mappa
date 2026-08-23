@@ -948,6 +948,14 @@ blue accents around the chrome for visual interest would cost the map the one
 colour that says, instantly and without being learned, *this is not somewhere
 you can tap*. The rule is worth more than the decoration.
 
+How dark or pale it goes is set by the gap in lightness against `--land`, not by
+taste: about 1.5:1 on the dark ground and 1.3:1 on the light one. Both were
+first picked by eye at around 1.1:1, where the land did not sit on the water so
+much as dissolve into it. The two figures are deliberately different — a dark
+ground has room to go further and a light one does not, since a pale sea one
+step further from the land stops reading as ocean and starts reading as the
+page it is printed on.
+
 Two places take it: the map area, and the magnifier's disc, which is a window
 onto the same map and would look like a hole if it did not. In landscape the
 empty rail beside the map takes it too — it holds nothing but two floating

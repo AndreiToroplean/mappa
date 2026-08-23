@@ -592,7 +592,12 @@
     font-size:11px;width:min(280px, calc(100vw - 24px));height:56px;
     max-width:none;display:flex;align-items:center;justify-content:center;
     overflow:hidden}
-  .lens path{fill:var(--land);stroke:var(--ink);stroke-width:1;
+  /* The same three values the map uses, because the disc is the map. --ink was
+     this rule's stroke until the palette was split, and it was the one place the
+     rename missed: an undefined custom property is not a fallback, it makes the
+     whole declaration invalid, so stroke fell back to inherited — which is none
+     — and the borders stopped being drawn at all. */
+  .lens path{fill:var(--land);stroke:var(--edge);stroke-width:1;
     vector-effect:non-scaling-stroke}
   .lens path.found{fill:var(--found);stroke:var(--foundline)}
   .lens path.miss{fill:var(--missfill);stroke:var(--missline)}

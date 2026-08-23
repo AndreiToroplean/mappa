@@ -29,6 +29,11 @@ Working habits that have earned their place:
 - One commit per point of instruction, committed as you go without being asked.
 - Do not regenerate the bundle unless asked. Do hand over `dist/mappa.html`
   every time, so it can be tried on a phone.
+- When a bundle *is* asked for, write it and hand it over. Do not clone it back
+  and rebuild to prove it works; Andrei will say if one ever arrives broken.
+- Andrei does the looking. Render or screenshot when *you* need to see something
+  to make a decision — the ramp against the land, two seas side by side — not to
+  demonstrate a finished change back to him.
 - `check.py` is not decoration. Three real bugs were caught by writing the test
   before believing the code: the panel test that was in a comment and not in the
   code, the harness's private copy of `addEntry` that had drifted from the real
@@ -1126,6 +1131,29 @@ Nothing stored. Every key keeps its `fifty:` prefix, the ids stay `trial`,
 still spelled `fifty`. Renaming a game does not rename the boards someone has
 been filling for a year, or the export sitting in their downloads. Same
 reasoning as `fifty:board2` and `fifty:practice1`. Only labels moved.
+
+## An undefined variable is not a missing colour
+
+`stroke: var(--ink)` outlived the rename that removed `--ink`, and the magnifier
+drew no borders at all for a whole release. The trap is what CSS does with a
+`var()` that names nothing: the declaration is not ignored and does not fall
+back to a default, it becomes **invalid at computed-value time**, and the
+property lands on its inherited value. For `stroke` that is `none`. Nothing
+warns, nothing throws, and the shape simply loses its outline.
+
+Two things follow.
+
+The rename slipped through because the checking was aimed at the wrong thing.
+After the palette refactor the file was scanned for leftover *literals* — hex
+codes and `rgba()` — and it came back clean, because `var(--ink)` is not a
+literal. Every colour had a name; one of the names had nobody home.
+
+`check.py` now asserts that every `var()` in the stylesheet, and every
+`getPropertyValue` written out in full in the JS, names something `:root`
+declares. That is a different question from the one the theme test asks. The
+theme test compares two palettes to each other and both can agree perfectly
+about a name that the stylesheet never uses; this one asks whether the
+stylesheet is asking for names that exist.
 
 ## Ideas not built
 

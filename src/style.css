@@ -40,8 +40,15 @@
        which is the primitive that turned out to be honest. See DESIGN.md.
 
        The only blue in either theme. Blue means water here and nothing else,
-       which is worth more than sprinkling it around for interest. */
-    --sea:#132536;
+       which is worth more than sprinkling it around for interest.
+
+       Set by the gap in lightness against --land rather than by taste: about
+       1.5:1 on the dark ground and 1.3:1 on the light one. Matching the two
+       exactly is wrong, because a dark ground has the room and a light one does
+       not — a pale sea a step further from the land stops reading as ocean and
+       starts reading as the page. Both were first chosen by eye at roughly
+       1.1:1 and the land did not sit on the water so much as blend into it. */
+    --sea:#0B1826;
     --land:#3E3426; --landhi:#564830;
     --edge:#13100B;      /* between two regions */
     --halo:#13100B;      /* knocked out behind a label drawn over the map */
@@ -113,7 +120,7 @@
     --shadowdeep:rgba(92,72,42,.30);
     --haze:rgba(250,244,231,.92);
 
-    --sea:#BFD7E0;
+    --sea:#DCEAEF;
     --land:#DCC9A2; --landhi:#C7AF80;
     --edge:#63502F;
     --halo:#FBF6EA;

@@ -974,6 +974,32 @@ if len(plurals) != len(maps):
 else:
     print(f'  all {len(maps)} maps spell out their plural')
 
+# Every var() has to name something the palette declares. An undefined custom
+# property is not a missing colour that falls back to a default — it makes the
+# whole declaration invalid, and the property lands on its inherited value. The
+# magnifier lost its borders that way and stayed that way through a release:
+# `stroke: var(--ink)` survived the rename that removed --ink, stroke inherited
+# `none`, and nothing anywhere said a word. Colour tests compare two palettes to
+# each other; this one asks whether the stylesheet is asking for names that
+# exist at all.
+declared_names = declared(block(':root{'))
+INLINE = {'--scorefill', '--scoreline'}      # set per element by paintScore()
+used = set(re.findall(r'var\((--[a-z0-9-]+)', css_src))
+dangling = sorted(used - declared_names - INLINE)
+read_in_js = set()
+for js in (ROOT / 'src/js').glob('*.js'):
+    # Only names written out in full. The ramp builds `--s${at}fill` by
+    # interpolation and cannot be read this way; the stops have their own check
+    # above, which is the right place for them.
+    read_in_js |= {m[1] for m in re.findall(
+        r"getPropertyValue\(\s*([`'\"])(--[a-z0-9-]+)\1", js.read_text())}
+dangling += sorted(n for n in read_in_js - declared_names - INLINE if n not in dangling)
+if dangling:
+    print(f'  FAIL asked for but never declared: {", ".join(dangling)}')
+    fails += 1
+else:
+    print(f'  every one of the {len(used | read_in_js)} names asked for is declared')
+
 # Both cards offer the same choices, since they are the same card in two states.
 picks = re.findall(r'<div class="pick[^"]*">\s*<div class="eyebrow">([^<]+)</div>', html_src)
 if len(picks) != 6 or picks[:3] != picks[3:]:

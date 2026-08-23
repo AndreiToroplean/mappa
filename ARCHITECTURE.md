@@ -63,7 +63,7 @@ was wasting about three fifths of a phone's height.
 ```
 src/index.html      markup, with __CSS__ / __JS__ placeholders
 src/style.css       all styling
-src/js/01-data.js   geographies (injected as __US__ / __FR__), modes, scoring
+src/js/01-data.js   maps (injected as __US__ / __FR__), modes, scoring, their copy
 src/js/02-map.js    building the SVG, paint layers, labels, tap targets
 src/js/03-run.js    run lifecycle: queue, lives, clock, guesses
 src/js/04-geometry.js  screen->map coordinates, distance, resolving a position

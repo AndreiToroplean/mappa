@@ -1012,6 +1012,73 @@ board rather than worked around, and a write that fails mid-session says so on
 the spot instead of waiting for the next load. A leaderboard that quietly
 forgets is worse than one that says up front that it will.
 
+## What things are called
+
+The game was *Fifty*, which named the fifty US states and stopped being the
+whole of it the moment France arrived. It is **Mappa**, from *mappa mundi* —
+five letters, means map, reads as a name rather than a word because it is not
+English, and belongs to no country. The tagline is **the world, from memory**,
+which says what the game is *for*; "a geography drill" only said what it was.
+
+The rest of the vocabulary, settled at the same time because a name on its own
+does not help anyone understand the menu:
+
+- **Map** for a geography. "Choose a map." The plainest true word, and there is
+  no confusion with the drawing on screen, because the US map *is* a map.
+- **Place** for a region, when the map's own noun — state, département,
+  country — will not do.
+- **Mode**: Test, Practice.
+- **Scoring**: Right or wrong, How close.
+
+**Trial had to go because it means two things.** A trial is a test, and a trial
+is also an attempt; a player could read either. Test/Practice is a pairing
+everyone already owns from driving tests and exams: one counts, one does not.
+
+**Misses/Distance described the bookkeeping, not the rule.** What actually
+separates them is that one is binary and one is continuous — a tap is the place
+or it is not, against a tap being scored by how far off it landed. Unlimited
+retries are not a feature of the first, they are what binary *allows*: there is
+nothing between hit and miss, so a second guess is just another guess. And they
+are what continuous *forbids*, since a second guess three places closer would
+post a better distance and the number would end up describing the search rather
+than the knowledge. "Distance" also sounded like it measured travel rather than
+error.
+
+### The line under each choice, and why it does not multiply
+
+Every option carries one sentence, shown when it is selected. **The line belongs
+to the option, never to the combination.** Four options are four sentences; four
+combinations would be eight, and the next axis would make that sixteen.
+
+The rule that makes it work: **no line may depend on what is selected on another
+row.** "Finish the whole map with no hints" is true of Test whichever scoring is
+on. "One tap per place" is true of How close in either mode. `check.py` enforces
+the cheap mechanical version — no line may name another axis's options — because
+that is how the drift would start. If a line ever genuinely needs to, the axes
+are not independent and the design needs looking at, not the copy.
+
+Each line also has to survive being the first sentence a person ever reads.
+Earlier drafts failed this in ways that were invisible from the inside: "no
+hints" as a bare fragment before hints exist as an idea, "spend it all" without
+saying what is being spent, "one tap each" where *each* referred to nothing yet.
+Mode talks about the run — can it end, is there help. Scoring talks about a
+single tap. Neither reaches into the other's territory.
+
+### Prominence
+
+Mode is the choice people want; scoring refines it. They were two identical
+rows, which said they were equally weighty. Both are labelled now — that is the
+pattern that scales, since another axis is one more labelled block — and the
+difference is carried by size, not by one of them going unlabelled.
+
+### What did not change
+
+Nothing stored. Every key keeps its `fifty:` prefix, the ids stay `trial`,
+`practice`, `count`, `drift`, and the marker at the top of an export file is
+still spelled `fifty`. Renaming a game does not rename the boards someone has
+been filling for a year, or the export sitting in their downloads. Same
+reasoning as `fifty:board2` and `fifty:practice1`. Only labels moved.
+
 ## Ideas not built
 
 Blind mode — no borders drawn, landmasses only — was the idea on this list that

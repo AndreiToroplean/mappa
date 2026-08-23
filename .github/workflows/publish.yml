@@ -24,14 +24,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # make.py stamps the version from `git describe`, which needs the tags
           # and the commits between them. The default shallow clone has neither,
           # and would silently stamp a bare hash instead.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -57,8 +57,11 @@ jobs:
           fi
           echo "no external references"
 
+      # These three majors are the ones that run on Node 24. The runners force
+      # JavaScript actions onto it and drop Node 20 entirely in September 2026,
+      # so an older major is a warning now and a broken step later.
       - name: Upload the build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mappa
           path: dist/mappa.html

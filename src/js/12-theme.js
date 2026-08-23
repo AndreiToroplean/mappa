@@ -5,18 +5,19 @@
    decides which of the two blocks applies, remembers it, and puts back the one
    thing a variable cannot reach.
 
-   Stored in localStorage directly rather than through kvGet/kvSet, which is the
-   only preference that does not go through them, for two reasons. It has to be
-   readable *synchronously* — the boot script in <head> reads it before the body
-   renders, and the kv layer is async by the time it has worked out which
-   backend it has. And it is not the player's data: an export carries boards and
-   how you like to play, and importing a friend's file should not repaint your
-   screen. So it stays out of the transfer entirely, and out of PREF_KEYS.
+   Saved like every other preference, through kvGet/kvSet and inside PREF_KEYS,
+   so it travels with an export. An export is how you move a phone's data to a
+   laptop, and which theme you play in is part of how you play — leaving it
+   behind would mean arriving somewhere with your leaderboard and none of your
+   settings. Nothing in the UI says so, because nothing needs to: everything is
+   exported.
 
-   That means the theme does not survive where localStorage does not exist. The
-   cost of getting it wrong is one tap, so it is not worth a fallback that
-   would put the value in two places. */
-const THEME_KEY = 'fifty:theme';   // also in the boot script in <head>
+   The one thing it still does differently is being read twice. The boot script
+   in <head> reads the same key straight out of localStorage before the body
+   renders, because a theme applied by module 12 is a theme applied one frame
+   too late and a light-theme player would see a flash of the dark one on every
+   load. check.py holds the two spellings of the key together. */
+const THEMES = { dark: 1, light: 1 };
 
 const themeNow = () =>
   document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
@@ -46,7 +47,9 @@ function drawThemeButton() {
 }
 
 function setTheme(name) {
+  if (!THEMES[name]) return;
   document.documentElement.dataset.theme = name;
+  kvSet(PREF_THEME, name);
   drawThemeButton();
   paintChrome();
   /* Scored regions wear their colour inline, so the new palette does not reach
@@ -54,11 +57,8 @@ function setTheme(name) {
   repaintScores();
 }
 
-document.querySelectorAll('.themebtn').forEach(b => b.addEventListener('click', () => {
-  const next = otherTheme();
-  setTheme(next);
-  try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* nothing to do */ }
-}));
+document.querySelectorAll('.themebtn').forEach(b =>
+  b.addEventListener('click', () => setTheme(otherTheme())));
 
 drawThemeButton();
 paintChrome();

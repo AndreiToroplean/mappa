@@ -70,8 +70,8 @@ src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
 src/js/05-lens.js   the press-and-hold magnifier
 src/js/06-board.js  storage, leaderboard, end of run
 src/js/11-review.js reading the finished map: facts on tap and under the lens
-src/js/12-transfer.js  exporting and importing the player's data as JSON
-src/js/13-theme.js  choosing between the two palettes, and remembering it
+src/js/12-theme.js  choosing between the two palettes, and remembering it
+src/js/13-transfer.js  exporting and importing the player's data as JSON
 src/js/14-start.js  startup: read the preferences, build the map, show the menu
 DESIGN.md           why it is the way it is, and the mistakes behind that
 check.py            regression harness for the pure logic (no browser needed)
@@ -517,11 +517,15 @@ Two things read the palette from JavaScript rather than being styled by it:
 - the confetti reads `--confetti`, a comma-separated list, at the moment it
   fires.
 
-`13-theme.js` owns the switch. The value lives in `localStorage` under
-`fifty:theme`, deliberately outside `kvGet`/`kvSet` and outside the export — see
-DESIGN.md. It is read by a four-line script in `<head>`, before the body
+`12-theme.js` owns the switch. The value is an ordinary preference: `PREF_THEME`
+in `06-board.js`, inside `PREF_KEYS`, saved through `kvSet` and carried by the
+export like everything else. It loads before `13-transfer.js` because an import
+has to apply it.
+
+The one thing it does differently is being read twice. A four-line script in
+`<head>` reads the same key straight out of `localStorage` before the body
 renders, so a light-theme player never sees a frame of the dark one; that script
-and `THEME_KEY` name the same string and `check.py` holds them to it.
+and `PREF_THEME` name the same string and `check.py` holds them to it.
 
 `check.py` also holds the two palettes to declaring exactly the same set of
 names. A variable missing from the light block falls through to the dark value

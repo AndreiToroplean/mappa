@@ -104,7 +104,8 @@ function validate(text) {
   }
 
   const prefs = {};
-  const known = { [PREF_GEO]: GEOS, [PREF_MODE]: MODES, [PREF_SCORING]: SCORINGS };
+  const known = { [PREF_GEO]: GEOS, [PREF_MODE]: MODES, [PREF_SCORING]: SCORINGS,
+                  [PREF_THEME]: THEMES };
   for (const k of PREF_KEYS) {
     const v = raw.prefs && raw.prefs[k];
     if (typeof v === 'string' && known[k][v]) prefs[k] = v;
@@ -146,6 +147,7 @@ function applyData(clean) {
   if (clean.prefs[PREF_MODE]) setMode(clean.prefs[PREF_MODE]);
   if (clean.prefs[PREF_SCORING]) setScoring(clean.prefs[PREF_SCORING]);
   if (clean.prefs[PREF_GEO]) setGeo(clean.prefs[PREF_GEO]);
+  if (clean.prefs[PREF_THEME]) setTheme(clean.prefs[PREF_THEME]);
   showBoards(loadBoard(), null);
 }
 

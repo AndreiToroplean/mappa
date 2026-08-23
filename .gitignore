@@ -6,3 +6,13 @@ __pycache__/
 *.pyc
 package-clues/
 package-water/
+
+# jsdom, pulled in for the probes that drive dist/mappa.html's real handlers —
+# see the working habits note in DESIGN.md. package.json and the lockfile stay
+# tracked so the dependency itself is recorded; the installed tree is not.
+node_modules/
+npm-debug.log*
+
+# stray editor/OS files, in case one ever lands
+.DS_Store
+*.swp

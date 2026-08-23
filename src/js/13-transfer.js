@@ -17,6 +17,10 @@
    storage says cannot misroute on the way back in, and inventing a second
    naming scheme would mean two of them to keep in step.
 */
+/* The marker at the top of an export, and the version of the shape below it.
+   Spelled `fifty` because that is what every file written so far says, and a
+   file's job is to be readable by the program that reads files — renaming the
+   game does not rename the exports already sitting in someone's downloads. */
 const DATA_FORMAT = 1;
 
 /* An export is only worth having if it survives the trip, so the import treats
@@ -75,7 +79,7 @@ function exportData() {
     const data = collectData();
     const runs = Object.keys(data.boards)
       .reduce((n, k) => n + data.boards[k].length, 0);
-    saveFile(`fifty-data-${stamp()}.json`, JSON.stringify(data, null, 2));
+    saveFile(`mappa-data-${stamp()}.json`, JSON.stringify(data, null, 2));
     flashNote(`Exported ${runs} run${runs === 1 ? '' : 's'} from `
             + `${Object.keys(data.boards).length} board`
             + `${Object.keys(data.boards).length === 1 ? '' : 's'}.`);
@@ -95,12 +99,12 @@ function validate(text) {
   try { raw = JSON.parse(text); }
   catch (e) { throw new Error('that file is not JSON'); }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new Error('that is not a Fifty export');
+    throw new Error('that is not a Mappa export');
   }
   if (raw.fifty !== DATA_FORMAT) {
     throw new Error(raw.fifty > DATA_FORMAT
       ? 'that file was written by a newer version'
-      : 'that is not a Fifty export');
+      : 'that is not a Mappa export');
   }
 
   const prefs = {};

@@ -8,7 +8,7 @@ misses ends the run; in Practice nothing does. Runs are ranked by regions found,
 then by how little help they took, then by time.
 
 Built as a single self-contained HTML file — no CDN, no network calls, no
-dependencies at runtime. Open `dist/fifty.html` in any browser and it works,
+dependencies at runtime. Open `dist/mappa.html` in any browser and it works,
 including offline.
 
 ## Geographies
@@ -79,10 +79,10 @@ render.py           rasterises a geography as the game shows it, in either theme
 src/geo.py          shared build geometry: simplify, polylabel, emit
 src/build-us.py     US states from us-atlas TopoJSON
 src/build-fr.py     French départements from france-geojson, with overseas insets
-src/make.py         assembles everything into dist/fifty.html
+src/make.py         assembles everything into dist/mappa.html
 data/us.json        generated: view box, abbreviations, regions
 data/fr.json        generated: same shape, 101 régions
-dist/fifty.html     generated (gitignored): the playable file
+dist/mappa.html     generated (gitignored): the playable file
 ```
 
 The split is for editing only. `make.py` inlines the CSS, concatenates the JS

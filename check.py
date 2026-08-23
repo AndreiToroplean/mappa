@@ -568,7 +568,7 @@ pathlib.Path('/tmp/fifty-modes.js').write_text(
     "let TOTAL = 50;\nlet GEO = {id:'us', all:'All fifty', noun:'state'};\n"
     "let GEOS = {us:{id:'us'}, fr:{id:'fr'}};\n"
     + data_src[data_src.index('function byTally'):]
-    + board_src[board_src.index('const PROBE'):board_src.index('/* One key-value layer')]
+    + board_src[board_src.index('const PROBE'):board_src.index('/* localStorage, and nothing')]
     + board_src[board_src.index('const errorsOf'):board_src.index('const addEntry')]
     + board_src[board_src.index('function missWords'):board_src.index('function renderBoard')]
     + """

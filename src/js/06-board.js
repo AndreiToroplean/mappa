@@ -31,27 +31,6 @@ function boardKeys() {
   }
   return keys;
 }
-const mem = {};   // last resort backend
-
-/* Three backends, tried in order, because the file gets run two very different
-   ways. Inside the artifact runtime `window.storage` exists and is scoped per
-   artifact instance — scores persist across refreshes but not across a rebuild,
-   since a new build is a new instance. Downloaded and opened straight from
-   Chrome there is no `window.storage` at all, and that case used to fall
-   silently into a memory array that died on every refresh. localStorage covers
-   it properly. Memory is the last resort (private mode, storage disabled), and
-   it is now *reported* rather than hidden — a leaderboard that quietly forgets
-   is worse than one that says it will. */
-let store = 'memory';
-
-function localOK() {
-  try {
-    window.localStorage.setItem(PROBE, '1');
-    window.localStorage.removeItem(PROBE);
-    return true;
-  } catch (e) { return false; }
-}
-
 const parse = s => { try { return JSON.parse(s) || []; } catch (e) { return []; } };
 
 /* Boards written before runs counted errors. A run that did not finish ended
@@ -63,53 +42,55 @@ function normalise(board) {
     ? r : Object.assign({}, r, { e: budget() }));
 }
 
-/* One key-value layer over the three backends. Boards and the saved geography
-   both go through it, so the backend logic exists once. */
-async function kvGet(key) {
-  if (window.storage && window.storage.get) {
-    try {
-      const r = await window.storage.get(key);
-      store = 'artifact';
-      return r ? r.value : null;
-    } catch (e) {
-      // An unset key throws here, which is not the same as a broken backend.
-      // Settle it with a write: if that lands, the backend is fine and empty.
-      try { await window.storage.set(key, ''); store = 'artifact'; return null; }
-      catch (e2) {}
-    }
-  }
-  if (localOK()) {
-    store = 'local';
-    return window.localStorage.getItem(key);
-  }
-  store = 'memory';
-  return key in mem ? mem[key] : null;
+/* localStorage, and nothing else.
+
+   There were three backends tried in order: `window.storage` for the artifact
+   runtime, localStorage for a downloaded file, and a plain object as a last
+   resort. Two of them have gone. The game is published as a page, so nothing
+   reaches the artifact runtime any more; and the memory object was a fallback
+   that quietly disagreed with the note under the board about what "saved"
+   meant — it kept a leaderboard alive for exactly as long as the tab.
+
+   What is left is *synchronous*, which is worth more than it sounds. Every read
+   and write in the game used to return a promise, so eight functions that do no
+   waiting were async, and the boot sequence had to await three reads before it
+   could draw a menu. All of that is gone with the backends.
+
+   The one thing that can still go wrong is a browser that refuses to store at
+   all — private mode with site data blocked, or a full quota. That is reported
+   rather than worked around: a leaderboard that quietly forgets is worse than
+   one that says up front that it will. */
+let saves = (() => {
+  try {
+    window.localStorage.setItem(PROBE, '1');
+    window.localStorage.removeItem(PROBE);
+    return true;
+  } catch (e) { return false; }
+})();
+
+function kvGet(key) {
+  try { return window.localStorage.getItem(key); }
+  catch (e) { saves = false; return null; }
 }
 
-async function kvSet(key, value) {
-  mem[key] = value;
-  if (store === 'artifact') {
-    try { await window.storage.set(key, value); return; }
-    catch (e) { store = localOK() ? 'local' : 'memory'; }
-  }
-  if (store === 'local') {
-    try { window.localStorage.setItem(key, value); return; }
-    catch (e) { store = 'memory'; }          // quota, or permission revoked
-  }
+/* Permission can be withdrawn and a quota can fill mid-session, so a write that
+   fails says so on the spot rather than waiting for the next page load. */
+function kvSet(key, value) {
+  try { window.localStorage.setItem(key, value); }
+  catch (e) { saves = false; showNote(); }
 }
 
-const loadBoard = async () => normalise(parse(await kvGet(boardKey())));
+const loadBoard = () => normalise(parse(kvGet(boardKey())));
 const saveBoard = b => kvSet(boardKey(), JSON.stringify(b));
 
 const STORE_NOTE = {
-  artifact: 'Saved to this copy of the game. A new build starts a fresh board.',
-  local:    'Saved in this browser.',
-  memory:   "This session only \u2014 these scores won't survive a refresh.",
+  yes: 'Saved in this browser.',
+  no: "Not saved \u2014 this browser will not let the game store anything.",
 };
 function showNote() {
   document.querySelectorAll('.storenote').forEach(el => {
-    el.textContent = STORE_NOTE[store];
-    el.classList.toggle('warn', store === 'memory');
+    el.textContent = saves ? STORE_NOTE.yes : STORE_NOTE.no;
+    el.classList.toggle('warn', !saves);
   });
 }
 
@@ -284,7 +265,7 @@ function renderBoard(target, board, mine) {
     : '<div class="empty">No runs yet.</div>';
 }
 
-async function finish(won, lastClick) {
+function finish(won, lastClick) {
   running = false;
   document.body.classList.remove('playing');
   closeLens(false);
@@ -339,8 +320,8 @@ async function finish(won, lastClick) {
   const e = MODE.capped ? Math.min(spent(), purse()) : spent();
   const entry = { f: found, v: revealed, e: e, c: cluesUsed, t: ms,
                   d: Date.now() };
-  const res = addEntry(await loadBoard(), entry);
-  if (res.kept) await saveBoard(res.board);
+  const res = addEntry(loadBoard(), entry);
+  if (res.kept) saveBoard(res.board);
   showBoards(res.board, res.kept ? entry.d : null);
 
   const remaining = Math.max(0, pause - (Date.now() - endedAt));
@@ -351,8 +332,8 @@ async function finish(won, lastClick) {
    shares one localStorage bucket, because Chrome treats all file:// pages as a
    single origin. Renaming or moving the file does not give you a fresh board,
    so this is the only way to get one. */
-async function clearBoard() {
-  await saveBoard([]);      // whichever backend is live already knows how
+function clearBoard() {
+  saveBoard([]);
   showBoards([], null);
 }
 
@@ -361,8 +342,8 @@ document.querySelectorAll('.clearBtn').forEach(b =>
   b.addEventListener('click', () => { confirmBox.hidden = false; }));
 el.clearNo.addEventListener('click',
   () => { confirmBox.hidden = true; });
-el.clearYes.addEventListener('click', async () => {
-  await clearBoard();
+el.clearYes.addEventListener('click', () => {
+  clearBoard();
   confirmBox.hidden = true;
 });
 addEventListener('keydown', e => {
@@ -372,23 +353,23 @@ addEventListener('keydown', e => {
 /* Switching mode swaps the board and the selected button, and is available from
    both cards so a run can be followed by a different kind of run without a
    reload. */
-async function setMode(id) {
+function setMode(id) {
   if (!GEO || !MODES[id]) return;    // a tap can land before startup finishes
   MODE = MODES[id];
-  await kvSet(PREF_MODE, id);
-  await afterSwitch();
+  kvSet(PREF_MODE, id);
+  afterSwitch();
 }
 
 /* The scoring axis switches exactly like the mode axis, and for the same
    reason: both change which board is being looked at and nothing else. */
-async function setScoring(id) {
+function setScoring(id) {
   if (!GEO || !SCORINGS[id]) return;
   SCORING = SCORINGS[id];
-  await kvSet(PREF_SCORING, id);
-  await afterSwitch();
+  kvSet(PREF_SCORING, id);
+  afterSwitch();
 }
 
-async function afterSwitch() {
+function afterSwitch() {
   refreshCopy();
   /* drawCounter(), not resetRun(): resetRun() ends by hiding the intro card,
      which is right when a geography change invalidates a half-played map and
@@ -396,7 +377,7 @@ async function afterSwitch() {
      Nothing about the board needs resetting, only the header column, which is
      counting a different thing now. */
   drawCounter();
-  try { showBoards(await loadBoard(), null); }
+  try { showBoards(loadBoard(), null); }
   catch (e) { reportCrash('board: ' + e.message); }
 }
 
@@ -440,15 +421,15 @@ addEventListener('resize', () => {
   composeTimer = setTimeout(() => { if (GEO) compose(); }, 120);
 });
 
-async function setGeo(id) {
+function setGeo(id) {
   if (!GEO || !GEOS[id] || id === GEO.id) return;
   loadGeography(id);
-  await kvSet(PREF_GEO, id);
+  kvSet(PREF_GEO, id);
   refreshCopy();
   resetRun();                       // repaint the header for the new totals
   el.intro.hidden = false;          // a half-played map must not linger
   overlay.hidden = true;
-  showBoards(await loadBoard(), null);
+  showBoards(loadBoard(), null);
 }
 
 document.querySelectorAll('.modeBtn').forEach(b =>
@@ -466,28 +447,3 @@ el.startBtn.addEventListener('click', beginRun);
    already resets the run and puts the intro up — the end card and the pause
    card are leaving the same thing. */
 if (el.menuBtn) el.menuBtn.addEventListener('click', quitToMenu);
-
-// show any existing best runs on the intro screen
-/* Startup. The geography is remembered between visits; the mode is not, since
-   Trial is the default reading of "play the game". */
-(async () => {
-  // The geography is built first and separately from anything that can fail:
-  // if reading the saved preference throws, the game should still start, just
-  // without remembering the choice.
-  let savedGeo = null, savedMode = null, savedScoring = null;
-  try {
-    savedGeo = await kvGet(PREF_GEO);
-    savedMode = await kvGet(PREF_MODE);
-    savedScoring = await kvGet(PREF_SCORING);
-  } catch (e) { reportCrash('storage: ' + e.message); }
-  // Every choice is remembered. Trial and counting are the default reading of
-  // "play the game".
-  MODE = MODES[savedMode] || MODES.trial;
-  SCORING = SCORINGS[savedScoring] || SCORINGS.count;
-  drawFsButton();
-  loadGeography(GEOS[savedGeo] ? savedGeo : DEFAULT_GEO);
-  refreshCopy();
-  resetRun();
-  el.intro.hidden = false;
-  try { showBoards(await loadBoard(), null); } catch (e) { reportCrash('board: ' + e.message); }
-})();

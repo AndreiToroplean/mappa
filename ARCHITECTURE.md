@@ -72,6 +72,7 @@ src/js/06-board.js  storage, leaderboard, end of run
 src/js/11-review.js reading the finished map: facts on tap and under the lens
 src/js/12-transfer.js  exporting and importing the player's data as JSON
 src/js/13-theme.js  choosing between the two palettes, and remembering it
+src/js/14-start.js  startup: read the preferences, build the map, show the menu
 DESIGN.md           why it is the way it is, and the mistakes behind that
 check.py            regression harness for the pure logic (no browser needed)
 render.py           rasterises a geography as the game shows it, in either theme

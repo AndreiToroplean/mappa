@@ -69,11 +69,32 @@ function effective(pts) {
   if (pts <= 0) return 0;                       // inside the region: perfect
   return 100 - (100 - Math.min(100, pts)) * NEAR_GAP;
 }
-const SCALE = [
-  { at: 0,   fill: [29, 83, 72],   line: [79, 203, 164] },
-  { at: 50,  fill: [122, 84, 24],  line: [255, 194, 75] },
-  { at: 100, fill: [122, 38, 43],  line: [229, 72, 77] },
-];
+/* The stops live in the palette, not here, so that colour has one home and a
+   theme is a block of CSS rather than a block of CSS *and* an array of triples.
+   Read once and re-read when the theme changes; mix() needs numbers, and
+   getComputedStyle per region per frame would not be free. */
+const STOPS = [0, 50, 100];
+let SCALE = [];
+
+/* Says so rather than producing '#NaNNaNNaN', which paints as black and looks
+   like a rendering bug rather than a missing variable. */
+function rgb(hex) {
+  const h = (hex || '').trim().replace('#', '');
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  const v = [0, 2, 4].map(i => parseInt(full.slice(i, i + 2), 16));
+  if (v.some(isNaN)) { reportCrash('palette: cannot read "' + hex + '"'); return [128, 128, 128]; }
+  return v;
+}
+
+function readScale() {
+  const css = getComputedStyle(document.documentElement);
+  SCALE = STOPS.map(at => ({
+    at,
+    fill: rgb(css.getPropertyValue(`--s${at}fill`)),
+    line: rgb(css.getPropertyValue(`--s${at}line`)),
+  }));
+}
+readScale();
 
 function mix(a, b, t) {
   return '#' + [0, 1, 2].map(i =>
@@ -92,11 +113,25 @@ function scoreColour(pts) {
    The answer flash has to *end* on it — see .answerflash — and an animation is
    the only thing that outranks an inline style, so the keyframes read the
    colour back off the element rather than being told it. */
+/* What each scored region cost, kept so the board can be painted again in
+   another palette. A scored colour is inline, and inline is the one thing a
+   theme's variables cannot reach. */
+let scoredPts = {};
+
 function paintScore(name, pts) {
   setStatus(name, 'scored');
+  scoredPts[name] = pts;
   const c = scoreColour(pts);
   wear(shapes[name], c);
   if (lensPaths[name]) wear(lensPaths[name], c);
+}
+
+/* Re-read the ramp and put every scored region back on it. */
+function repaintScores() {
+  readScale();
+  for (const name in scoredPts) {
+    if (shapes[name]) paintScore(name, scoredPts[name]);
+  }
 }
 
 function wear(node, c) {
@@ -120,6 +155,7 @@ function setStatus(name, key) {
   const spec = STATUS[key];
   statusOf[name] = key;
   if (key !== 'scored') {          // only paintScore() sets these
+    delete scoredPts[name];
     strip(shapes[name]);
     if (lensPaths[name]) strip(lensPaths[name]);
   }
@@ -392,6 +428,7 @@ function buildMap() {
   [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT, L_HIT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
+  scoredPts = {};
   panelOf = {};
 
   REGIONS.forEach(r => {

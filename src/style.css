@@ -29,6 +29,7 @@
 
     /* text */
     --text:#F2E9D6; --muted:#9F8E74;
+    --labelfade:.85;     /* a found region's name, quiet against its own fill */
     --onaccent:#13100B;  /* on an amber ground */
 
     /* the three that mean something, and stay meaning it in both themes */
@@ -60,6 +61,68 @@
 
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* ---- the light theme -----------------------------------------------------
+     The plate on the table: aged rag paper in daylight, which is what the game
+     is for outdoors and what some people simply prefer indoors.
+
+     Not the dark theme lightened. The construction inverts, because a filled
+     shape on paper is *lighter* than the ink around it, never darker — so a
+     state here is a pale wash carried by a saturated stroke, where on the dark
+     ground it is a dark fill carried by a bright one. Same two parts, opposite
+     way round, and the same thing legible either way.
+
+     Amber is the one that could not simply be reused. #FFC24B on cream is not a
+     colour, it is a suggestion, so the accent is a deep ochre — which flips what
+     has to sit on top of it, and is the whole reason --onaccent exists.
+
+     Everything meant to be read was checked against its own ground rather than
+     against the page: the muted labels are darker than a straight translation
+     would make them, because 10px letterspaced mono in sunlight is the hardest
+     thing on the screen and it is also the thing that names every column. */
+  :root[data-theme="light"]{
+    --base:#EEE4CE;
+    --panel:#FBF5E7;
+    --well:#FFFDF6;
+    --line:#C4B08A;
+    --hairline:rgba(58,46,28,.11);
+    --hover:rgba(58,46,28,.07);
+    --scrim:rgba(222,209,183,.94);
+    --veil:rgba(222,209,183,.62);
+    --shadow:rgba(92,72,42,.18);
+    --shadowdeep:rgba(92,72,42,.30);
+    --haze:rgba(250,244,231,.92);
+
+    --land:#DCC9A2; --landhi:#C7AF80;
+    --edge:#63502F;
+    --halo:#FBF6EA;
+
+    --text:#382C1A; --muted:#7A6647;
+    --labelfade:1;
+    --onaccent:#FCF7EA;
+
+    --found:#9FC4AE; --foundline:#175A40; --foundmid:#7EBA9C;
+    --amber:#9C600C; --red:#B3322C; --softred:#A8443E;
+    --washsoft:rgba(156,96,12,.12);
+    --washfirm:rgba(156,96,12,.17);
+    --foundglow:rgba(23,90,64,.28);
+
+    --missfill:#E39A93;   --missline:#9E2B26;
+    --revealfill:#F2C25A; --revealline:#8A5A10;
+
+    --wrongink:#7A1F1B;  --wronghalo:#FDECEA;
+    --answerink:#4A3208; --answerhalo:#FBEBC8;
+    --scoredink:#33281A; --scoredhalo:rgba(255,252,244,.82);
+
+    --s0fill:#A6C9B2;   --s0line:#17573E;
+    --s50fill:#E8C689;  --s50line:#8A5A10;
+    --s100fill:#E0A098; --s100line:#9E2B26;
+
+    --lossflash:#F3D8D4; --winflash:#D7E9DE;
+    --crashbg:#F7DDD9;   --crashink:#7A1F1B;
+
+    --confetti:#17573E,#9C600C,#B3322C,#C08A3E,#7A6647;
   }
   *{box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
@@ -215,7 +278,7 @@
   @keyframes driftfade{0%,62%{opacity:1}100%{opacity:0}}
 
   text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
-    text-anchor:middle;pointer-events:none;opacity:.85}
+    text-anchor:middle;pointer-events:none;opacity:var(--labelfade)}
   text.label.wrong{fill:var(--wrongink);opacity:1;font-weight:600;
     stroke:var(--wronghalo);stroke-width:3px;paint-order:stroke}
   text.label.answer{fill:var(--answerink);opacity:1;font-weight:600;
@@ -240,7 +303,7 @@
     display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
   .overlay[hidden]{display:none}
   .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:32px;width:100%;max-width:400px}
+    padding:32px;width:100%;max-width:400px;box-shadow:0 18px 44px var(--shadow)}
   .card h2{margin:0;font-size:26px;letter-spacing:-0.02em}
   .card .sub{font-family:var(--mono);font-size:12px;color:var(--muted);
     letter-spacing:.1em;text-transform:uppercase;margin:6px 0 24px}
@@ -311,6 +374,12 @@
   .headbtn:hover{filter:none;color:var(--text)}
   .headbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
   .fsbtn[hidden]{display:none}
+  /* The icon is the theme you would get, not the one you are in — the same
+     reading as the button beside it, where the expand icon expands. */
+  .themebtn svg{width:15px;height:15px;display:block}
+  .themebtn .i-moon{display:none}
+  :root[data-theme="light"] .themebtn .i-sun{display:none}
+  :root[data-theme="light"] .themebtn .i-moon{display:block}
 
   /* The menu behind the dots. Everything here is something you do to your data
      rather than to a run, which is why it is not on the card with the things

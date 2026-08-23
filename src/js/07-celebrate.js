@@ -21,7 +21,7 @@ const GRAVITY = 0.0013;       // px per ms squared
    be dark to show on a light ground and bright to show on a dark one — and the
    palette is where that decision already lives. Read at spawn time, not once,
    so a run finished after a theme change throws the right colours. */
-const confetti = () =>
+const confettiColours = () =>
   getComputedStyle(document.documentElement).getPropertyValue('--confetti')
     .split(',').map(s => s.trim()).filter(Boolean);
 
@@ -29,7 +29,7 @@ const confetti = () =>
    celebratory in a way that a downward drift from the top does not. */
 function spawn(w, h) {
   const bits = [];
-  const colours = confetti();
+  const colours = confettiColours();
   const tilt = 0.26 + 0.36 * Math.min(1, w / 1200);
   for (let i = 0; i < PIECES; i++) {
     const left = i % 2 === 0;

@@ -61,7 +61,7 @@ for g in GEOS:
     html = html.replace(f'__CLUES_{g.upper()}__', clues[g])
     html = html.replace(f'__{g.upper()}__', data[g])
 
-out = ROOT / 'dist' / 'fifty.html'
+out = ROOT / 'dist' / 'mappa.html'
 out.parent.mkdir(exist_ok=True)
 out.write_text(html)
 print(f'wrote {out} ({len(html):,} bytes, {len(GEOS)} geographies, '

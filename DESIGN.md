@@ -15,7 +15,7 @@ The repo does not live on the machine that writes it. Each session starts from
 filesystem does not survive between sessions; the bundle is the only continuity.
 
 ```
-python3 src/make.py     # -> dist/fifty.html, the whole game in one file
+python3 src/make.py     # -> dist/mappa.html, the whole game in one file
 python3 check.py        # the regression harness; must be green before a commit
 python3 render.py app fr 780 390    # rasterise, to see what the code drew
 ```
@@ -27,7 +27,7 @@ actually check.
 Working habits that have earned their place:
 
 - One commit per point of instruction, committed as you go without being asked.
-- Do not regenerate `fifty.bundle` unless asked. Do hand over `dist/fifty.html`
+- Do not regenerate the bundle unless asked. Do hand over `dist/mappa.html`
   every time, so it can be tried on a phone.
 - `check.py` is not decoration. Three real bugs were caught by writing the test
   before believing the code: the panel test that was in a comment and not in the
@@ -42,7 +42,7 @@ Working habits that have earned their place:
   behind the menu; a round of hardening the file reading went into a bug that was
   one `z-index` line. Rendered and invisible looks exactly like broken.
 - `npm install jsdom` works here, and a throwaway script that loads
-  `dist/fifty.html` and drives the real handlers is the only way to check a flow
+  `dist/mappa.html` and drives the real handlers is the only way to check a flow
   that lives in the DOM — the end card, the import card, the magnifier. `check.py`
   stays browser-free on purpose; these probes are scratch, not committed.
 

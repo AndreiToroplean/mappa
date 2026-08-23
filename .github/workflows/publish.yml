@@ -50,9 +50,9 @@ jobs:
           set -eu
           # The whole point of the file is that it works offline. A stray src=
           # or href= to somewhere else would only show up as a broken page.
-          if grep -Eo '(src|href)="[^"]*"' dist/fifty.html \
+          if grep -Eo '(src|href)="[^"]*"' dist/mappa.html \
              | grep -Ev '="(#|data:)' ; then
-            echo "::error::dist/fifty.html references something external"
+            echo "::error::dist/mappa.html references something external"
             exit 1
           fi
           echo "no external references"
@@ -60,8 +60,8 @@ jobs:
       - name: Upload the build
         uses: actions/upload-artifact@v4
         with:
-          name: fifty
-          path: dist/fifty.html
+          name: mappa
+          path: dist/mappa.html
 
       # Pushed to a gh-pages branch by hand rather than with actions/deploy-pages,
       # because that action's artifact replaces the entire site: publishing beta
@@ -85,7 +85,7 @@ jobs:
           }
 
           mkdir -p "site/$DIR"
-          cp dist/fifty.html "site/$DIR/index.html"
+          cp dist/mappa.html "site/$DIR/index.html"
           touch site/.nojekyll        # serve the files as they are
 
           cd site

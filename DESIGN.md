@@ -1017,18 +1017,25 @@ forgets is worse than one that says up front that it will.
 The game was *Fifty*, which named the fifty US states and stopped being the
 whole of it the moment France arrived. It is **Mappa**, from *mappa mundi* —
 five letters, means map, reads as a name rather than a word because it is not
-English, and belongs to no country. The tagline is **the world, from memory**,
+English, and belongs to no country. The tagline is **The World from Memory**,
 which says what the game is *for*; "a geography drill" only said what it was.
 
 The rest of the vocabulary, settled at the same time because a name on its own
 does not help anyone understand the menu:
+
+Buttons are title-cased — Right or Wrong, Play Again, Import Data — so a label
+reads as a name for a thing rather than as a sentence fragment. The wordmark is
+uppercased in CSS rather than typed that way, so what a screen reader announces
+is still "Mappa" and not five letters one at a time. The tagline keeps its own
+capitals; the rest of `.sub`, which is a run's summary on the end card, stays
+uppercase.
 
 - **Map** for a geography. "Choose a map." The plainest true word, and there is
   no confusion with the drawing on screen, because the US map *is* a map.
 - **Place** for a region, when the map's own noun — state, département,
   country — will not do.
 - **Mode**: Test, Practice.
-- **Scoring**: Right or wrong, How close.
+- **Scoring**: Right or Wrong, How Close.
 
 **Trial had to go because it means two things.** A trial is a test, and a trial
 is also an attempt; a player could read either. Test/Practice is a pairing

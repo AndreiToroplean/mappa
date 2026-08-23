@@ -148,7 +148,7 @@ const PANEL_SPAN = 1000;   // what normalise() scales a panel's longest side to
 const SCORINGS = {
   count: {
     id: 'count',
-    label: 'Right or wrong',
+    label: 'Right or Wrong',
     note: 'Nearly right counts for nothing. Keep tapping until you find it.',
     budget: 3,            // what a Trial run may spend
     pips: true,           // three lives read better as pips than as a number
@@ -157,7 +157,7 @@ const SCORINGS = {
 
   drift: {
     id: 'drift',
-    label: 'How close',
+    label: 'How Close',
     note: 'One tap per place. Get it as close as you can.',
     budget: 100,          // the purse: one full width of the geography
     pips: false,

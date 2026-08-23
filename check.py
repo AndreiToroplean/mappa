@@ -740,7 +740,7 @@ eq('board keys are all distinct', new Set(keys).size, 8);
 eq('the export enumerates exactly the keys the game reads through',
    boardKeys().slice().sort(), keys.slice().sort());
 eq('and the preferences alongside them',
-   PREF_KEYS, ['fifty:geo', 'fifty:mode', 'fifty:scoring']);
+   PREF_KEYS, ['fifty:geo', 'fifty:mode', 'fifty:scoring', 'fifty:theme']);
 console.log('modes:   ' + (fail ? fail + ' FAILED' : '51/51 pass'));
 process.exitCode = fail ? 1 : 0;
 """)
@@ -897,11 +897,27 @@ else:
 
 # The theme is chosen before the body renders, by a script in <head> that has
 # to name the same storage key as the module that writes it.
-key = re.search(r"const THEME_KEY = '([^']+)'", (ROOT / 'src/js/13-theme.js').read_text()).group(1)
+key = re.search(r"const PREF_THEME = '([^']+)'", (ROOT / 'src/js/06-board.js').read_text()).group(1)
 if f"localStorage.getItem('{key}')" not in html_src:
     print(f'  FAIL the boot script does not read {key}, so a light theme starts dark')
     fails += 1
 else:
-    print(f'  the boot script and the theme module agree on {key}')
+    print(f'  the boot script and the stored preference agree on {key}')
+
+# Everything the game remembers about a player goes in the export, so every
+# preference key needs a set of legal values for the import to check it
+# against. A key added to PREF_KEYS without one throws on `known[k][v]` — at
+# import time, on someone else's file, which is the worst place to find out.
+board_js = (ROOT / 'src/js/06-board.js').read_text()
+transfer_js = (ROOT / 'src/js/13-transfer.js').read_text()
+pref_keys = re.search(r'const PREF_KEYS = \[([^\]]*)\]', board_js).group(1)
+pref_keys = [k.strip() for k in pref_keys.split(',') if k.strip()]
+known = re.search(r'const known = \{(.*?)\};', transfer_js, re.S).group(1)
+unchecked = [k for k in pref_keys if f'[{k}]' not in known]
+if unchecked:
+    print(f'  FAIL exported but not validated on the way back: {", ".join(unchecked)}')
+    fails += 1
+else:
+    print(f'  all {len(pref_keys)} exported preferences are validated on import')
 
 sys.exit(1 if fails else 0)

@@ -901,16 +901,25 @@ The middle stop out-saturates the land instead. The two hex codes do not look
 alike written down; this was caught by putting swatches beside each other, which
 is the `render.py` lesson again in a different costume.
 
-**Why the theme is not player data.** It is the only preference that does not go
-through `kvGet`/`kvSet`, for two reasons that both point the same way. It has to
-be readable synchronously — by a script in `<head>`, before the body renders, or
-a light-theme player gets a frame of the dark one on every single load, and the
-kv layer is async by the time it has worked out which backend it has. And an
-export carries boards and how you like to play; importing a friend's file should
-not repaint your screen. So it is plain `localStorage`, out of `PREF_KEYS` and
-out of the transfer. The cost is that it does not persist where `localStorage`
-does not exist, which is one tap, and cheaper than keeping the value in two
-places.
+**The theme is player data.** It is an ordinary preference: in `PREF_KEYS`,
+saved through `kvSet`, and carried by an export. An export is not a thing you
+send to a friend, it is how you move a phone's data to a laptop — so it should
+carry everything, and arriving with your leaderboard but not your settings would
+be the wrong half. Nothing in the UI says the theme is included, because nothing
+needs to: everything is.
+
+It was briefly written the other way, on the reasoning that a display setting is
+not really *data*. That reasoning depended on the storage layer being async,
+which it no longer is, and on an export being something you hand to someone
+else, which it is not.
+
+The one thing it still does differently is being read twice. The script in
+`<head>` reads the key straight out of `localStorage` before the body renders,
+because a theme applied by module 12 is a theme applied one frame too late.
+
+An import applies it through `setTheme()`, which refuses a name that is not one
+of the two — the same treatment every other preference gets, since a file may
+have been hand-edited.
 
 **The button.** Sun or moon, to the left of the full screen one, on every card
 that has a corner row. The icon is the theme you would *get*, not the one you

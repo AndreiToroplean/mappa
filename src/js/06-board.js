@@ -4,6 +4,7 @@ const PROBE = 'fifty:probe';
 const PREF_GEO = 'fifty:geo';
 const PREF_MODE = 'fifty:mode';
 const PREF_SCORING = 'fifty:scoring';
+const PREF_THEME = 'fifty:theme';   // also read by the boot script in <head>
 
 /* Every geography-and-mode combination keeps its own board. Mixing them would
    be meaningless — a practice run cannot fail, and a departement is not a
@@ -23,7 +24,7 @@ const keyFor = (geo, mode, scoring) => scoring !== 'count'
   : (geo === 'us' ? LEGACY_US[mode] : `fifty:${geo}:${mode}`);
 const boardKey = () => keyFor(GEO.id, MODE.id, SCORING.id);
 
-const PREF_KEYS = [PREF_GEO, PREF_MODE, PREF_SCORING];
+const PREF_KEYS = [PREF_GEO, PREF_MODE, PREF_SCORING, PREF_THEME];
 function boardKeys() {
   const keys = [];
   for (const g in GEOS) for (const m in MODES) for (const s in SCORINGS) {

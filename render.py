@@ -39,7 +39,8 @@ def palette(theme='dark'):
 def use(theme):
     global INK, LAND, EDGE, PANEL, LINE, FRAME, MUTED, TEXT, AMBER
     c = palette(theme)
-    INK, LAND, EDGE = c['--base'], c['--land'], c['--edge']
+    # The map area is water, so that is the ground this tool draws on.
+    INK, LAND, EDGE = c['--sea'], c['--land'], c['--edge']
     PANEL, LINE, FRAME = c['--panel'], c['--line'], c['--amber']
     MUTED, TEXT, AMBER = c['--muted'], c['--text'], c['--amber']
 

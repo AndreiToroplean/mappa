@@ -24,8 +24,11 @@ const themeNow = () =>
 const otherTheme = () => themeNow() === 'dark' ? 'light' : 'dark';
 
 /* The phone's own chrome, which is the one surface the stylesheet cannot paint
-   and the one most obviously wrong when it disagrees. Read off --base rather
-   than named here, so the palette stays the only place a colour is written. */
+   and the one most obviously wrong when it disagrees. It sits directly above
+   the header, so it takes --panel; it was reading --base, which was close
+   enough while the two were both near-black and is not now that the page behind
+   the map is water. Read from the palette rather than named here, so that stays
+   the only place a colour is written. */
 function paintChrome() {
   let m = document.querySelector('meta[name="theme-color"]');
   if (!m) {
@@ -34,7 +37,7 @@ function paintChrome() {
     document.head.appendChild(m);
   }
   m.content = getComputedStyle(document.documentElement)
-    .getPropertyValue('--base').trim();
+    .getPropertyValue('--panel').trim();
 }
 
 function drawThemeButton() {

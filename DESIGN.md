@@ -543,10 +543,24 @@ did nothing. None of the above is confirmed to be its cause — the SVGPoint bug
 would break taps on the map, not buttons in the menu. The crash band exists so
 the next report says what actually threw.
 
-## Water: parked on branch `water-wip`
+## Water: parked on branch `water-wip`, and then answered a third way
 
-Two attempts shipped and both were wrong, so visible water is off master. The
-work is preserved on `water-wip` (`git log water-wip`), which has both.
+Two attempts shipped and both were wrong, so visible water stayed off master.
+The work is preserved on `water-wip` (`git log water-wip`), which has both.
+
+**Settled since, by giving up on being right.** The map area is simply painted
+`--sea`, and every region is drawn on top of it. Everything that is not a region
+is therefore water — which is false, there is a great deal of Canada in it, but
+it is what a printed map does with the space around its subject and nobody
+reads it as a claim. The failures below were all failures of *alignment*: coarse
+outlines, clip boxes, halos that had to follow a coast. There is nothing to
+align here, nothing to clip, and no second geometry to keep in step with the
+first. The note at the end of this section already said it — land is the honest
+primitive — and the answer was to stop drawing water at all and let the ground
+be water by default.
+
+`build-coast.py` and its projection recovery stay on the branch, unused. They
+are the right tool if real coastlines are ever wanted for their own sake.
 
 What failed, so it is not tried a third time the same way:
 
@@ -927,6 +941,22 @@ are in, which is how the button beside it already reads — the expand icon
 expands. Checking where the full screen button actually was turned up that the
 end card had no corner row at all, and that is the card you sit on longest; it
 has one now, so full screen is reachable from there too.
+
+**Blue means water, and nothing else.** It is the one hue in the game that is
+not paper, ink or a verdict, and it earns that by being reserved. Scattering
+blue accents around the chrome for visual interest would cost the map the one
+colour that says, instantly and without being learned, *this is not somewhere
+you can tap*. The rule is worth more than the decoration.
+
+Two places take it: the map area, and the magnifier's disc, which is a window
+onto the same map and would look like a hole if it did not. In landscape the
+empty rail beside the map takes it too — it holds nothing but two floating
+buttons, and a strip of shore between the water and the screen edge is worse
+than more water.
+
+One thing fell out of it: the phone's own status bar was reading `--base`, which
+was close enough while the page and the header were both near-black. It reads
+`--panel` now, because the header is the surface it actually sits above.
 
 **Character.** Two touches, one value each so either can be turned off by
 setting it to `none`. `--grain` is a tiled turbulence, desaturated, at an

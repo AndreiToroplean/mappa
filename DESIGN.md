@@ -771,12 +771,33 @@ every one of those numbers is a guess about how text wraps at a width you do not
 control, and it has to be re-guessed whenever the copy changes. A window-derived
 height needs no such guess.
 
-The end-of-run card carries the same switchers and the same board, and gets the
-same treatment from the same rules — they are keyed on a `menu` class rather than
-on either card's id. That is not only for consistency: it is the same card in two
-states, and sharing one height means going menu -> run -> end card and back moves
-nothing on screen but the words. The pause and confirm cards are not menus and
-keep their content-sized height, which is right for a card holding two buttons.
+The end-of-run card carries the same board and gets the same treatment from the
+same rules — they are keyed on a `menu` class rather than on either card's id.
+That is not only for consistency: it is the same card in two states, and sharing
+one height means going menu -> run -> end card and back moves nothing on screen
+but the words. It matters more now that the two cards hold different controls,
+since a height taken from the contents would make them different sizes. The
+pause and confirm cards are not menus and keep their content-sized height, which
+is right for a card holding two buttons.
+
+## The end card reports, the start card configures
+
+Both cards had the map, mode and scoring switchers, because the end card is the
+same card in another state and inherited them. But the two ask different
+questions. The start card asks what you are about to play; the end card answers
+what you just played, and the board under it belongs to that combination. A
+switcher there quietly changed the board you were reading while you read it, and
+sat directly above a button labelled Play Again that then meant something else.
+
+So the choices are on the start card and nowhere else. Play Again repeats the
+run you just did — which is what the words say — and Main Menu is one tap away
+for anything else. The end card keeps the theme and full screen buttons, which
+are about the screen rather than about the run, and the board.
+
+`check.py` was tightened rather than relaxed to match: it asserts the start card
+labels exactly Map, Mode and Scoring, and that the end card carries none. The
+old test compared the two lists to each other, which would have passed just as
+happily if both had lost them.
 
 ## Looking at the map
 

@@ -9,7 +9,7 @@ let labels = {};     // region name -> its abbreviation <text>
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
 const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
       L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
-      L_NUDGE = layer(), L_DRIFT = layer(), L_HIT = layer();
+      L_NUDGE = layer(), L_DRIFT = layer();
 
 /* Composed label anchors, kept because the nudge arrow needs to point from one
    region to another and the anchor is the most sensible "middle" we have — it
@@ -425,7 +425,7 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT, L_HIT]
+  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
   scoredPts = {};
@@ -526,9 +526,6 @@ function compose() {
   layoutNow = L;
   svg.setAttribute('viewBox', `0 0 ${L.W.toFixed(1)} ${L.H.toFixed(1)}`);
 
-  while (L_HIT.firstChild) L_HIT.removeChild(L_HIT.firstChild);
-  const small = [];
-
   REGIONS.forEach(r => {
     const at = L.place[r.panel];
     const rings = composeRings(localRings[r.name], at.s, at.dx, at.dy);
@@ -540,21 +537,6 @@ function compose() {
     labels[r.name].setAttribute('y', ly + 4);
     anchorAt[r.name] = { x: lx, y: ly };
     if (lensPaths[r.name]) lensPaths[r.name].setAttribute('d', shapes[r.name].getAttribute('d'));
-
-    const rad = r.radius * at.s;
-    if (rad < 12) small.push({ name: r.name, x: lx, y: ly, r: rad });
-  });
-
-  // Anything whose widest inscribed circle is under ~12 units is hard to hit
-  // with a thumb, so it gets an invisible tap target at its label anchor.
-  // Tightest go last, so they sit on top of their roomier neighbours.
-  small.sort((a, b) => b.r - a.r).forEach(t => {
-    const c = document.createElementNS(NS, 'circle');
-    c.setAttribute('class', 'hit');
-    c.setAttribute('cx', t.x); c.setAttribute('cy', t.y);
-    c.setAttribute('r', Math.max(10, t.r));
-    c.dataset.name = t.name;
-    L_HIT.appendChild(c);
   });
   // Anything else drawn in composed coordinates has to be rebuilt with them.
   redrawHints();

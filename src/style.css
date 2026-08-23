@@ -163,8 +163,8 @@
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
     -webkit-touch-callout:none;                /* long-press context menu */
     -webkit-user-select:none;user-select:none} /* stray text selection on labels */
-  svg,path.state,circle.hit{touch-action:none}
-  path.state:focus,circle.hit:focus{outline:none}
+  svg,path.state{touch-action:none}
+  path.state:focus{outline:none}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--base);color:var(--text);font-family:var(--sans)}
   body{display:flex;flex-direction:column;background-image:var(--grain)}
 
@@ -259,7 +259,6 @@
     100%{fill:var(--scorefill,var(--revealfill));
          stroke:var(--scoreline,var(--revealline));stroke-width:1}
   }
-  circle.hit{fill:transparent;cursor:pointer}
   /* The miss arrow. Amber rather than red: red is the colour of the mistake
      itself, and this is the help. */
   /* Amber is the colour of help: the revealed answer, the miss arrow, and the

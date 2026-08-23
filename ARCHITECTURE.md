@@ -64,7 +64,7 @@ was wasting about three fifths of a phone's height.
 src/index.html      markup, with __CSS__ / __JS__ placeholders
 src/style.css       all styling
 src/js/01-data.js   maps (injected as __US__ / __FR__), modes, scoring, their copy
-src/js/02-map.js    building the SVG, paint layers, labels, tap targets
+src/js/02-map.js    building the SVG, paint layers, labels
 src/js/03-run.js    run lifecycle: queue, lives, clock, guesses
 src/js/04-geometry.js  screen->map coordinates, distance, resolving a position
 src/js/05-lens.js   the press-and-hold magnifier
@@ -135,19 +135,19 @@ Hawaii's in open ocean. For multi-part states the algorithm runs per landmass an
 the roomiest one wins, which is what keeps Michigan's label in the lower
 peninsula.
 
-The algorithm also returns the inscribed radius, which is reused: any state whose
-widest inscribed circle is under 12px gets an invisible circular tap target at
-the same point, because it can't reliably be hit with a thumb. That currently
-covers CT, DE, HI, MD, MA, NH, NJ, RI and VT. Maryland qualifies despite its
-size — it's long but never more than 8px thick.
+The algorithm also returns the inscribed radius, still emitted per region as `r`.
+It used to size an invisible tap circle over anything too narrow to hit with a
+thumb; nothing reads it at run time now. Small regions are the magnifier's job —
+see *Magnifier* below.
 
 ## Rendering notes
 
 SVG has no `z-index`; it paints in document order. Resolved states therefore
-*move* between six `<g>` layers as their status changes:
+*move* between the first four of eight `<g>` layers as their status changes; the
+rest hold things drawn over the map rather than regions:
 
 ```
-base  <  found  <  missed  <  answer  <  labels  <  hit targets
+base  <  found  <  missed  <  answer  <  labels  <  grouping  <  arrow  <  drift
 ```
 
 Overlays are the same problem one level up. They all share `z-index:10`, so
@@ -157,8 +157,9 @@ those to 30; `check.py` holds the list of which overlays are which, so adding on
 makes someone decide.
 
 Without this, a neighbouring unsolved state drawn later clips the outline of one
-you've already solved. Hit targets stay topmost so clicks still land, which means
-the handler has to explicitly ignore clicks on already-found states.
+you've already solved. Nothing sits above the regions to intercept a tap, so a
+click on a solved one is refused where every other refusal happens: `resolve()`
+only ever returns a selectable region.
 
 The magnifier stacks its own copy of the map the same way, and had the same bug
 until it did — the amber outline of the aimed region came out with pieces missing
@@ -224,9 +225,13 @@ is not always the one under the crosshair, since the crosshair may be over
 water or over a state already solved. Lifting over open water
 cancels without cost. Plain tapping still works and is unchanged.
 
+This is the whole answer for regions a thumb cannot land on — Rhode Island,
+Paris, Hauts-de-Seine — and the only one. A tap resolves what it lands on and
+nothing widens the target beforehand.
+
 Aiming hit-tests the real map with `isPointInFill`, not the disc and not
-`elementFromPoint` — the disc must reflect true geometry, and the oversized tap
-circles would otherwise answer for their neighbours. The disc is
+`elementFromPoint` — the disc must reflect true geometry, and `elementFromPoint`
+answers with whatever node happens to be topmost. The disc is
 `pointer-events:none` so it can float over the finger without intercepting it.
 
 The release is deliberately not "whatever was under the finger at lift-off": a

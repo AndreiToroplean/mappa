@@ -13,7 +13,7 @@ including offline.
 
 ## Geographies
 
-Two, chosen from a dropdown on both cards and remembered between visits:
+Two, chosen from a dropdown on the start card and remembered between visits:
 
 | geography | regions | source | abbreviations |
 |---|---|---|---|
@@ -274,8 +274,9 @@ key. They are not comparable — a practice run cannot fail, a département is n
 a state, and points are not misses — and merging them would bury one under
 another. Clearing a board clears only the one you are looking at.
 
-The switcher appears on both the intro and the end-of-run card, so a run can be
-followed by a different kind of run without a reload.
+The switchers live on the start card only. The end card reports a result and
+offers Play Again, Review Map and Main Menu; a different kind of run is one tap
+further away, through the menu, and nothing is reloaded either way.
 
 ## Water
 

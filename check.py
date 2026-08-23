@@ -1000,12 +1000,22 @@ if dangling:
 else:
     print(f'  every one of the {len(used | read_in_js)} names asked for is declared')
 
-# Both cards offer the same choices, since they are the same card in two states.
-picks = re.findall(r'<div class="pick[^"]*">\s*<div class="eyebrow">([^<]+)</div>', html_src)
-if len(picks) != 6 or picks[:3] != picks[3:]:
-    print(f'  FAIL the menu and the end card offer different choices: {picks}')
+# Choices belong on the start card, where a run is configured. The end card
+# reports the result and deliberately does not repeat those controls.
+# Split on the two card ids rather than parsing: a rename is a FAIL here rather
+# than a traceback, since this reads the source as text and index() would throw.
+PICK = r'<div class="pick[^"]*">\s*<div class="eyebrow">([^<]+)</div>'
+at_intro, at_end = html_src.find('id="intro"'), html_src.find('id="overlay"')
+if at_intro < 0 or at_end < at_intro:
+    print('  FAIL cannot find the start and end cards in that order')
     fails += 1
 else:
-    print(f'  both cards label the same choices: {", ".join(picks[:3])}')
+    intro_picks = re.findall(PICK, html_src[at_intro:at_end])
+    end_picks = re.findall(PICK, html_src[at_end:])
+    if intro_picks != ['Map', 'Mode', 'Scoring'] or end_picks:
+        print(f'  FAIL choices are not scoped to the start card: start={intro_picks}, end={end_picks}')
+        fails += 1
+    else:
+        print(f'  start card labels its choices; end card has none: {", ".join(intro_picks)}')
 
 sys.exit(1 if fails else 0)

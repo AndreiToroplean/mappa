@@ -344,8 +344,15 @@
     border:1px solid var(--line);border-radius:14px;
     padding:32px;width:100%;max-width:400px;box-shadow:0 18px 44px var(--shadow)}
   .card h2{margin:0;font-size:26px;letter-spacing:-0.02em}
+  /* The name, set as a mark rather than as a word. Uppercased in CSS rather
+     than typed that way, so the accessible name a screen reader announces is
+     still "Mappa" and not five letters read out one at a time. */
+  .card h2.wordmark{text-transform:uppercase;letter-spacing:.06em;font-weight:700}
   .card .sub{font-family:var(--mono);font-size:12px;color:var(--muted);
     letter-spacing:.1em;text-transform:uppercase;margin:6px 0 24px}
+  /* The tagline is a phrase, not a label, so it keeps its own capitals. The
+     rest of .sub — a run's summary line on the end card — stays uppercase. */
+  .sub.tagline{text-transform:none;letter-spacing:.04em;font-size:12.5px}
   /* The build's version, so a phone can be identified without asking it
      anything. On the tagline's own row rather than a line of its own: it costs no
      height, and the row is already the quietest text on the card. Dimmer again

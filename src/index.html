@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mappa — the world, from memory</title>
+<title>Mappa — The World from Memory</title>
 <style>
 __CSS__</style>
 <meta name="theme-color" content="#1E1810">
@@ -59,7 +59,7 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
     <button id="resumeBtn">Resume</button>
     <div class="btnrow">
       <button class="ghost" id="restartBtn">Restart</button>
-      <button class="ghost" id="quitBtn">Main menu</button>
+      <button class="ghost" id="quitBtn">Main Menu</button>
     </div>
   </div>
 </div>
@@ -90,9 +90,9 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
 
 <div class="overlay ask" id="impCard" hidden>
   <div class="card narrow">
-    <h2>Import data</h2>
+    <h2>Import Data</h2>
     <div class="sub">Boards in the file replace the ones saved here</div>
-    <button class="ghost" id="impPick">Choose a file…</button>
+    <button class="ghost" id="impPick">Choose a File…</button>
     <textarea id="impText" rows="4" spellcheck="false" autocapitalize="off"
               autocorrect="off" placeholder="…or paste an export here"></textarea>
     <div class="impnote" id="impNote"></div>
@@ -110,18 +110,18 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
 
 <div class="overlay" id="intro">
   <div class="card menu">
-    <div class="cardhead"><h2>Mappa</h2>
+    <div class="cardhead"><h2 class="wordmark">Mappa</h2>
       <div class="headbtns">
         <button class="headbtn themebtn" aria-label="Light theme" title="Light theme"><svg class="i-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.7v2.1M12 19.2v2.1M4.4 4.4l1.5 1.5M18.1 18.1l1.5 1.5M2.7 12h2.1M19.2 12h2.1M4.4 19.6l1.5-1.5M18.1 5.9l1.5-1.5"/></svg><svg class="i-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.4A8.6 8.6 0 0 1 9.6 3.6a8.6 8.6 0 1 0 10.8 10.8Z"/></svg></button>
         <button class="headbtn fsbtn" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 4H4v5.5M14.5 4H20v5.5M14.5 20H20v-5.5M9.5 20H4v-5.5"/></svg></button>
         <button class="headbtn dotsbtn" id="dataBtn" title="Your data" aria-label="Your data" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
       </div>
       <div class="pop" id="dataMenu" hidden>
-        <button id="exportBtn">Export data</button>
-        <button id="importBtn">Import data</button>
+        <button id="exportBtn">Export Data</button>
+        <button id="importBtn">Import Data</button>
         <div class="ver">__VERSION__</div>
       </div></div>
-    <div class="sub">The world, from memory</div>
+    <div class="sub tagline">The World from Memory</div>
       <div class="pick">
         <div class="eyebrow">Map</div>
         <select class="geoSel" aria-label="Choose a map">
@@ -139,8 +139,8 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
       <div class="pick quiet">
         <div class="eyebrow">Scoring</div>
         <div class="modes">
-          <button class="scoreBtn" data-score="count">Right or wrong</button>
-          <button class="scoreBtn" data-score="drift">How close</button>
+          <button class="scoreBtn" data-score="count">Right or Wrong</button>
+          <button class="scoreBtn" data-score="drift">How Close</button>
         </div>
       </div>
     <div class="board">
@@ -182,8 +182,8 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
       <div class="pick quiet">
         <div class="eyebrow">Scoring</div>
         <div class="modes">
-          <button class="scoreBtn" data-score="count">Right or wrong</button>
-          <button class="scoreBtn" data-score="drift">How close</button>
+          <button class="scoreBtn" data-score="count">Right or Wrong</button>
+          <button class="scoreBtn" data-score="drift">How Close</button>
         </div>
       </div>
     <div class="board">
@@ -199,10 +199,10 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
       <div id="boardList" class="blist"></div>
       <div class="storenote"></div>
     </div>
-    <button id="again">Play again</button>
+    <button id="again">Play Again</button>
     <div class="btnrow">
-      <button class="ghost" id="reviewBtn">Review map</button>
-      <button class="ghost" id="menuBtn">Main menu</button>
+      <button class="ghost" id="reviewBtn">Review Map</button>
+      <button class="ghost" id="menuBtn">Main Menu</button>
     </div>
   </div>
 </div>

@@ -55,8 +55,8 @@ function drawClueButton() {
   if (!el.clue) return;
   const rung = running ? nextRung() : null;
   el.clue.disabled = !rung;
-  el.clue.textContent = !rung ? 'No more clues'
-    : given.size === 0 ? 'Clue' : 'Another clue';
+  el.clue.textContent = !rung ? 'No More Clues'
+    : given.size === 0 ? 'Clue' : 'Another Clue';
 }
 
 /* A wrong guess re-opens the arrow rung and takes down the old one, which was

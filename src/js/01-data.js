@@ -71,9 +71,18 @@ function byTally(board, entry) {
 }
 
 const MODES = {
+  /* The ids are the spellings the boards were saved under and cannot change:
+     `fifty:fr:trial` is a real key with real runs in it. Only the labels are
+     the game's vocabulary, and only the labels have moved. */
   trial: {
     id: 'trial',
-    label: 'Trial',
+    label: 'Test',
+    /* Said once here, shown wherever the choice is offered. Each line has to
+       hold up as the first sentence a person reads, so none of them refers to
+       anything decided on another row — no "no hints" before hints exist, no
+       "spend it all" without saying what. */
+    note: 'Finish the whole map with no hints. Too many mistakes and the run '
+        + 'ends early.',
     capped: true,           // a run can end early; SCORING says at what
 
     insert: byTally,
@@ -82,6 +91,8 @@ const MODES = {
   practice: {
     id: 'practice',
     label: 'Practice',
+    note: 'Learn the map at your own pace. Ask for hints, and there is no way '
+        + 'to lose.',
     capped: false,
     clues: true,          // the clue ladder, arrow included
 
@@ -133,7 +144,8 @@ const PANEL_SPAN = 1000;   // what normalise() scales a panel's longest side to
 const SCORINGS = {
   count: {
     id: 'count',
-    label: 'Misses',
+    label: 'Right or wrong',
+    note: 'Nearly right counts for nothing. Keep tapping until you find it.',
     budget: 3,            // what a Trial run may spend
     pips: true,           // three lives read better as pips than as a number
     retry: true,          // a wrong tap leaves the region on the table
@@ -141,7 +153,8 @@ const SCORINGS = {
 
   drift: {
     id: 'drift',
-    label: 'Distance',
+    label: 'How close',
+    note: 'One tap per place. Get it as close as you can.',
     budget: 100,          // the purse: one full width of the geography
     pips: false,
     /* Trial ends the moment the purse runs out, so what a run has to show for

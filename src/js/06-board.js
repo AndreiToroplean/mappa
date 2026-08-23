@@ -391,6 +391,8 @@ function refreshCopy() {
     b.classList.toggle('on', b.dataset.mode === MODE.id));
   document.querySelectorAll('.scoreBtn').forEach(b =>
     b.classList.toggle('on', b.dataset.score === SCORING.id));
+  document.querySelectorAll('.modenote').forEach(n => { n.textContent = MODE.note; });
+  document.querySelectorAll('.scorenote').forEach(n => { n.textContent = SCORING.note; });
   document.querySelectorAll('.clearLabel').forEach(n => {
     n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label} · ${SCORING.label}`;
   });

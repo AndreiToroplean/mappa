@@ -920,4 +920,55 @@ if unchecked:
 else:
     print(f'  all {len(pref_keys)} exported preferences are validated on import')
 
+# ------------------------------------------------------------- the choices
+# Three labelled rows on the menu — map, mode, scoring — each with a line
+# saying what the selected option does. The line belongs to the option and not
+# to the combination, which is the only reason the copy does not multiply: four
+# options are four sentences, four combinations would be eight, and the next
+# axis would make that sixteen.
+#
+# What holds that together is independence: a line may not depend on what is
+# selected on another row. The cheap mechanical version of that rule is that no
+# line may name another axis's options, which is how the drift would start.
+print('the choices')
+data_js = (ROOT / 'src/js/01-data.js').read_text()
+
+
+def options(block):
+    i = data_js.index(block)
+    body = data_js[i:data_js.index('\n};', i)]
+    return dict(zip(re.findall(r"^\s+label: '([^']+)'", body, re.M),
+                    [n.replace("'\n        + '", '') for n in
+                     re.findall(r"note: '(.*?)',\n", body, re.S)]))
+
+
+modes = options('const MODES = {')
+scorings = options('const SCORINGS = {')
+missing = [k for k, v in {**modes, **scorings}.items() if not v.strip()]
+if len(modes) != 2 or len(scorings) != 2 or missing:
+    print(f'  FAIL an option without a line of its own: {missing or "count mismatch"}')
+    fails += 1
+else:
+    print(f'  {len(modes) + len(scorings)} options, each with a line of its own')
+
+crossed = []
+for mine, theirs in ((modes, scorings), (scorings, modes)):
+    for label, note in mine.items():
+        for other in theirs:
+            if other.lower() in note.lower():
+                crossed.append(f'{label} names {other}')
+if crossed:
+    print(f'  FAIL a line depends on another row: {"; ".join(crossed)}')
+    fails += 1
+else:
+    print('  no line names an option from the other row')
+
+# Both cards offer the same choices, since they are the same card in two states.
+picks = re.findall(r'<div class="pick[^"]*">\s*<div class="eyebrow">([^<]+)</div>', html_src)
+if len(picks) != 6 or picks[:3] != picks[3:]:
+    print(f'  FAIL the menu and the end card offer different choices: {picks}')
+    fails += 1
+else:
+    print(f'  both cards label the same choices: {", ".join(picks[:3])}')
+
 sys.exit(1 if fails else 0)

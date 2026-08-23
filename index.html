@@ -170,8 +170,8 @@
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
     -webkit-touch-callout:none;                /* long-press context menu */
     -webkit-user-select:none;user-select:none} /* stray text selection on labels */
-  svg,path.state,circle.hit{touch-action:none}
-  path.state:focus,circle.hit:focus{outline:none}
+  svg,path.state{touch-action:none}
+  path.state:focus{outline:none}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--base);color:var(--text);font-family:var(--sans)}
   body{display:flex;flex-direction:column;background-image:var(--grain)}
 
@@ -266,7 +266,6 @@
     100%{fill:var(--scorefill,var(--revealfill));
          stroke:var(--scoreline,var(--revealline));stroke-width:1}
   }
-  circle.hit{fill:transparent;cursor:pointer}
   /* The miss arrow. Amber rather than red: red is the colour of the mistake
      itself, and this is the help. */
   /* Amber is the colour of help: the revealed answer, the miss arrow, and the
@@ -952,7 +951,7 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
       <div class="pop" id="dataMenu" hidden>
         <button id="exportBtn">Export Data</button>
         <button id="importBtn">Import Data</button>
-        <div class="ver">v2.0.1</div>
+        <div class="ver">v2.0.2</div>
       </div></div>
     <div class="sub tagline">The World from Memory</div>
       <div class="pick">
@@ -1281,7 +1280,7 @@ let labels = {};     // region name -> its abbreviation <text>
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
 const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
       L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
-      L_NUDGE = layer(), L_DRIFT = layer(), L_HIT = layer();
+  L_NUDGE = layer(), L_DRIFT = layer();
 
 /* Composed label anchors, kept because the nudge arrow needs to point from one
    region to another and the anchor is the most sensible "middle" we have — it
@@ -1697,7 +1696,7 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT, L_HIT]
+  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
   scoredPts = {};
@@ -1798,9 +1797,6 @@ function compose() {
   layoutNow = L;
   svg.setAttribute('viewBox', `0 0 ${L.W.toFixed(1)} ${L.H.toFixed(1)}`);
 
-  while (L_HIT.firstChild) L_HIT.removeChild(L_HIT.firstChild);
-  const small = [];
-
   REGIONS.forEach(r => {
     const at = L.place[r.panel];
     const rings = composeRings(localRings[r.name], at.s, at.dx, at.dy);
@@ -1813,20 +1809,6 @@ function compose() {
     anchorAt[r.name] = { x: lx, y: ly };
     if (lensPaths[r.name]) lensPaths[r.name].setAttribute('d', shapes[r.name].getAttribute('d'));
 
-    const rad = r.radius * at.s;
-    if (rad < 12) small.push({ name: r.name, x: lx, y: ly, r: rad });
-  });
-
-  // Anything whose widest inscribed circle is under ~12 units is hard to hit
-  // with a thumb, so it gets an invisible tap target at its label anchor.
-  // Tightest go last, so they sit on top of their roomier neighbours.
-  small.sort((a, b) => b.r - a.r).forEach(t => {
-    const c = document.createElementNS(NS, 'circle');
-    c.setAttribute('class', 'hit');
-    c.setAttribute('cx', t.x); c.setAttribute('cy', t.y);
-    c.setAttribute('r', Math.max(10, t.r));
-    c.dataset.name = t.name;
-    L_HIT.appendChild(c);
   });
   // Anything else drawn in composed coordinates has to be rebuilt with them.
   redrawHints();
@@ -2104,8 +2086,8 @@ function userPoint(x, y) {
   return scratch.matrixTransform(m.inverse());
 }
 
-// Geometry hit test rather than elementFromPoint: inside the disc we want the
-// true shape under the crosshair, never one of the oversized tap circles.
+// Geometry hit test rather than elementFromPoint: taps and the lens should
+// resolve the same true shape under the pointer.
 /* ---- resolving a pointer position to a state --------------------------
    One resolver, shared by taps and the magnifier, so the two can never
    disagree about what a position means.
@@ -2517,11 +2499,8 @@ svg.addEventListener('contextmenu', e => e.preventDefault());
 
 svg.addEventListener('click', e => {
   if (swallowClick) return;          // this press was consumed by the magnifier
-  // An enlarged hit circle still counts, but only for a state worth picking;
-  // anything else goes through the shared resolver.
-  const tapped = e.target.dataset && e.target.dataset.name;
   const at = userPoint(e.clientX, e.clientY);
-  choose(selectable(tapped) ? tapped : resolve(e.clientX, e.clientY), at);
+  choose(resolve(e.clientX, e.clientY), at);
 });
 
 // leaderboard: one best time per regions-found tally, many entries at a full set

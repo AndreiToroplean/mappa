@@ -1,12 +1,11 @@
 /* ---- taking your data with you -------------------------------------------
-   Everything the game knows about a player is eight boards and three
-   preferences, and all of it lives in one browser's storage — which is a
+   Everything the game knows about a player is eight boards and a handful of
+   preferences, and all of it lives in one browser's localStorage — which is a
    fragile place to keep a year of runs. Chrome treats every file:// page as one
    origin, so a downloaded copy shares a bucket with every other downloaded
-   copy; the artifact runtime scopes storage to a build, so a rebuild starts
-   empty; and clearing site data takes the lot. None of that is fixable from
-   inside the page. What is fixable is being able to get the data out and put it
-   back.
+   copy; clearing site data takes the lot; and a phone is not the same browser
+   as a laptop. None of that is fixable from inside the page. What is fixable is
+   being able to get the data out and put it back.
 
    JSON, and readable JSON at that: indented, with the storage keys spelled out
    as they really are. Someone should be able to open the file and see what the
@@ -32,11 +31,11 @@ function buildVersion() {
   return v ? v.textContent.trim() : '';
 }
 
-async function readKey(key) {
-  try { return await kvGet(key); } catch (e) { return null; }
+function readKey(key) {
+  try { return kvGet(key); } catch (e) { return null; }
 }
 
-async function collectData() {
+function collectData() {
   const data = {
     fifty: DATA_FORMAT,
     exported: new Date().toISOString(),
@@ -45,14 +44,14 @@ async function collectData() {
     boards: {},
   };
   for (const k of PREF_KEYS) {
-    const v = await readKey(k);
+    const v = readKey(k);
     if (v) data.prefs[k] = v;
   }
   // Empty boards are left out rather than written as []. An import replaces
   // what the file mentions, so an empty one would quietly wipe a board that
   // only exists on the other device.
   for (const k of boardKeys()) {
-    const rows = parse(await readKey(k));
+    const rows = parse(readKey(k));
     if (rows.length) data.boards[k] = rows;
   }
   return data;
@@ -71,9 +70,9 @@ function saveFile(name, text) {
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 
-async function exportData() {
+function exportData() {
   try {
-    const data = await collectData();
+    const data = collectData();
     const runs = Object.keys(data.boards)
       .reduce((n, k) => n + data.boards[k].length, 0);
     saveFile(`fifty-data-${stamp()}.json`, JSON.stringify(data, null, 2));
@@ -136,18 +135,18 @@ function validate(text) {
   return { prefs: prefs, boards: boards, runs: runs, exported: raw.exported };
 }
 
-async function applyData(clean) {
-  for (const k in clean.boards) await kvSet(k, JSON.stringify(clean.boards[k]));
-  for (const k in clean.prefs) await kvSet(k, clean.prefs[k]);
+function applyData(clean) {
+  for (const k in clean.boards) kvSet(k, JSON.stringify(clean.boards[k]));
+  for (const k in clean.prefs) kvSet(k, clean.prefs[k]);
 
   /* The live state has to follow the file, or the menu would go on showing the
      board of whatever was selected before while claiming the data changed. The
      ordinary switchers do it, and they save the preference again on the way
      through, which is what was just written anyway. */
-  if (clean.prefs[PREF_MODE]) await setMode(clean.prefs[PREF_MODE]);
-  if (clean.prefs[PREF_SCORING]) await setScoring(clean.prefs[PREF_SCORING]);
-  if (clean.prefs[PREF_GEO]) await setGeo(clean.prefs[PREF_GEO]);
-  showBoards(await loadBoard(), null);
+  if (clean.prefs[PREF_MODE]) setMode(clean.prefs[PREF_MODE]);
+  if (clean.prefs[PREF_SCORING]) setScoring(clean.prefs[PREF_SCORING]);
+  if (clean.prefs[PREF_GEO]) setGeo(clean.prefs[PREF_GEO]);
+  showBoards(loadBoard(), null);
 }
 
 /* ---- the import card -----------------------------------------------------
@@ -301,13 +300,13 @@ if (el.impText) ['input', 'change'].forEach(ev =>
     accept(text);
   }));
 
-if (el.impGo) el.impGo.addEventListener('click', async () => {
+if (el.impGo) el.impGo.addEventListener('click', () => {
   const clean = pending;
   if (!clean) return;
   el.impGo.disabled = true;
   note('Importing…');
   try {
-    await applyData(clean);
+    applyData(clean);
     closeImport();
     flashNote(`Imported ${clean.runs} run${clean.runs === 1 ? '' : 's'}.`);
   } catch (e) {

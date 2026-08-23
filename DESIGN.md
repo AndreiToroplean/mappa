@@ -931,6 +931,40 @@ the corners and dimming Guyane to make a mood would be a bad trade.
 from the real ones. It reads `style.css` now and takes a theme as its fifth
 argument, which is the only way to look at both without a phone.
 
+## One place the data lives
+
+There were three storage backends tried in order: `window.storage` for the
+artifact runtime, `localStorage` for a downloaded file, and a plain object as a
+last resort. Now there is one, `localStorage`, because the game is published as
+a page and the other two were each solving a problem it no longer has. The
+memory object in particular was a fallback that disagreed with the note under
+the board about what "saved" means — it kept a leaderboard alive for exactly as
+long as the tab.
+
+The gain is bigger than deleting a branch. The layer is *synchronous*, so eight
+functions that never waited for anything stopped being `async`, and startup
+stopped being a promise chain.
+
+**It also exposed a bug that had been there the whole time.** The startup block
+lived at the bottom of `06-board.js` and called `drawFsButton()`, which is
+defined in `10-fullscreen.js` — four modules further down a file whose one rule
+is that a module may only use ones loaded before it. It worked because its first
+statement awaited a stored preference, and that yield let modules 07 to 13
+finish loading before the rest of it ran. Taking the promise out of storage took
+the yield with it, and startup ran at module 06's position against a full screen
+button that did not exist yet.
+
+It is `14-start.js` now, last in the file, where reading across everything else
+is the honest thing for it to do rather than an accident of scheduling. Worth
+remembering: an `await` in the wrong place can hold a load-order violation
+together for months, and removing it is what reports the violation.
+
+The one failure left is a browser that refuses to store at all — private mode
+with site data blocked, or a full quota. It is reported in the note under the
+board rather than worked around, and a write that fails mid-session says so on
+the spot instead of waiting for the next load. A leaderboard that quietly
+forgets is worse than one that says up front that it will.
+
 ## Ideas not built
 
 Blind mode — no borders drawn, landmasses only — was the idea on this list that

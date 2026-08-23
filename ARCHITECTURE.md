@@ -501,7 +501,8 @@ dark one and `:root[data-theme="light"]` overrides it. Nothing outside that
 block names a colour, with one exception noted in the file — white text on the
 danger button, which is red on both grounds.
 
-Names are by role. `--base` is the page, `--panel` is what is raised off it,
+Names are by role. `--sea` is the map area, `--base` is the page, `--panel` is
+what is raised off it,
 `--well` is what is recessed into it, `--edge` is the hairline drawn between two
 regions, `--halo` is the knockout behind a label drawn over the map, and
 `--onaccent` is text sitting on amber. The last four used to be one `--ink`,

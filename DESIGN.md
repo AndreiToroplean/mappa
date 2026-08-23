@@ -10,7 +10,7 @@ decision recorded here, change the note too.
 ## Picking this up in a new session
 
 The repo does not live on the machine that writes it. Each session starts from
-`fifty.bundle`, which Andrei keeps: `git clone fifty.bundle fifty`, then
+`mappa.bundle`, which Andrei keeps: `git clone mappa.bundle mappa`, then
 `git remote remove origin` since that origin is the bundle file. The container's
 filesystem does not survive between sessions; the bundle is the only continuity.
 
@@ -1046,9 +1046,9 @@ error.
 
 ### The line under each choice, and why it does not multiply
 
-Every option carries one sentence, shown when it is selected. **The line belongs
-to the option, never to the combination.** Four options are four sentences; four
-combinations would be eight, and the next axis would make that sixteen.
+Every option carries one sentence. **The line belongs to the option, never to
+the combination.** Four options are four sentences; four combinations would be
+eight, and the next axis would make that sixteen.
 
 The rule that makes it work: **no line may depend on what is selected on another
 row.** "Finish the whole map with no hints" is true of Test whichever scoring is
@@ -1064,12 +1064,53 @@ saying what is being spent, "one tap each" where *each* referred to nothing yet.
 Mode talks about the run — can it end, is there help. Scoring talks about a
 single tap. Neither reaches into the other's territory.
 
+### Where the lines are, and are not
+
+They were printed under each row of buttons, permanently. That spent four lines
+of card height forever to answer a question that is asked once and then never
+again — and the card is the one part of the game genuinely short of room, since
+its height comes from the window and everything it gains, the leaderboard loses.
+
+So they moved to the moment they are wanted. On a pointer they are the `title`
+of the control, which is what hover is for. On a phone they arrive as a line at
+the bottom of the screen for a few seconds after the tap that raised the
+question, and then leave. A button's hover text is *its own* line rather than
+the selected one's: hovering Practice while Test is on should say what Practice
+would do.
+
+Two details worth keeping:
+
+- The tip is raised in the click handlers, not inside `setMode()` and friends —
+  those are also how an import applies a file, and an import that changed all
+  three would stack three tips to say what nobody asked.
+- It is `pointer-events: none`. It lands near the bottom of the screen, which on
+  a phone is exactly where the next tap is coming from.
+
+The map's line is built rather than written per geography: the region count and
+the plural noun. The plural is spelled out in the data instead of being `noun`
+plus an `s`, which works for states and départements and breaks on the first
+country.
+
+**The premise went with them.** "You'll be named a state. Tap it on the map."
+was a permanent line on the card; it belongs to the map, so it is what the map's
+tip says. A player who never touches the map selector never sees it, which is
+the one thing given up here — the footer still says *Pick a map and press
+Start*, and the header names the place the moment a run begins.
+
 ### Prominence
 
 Mode is the choice people want; scoring refines it. They were two identical
 rows, which said they were equally weighty. Both are labelled now — that is the
 pattern that scales, since another axis is one more labelled block — and the
 difference is carried by size, not by one of them going unlabelled.
+
+### The version stamp
+
+It rode along on the tagline, which put it on the card at all times for the sake
+of the rare moment it is wanted. It is the last line of the dots menu now, under
+a rule and not a button — the menu is already where the things you do to your
+data live, and identifying which build a phone is running is that kind of
+errand. Findable when looked for, never noticed otherwise.
 
 ### What did not change
 

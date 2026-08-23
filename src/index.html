@@ -42,7 +42,7 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
   <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
-<footer><span id="ticker">Pick a geography and press Start.</span><button id="clue" class="cluebtn">Clue</button><button id="backBtn" class="backbtn">Results</button></footer>
+<footer><span id="ticker">Pick a map and press Start.</span><button id="clue" class="cluebtn">Clue</button><button id="backBtn" class="backbtn">Results</button></footer>
 
 <div class="lens" id="lens" hidden>
   <div class="disc">
@@ -78,6 +78,8 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
 </div>
 
 <div class="flash" id="flash" hidden><span></span></div>
+
+<div class="tip" id="tip" hidden><span></span></div>
 
 <div class="crash" id="crash" hidden></div>
 
@@ -117,10 +119,9 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
       <div class="pop" id="dataMenu" hidden>
         <button id="exportBtn">Export data</button>
         <button id="importBtn">Import data</button>
+        <div class="ver">__VERSION__</div>
       </div></div>
-    <div class="sub">The world, from memory<span class="ver">__VERSION__</span></div>
-    <p class="rules">You'll be named a <span class="geoNoun">state</span>.
-      Tap it on the map.</p>
+    <div class="sub">The world, from memory</div>
       <div class="pick">
         <div class="eyebrow">Map</div>
         <select class="geoSel" aria-label="Choose a map">
@@ -134,7 +135,6 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
           <button class="modeBtn" data-mode="trial">Test</button>
           <button class="modeBtn" data-mode="practice">Practice</button>
         </div>
-        <p class="picknote modenote"></p>
       </div>
       <div class="pick quiet">
         <div class="eyebrow">Scoring</div>
@@ -142,7 +142,6 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
           <button class="scoreBtn" data-score="count">Right or wrong</button>
           <button class="scoreBtn" data-score="drift">How close</button>
         </div>
-        <p class="picknote scorenote"></p>
       </div>
     <div class="board">
       <div class="bhead">
@@ -179,7 +178,6 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
           <button class="modeBtn" data-mode="trial">Test</button>
           <button class="modeBtn" data-mode="practice">Practice</button>
         </div>
-        <p class="picknote modenote"></p>
       </div>
       <div class="pick quiet">
         <div class="eyebrow">Scoring</div>
@@ -187,7 +185,6 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
           <button class="scoreBtn" data-score="count">Right or wrong</button>
           <button class="scoreBtn" data-score="drift">How close</button>
         </div>
-        <p class="picknote scorenote"></p>
       </div>
     <div class="board">
       <div class="bhead">

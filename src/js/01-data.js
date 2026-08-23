@@ -19,6 +19,9 @@ const GEOS = {
     id: 'us',
     label: 'United States — states',
     noun: 'state',
+    /* Written out rather than noun + 's', because the next maps are countries
+       and provinces and one of those does not pluralise that way. */
+    plural: 'states',
     all: 'All fifty',
   }, __US__, { clues: __CLUES_US__ }),
 
@@ -26,6 +29,7 @@ const GEOS = {
     id: 'fr',
     label: 'France — départements',
     noun: 'département',
+    plural: 'départements',
     all: 'All 101',
   }, __FR__, { clues: __CLUES_FR__ }),
 };

@@ -963,6 +963,17 @@ if crossed:
 else:
     print('  no line names an option from the other row')
 
+# A map's line counts its places, so every map has to say how its noun
+# pluralises. Guessing it works for states and departements and breaks on the
+# countries that are coming.
+maps = re.findall(r"noun: '([^']+)',", data_js)
+plurals = re.findall(r"plural: '([^']+)',", data_js)
+if len(plurals) != len(maps):
+    print(f'  FAIL {len(maps)} maps but {len(plurals)} plurals')
+    fails += 1
+else:
+    print(f'  all {len(maps)} maps spell out their plural')
+
 # Both cards offer the same choices, since they are the same card in two states.
 picks = re.findall(r'<div class="pick[^"]*">\s*<div class="eyebrow">([^<]+)</div>', html_src)
 if len(picks) != 6 or picks[:3] != picks[3:]:

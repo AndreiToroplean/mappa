@@ -833,4 +833,75 @@ if missing:
 else:
     print(f'  {len(loose)} full screen buttons, all styled as corner buttons')
 
+# The theme button was asked for beside the full screen one, everywhere that
+# one appears — which turned out to be two cards and not the three anyone
+# remembered, so the end card grew a head row to hold the pair. Pairing them
+# here rather than counting each: the failure to catch is a card that gets one
+# button and not the other.
+heads = re.findall(r'<div class="headbtns">(.*?)</div>', html_src, re.S)
+odd = [h for h in heads if ('fsbtn' in h) != ('themebtn' in h)]
+if odd:
+    print(f'  FAIL {len(odd)} corner row(s) with only one of the two buttons')
+    fails += 1
+elif len(heads) < 3:
+    print(f'  FAIL only {len(heads)} corner rows; the menu, the pause card and the end card each need one')
+    fails += 1
+else:
+    print(f'  {len(heads)} corner rows, each with both buttons')
+# Left of full screen, as asked, and the same way round on every card.
+if any(h.index('themebtn') > h.index('fsbtn') for h in heads):
+    print('  FAIL the theme button is not always left of the full screen one')
+    fails += 1
+
+# ------------------------------------------------------------- themes
+# A light theme is a block of overrides, and the way it fails is silence: a
+# variable left out of it falls through to the dark value, which is unreadable
+# on paper and looks like a rendering bug rather than a missing line.
+print('themes')
+css_src = (ROOT / 'src/style.css').read_text()
+
+
+def declared(block):
+    return set(re.findall(r'(--[a-z0-9]+)\s*:', block))
+
+
+def block(selector):
+    i = css_src.index(selector)
+    return css_src[i:css_src.index('\n  }', i)]
+
+
+TYPEFACES = {'--mono', '--sans'}
+dark = declared(block(':root{')) - TYPEFACES
+light = declared(block(':root[data-theme="light"]{'))
+missing = sorted(dark - light)
+extra = sorted(light - dark)
+if missing:
+    print(f'  FAIL the light theme does not set: {", ".join(missing)}')
+    fails += 1
+if extra:
+    print(f'  FAIL the light theme sets what the dark one does not: {", ".join(extra)}')
+    fails += 1
+if not missing and not extra:
+    print(f'  both themes set the same {len(dark)} values')
+
+# The ramp is read out of the palette by name; a stop renamed on one side only
+# would paint every scored region grey and report a crash to say so.
+map_js = (ROOT / 'src/js/02-map.js').read_text()
+stops = re.search(r'const STOPS = \[([^\]]*)\]', map_js).group(1)
+want = {f'--s{s.strip()}{part}' for s in stops.split(',') for part in ('fill', 'line')}
+if not want <= dark:
+    print(f'  FAIL the ramp asks for {", ".join(sorted(want - dark))}, which no theme sets')
+    fails += 1
+else:
+    print(f'  the distance ramp\'s {len(want)} stops are set by both themes')
+
+# The theme is chosen before the body renders, by a script in <head> that has
+# to name the same storage key as the module that writes it.
+key = re.search(r"const THEME_KEY = '([^']+)'", (ROOT / 'src/js/13-theme.js').read_text()).group(1)
+if f"localStorage.getItem('{key}')" not in html_src:
+    print(f'  FAIL the boot script does not read {key}, so a light theme starts dark')
+    fails += 1
+else:
+    print(f'  the boot script and the theme module agree on {key}')
+
 sys.exit(1 if fails else 0)

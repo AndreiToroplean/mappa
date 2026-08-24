@@ -840,9 +840,12 @@
 </style>
 <meta name="theme-color" content="#1E1810">
 <!-- Read before the body renders, so a light-theme player never sees a frame of
-     the dark one. The key here and THEME_KEY in the theme module are the same
-     string, and check.py holds them to it. -->
-<script>try{var t=localStorage.getItem('fifty:theme');
+     the dark one. The link wins over the stored value here for the same reason
+     it does in 14-start.js, which is where it gets saved: this only paints.
+     The key and the parameter name are both spelled again in that module, and
+     check.py holds the three together. -->
+<script>try{var q=new URLSearchParams(location.search).get('theme');
+var t=q===null?localStorage.getItem('fifty:theme'):q;
 if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
@@ -946,12 +949,13 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
       <div class="headbtns">
         <button class="headbtn themebtn" aria-label="Light theme" title="Light theme"><svg class="i-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.7v2.1M12 19.2v2.1M4.4 4.4l1.5 1.5M18.1 18.1l1.5 1.5M2.7 12h2.1M19.2 12h2.1M4.4 19.6l1.5-1.5M18.1 5.9l1.5-1.5"/></svg><svg class="i-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.4A8.6 8.6 0 0 1 9.6 3.6a8.6 8.6 0 1 0 10.8 10.8Z"/></svg></button>
         <button class="headbtn fsbtn" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 4H4v5.5M14.5 4H20v5.5M14.5 20H20v-5.5M9.5 20H4v-5.5"/></svg></button>
-        <button class="headbtn dotsbtn" id="dataBtn" title="Your data" aria-label="Your data" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
+        <button class="headbtn dotsbtn" id="dataBtn" title="More" aria-label="More" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
       </div>
       <div class="pop" id="dataMenu" hidden>
+        <button id="shareBtn">Copy Link</button>
         <button id="exportBtn">Export Data</button>
         <button id="importBtn">Import Data</button>
-        <div class="ver">v2.0.3</div>
+        <div class="ver">v2.1.0</div>
       </div></div>
     <div class="sub tagline">The World from Memory</div>
       <div class="pick">
@@ -1259,7 +1263,7 @@ let labels = {};     // region name -> its abbreviation <text>
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
 const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
       L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
-  L_NUDGE = layer(), L_DRIFT = layer();
+      L_NUDGE = layer(), L_DRIFT = layer();
 
 /* Composed label anchors, kept because the nudge arrow needs to point from one
    region to another and the anchor is the most sensible "middle" we have — it
@@ -1787,7 +1791,6 @@ function compose() {
     labels[r.name].setAttribute('y', ly + 4);
     anchorAt[r.name] = { x: lx, y: ly };
     if (lensPaths[r.name]) lensPaths[r.name].setAttribute('d', shapes[r.name].getAttribute('d'));
-
   });
   // Anything else drawn in composed coordinates has to be rebuilt with them.
   redrawHints();
@@ -1837,7 +1840,7 @@ const el = {};
  'countdown', 'countNum', 'tip', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'reviewBtn', 'menuBtn', 'backBtn', 'startBtn',
  'clearNo', 'clearYes',
- 'dataBtn', 'dataMenu', 'exportBtn', 'importBtn', 'importFile', 'impCard', 'impPick', 'impText',
+ 'dataBtn', 'dataMenu', 'shareBtn', 'exportBtn', 'importBtn', 'importFile', 'impCard', 'impPick', 'impText',
  'impNote', 'impCancel', 'impGo',
 ].forEach(id => { el[id] = $(id); });
 
@@ -2509,6 +2512,33 @@ const keyFor = (geo, mode, scoring) => scoring !== 'count'
 const boardKey = () => keyFor(GEO.id, MODE.id, SCORING.id);
 
 const PREF_KEYS = [PREF_GEO, PREF_MODE, PREF_SCORING, PREF_THEME];
+
+/* What each preference is: the values it may take, and the one in force. Asked
+   by everything that takes a preference from outside the game or hands one
+   back out — an imported file, a link read, a link written — so there is one
+   answer rather than one per door.
+
+   Functions rather than values because THEMES and themeNow() are declared in
+   module 12 and this is module 06; nothing calls them until the whole file has
+   loaded. */
+const PREFS = {
+  [PREF_GEO]:     { values: () => GEOS,     now: () => GEO && GEO.id },
+  [PREF_MODE]:    { values: () => MODES,    now: () => MODE.id },
+  [PREF_SCORING]: { values: () => SCORINGS, now: () => SCORING.id },
+  [PREF_THEME]:   { values: () => THEMES,   now: () => themeNow() },
+};
+
+/* hasOwnProperty rather than `table[value]`, because `constructor` is a
+   property of every object in JavaScript: a plain lookup says yes to
+   `MODES['constructor']` and would hand the game the Object constructor as a
+   mode. Nothing normal sends that, which is exactly why it would be found
+   late. */
+function prefLegal(key, value) {
+  const pref = PREFS[key];
+  return !!pref && typeof value === 'string'
+    && Object.prototype.hasOwnProperty.call(pref.values(), value);
+}
+
 function boardKeys() {
   const keys = [];
   for (const g in GEOS) for (const m in MODES) for (const s in SCORINGS) {
@@ -3859,11 +3889,9 @@ function validate(text) {
   }
 
   const prefs = {};
-  const known = { [PREF_GEO]: GEOS, [PREF_MODE]: MODES, [PREF_SCORING]: SCORINGS,
-                  [PREF_THEME]: THEMES };
   for (const k of PREF_KEYS) {
     const v = raw.prefs && raw.prefs[k];
-    if (typeof v === 'string' && known[k][v]) prefs[k] = v;
+    if (prefLegal(k, v)) prefs[k] = v;
   }
 
   const boards = {};
@@ -4092,7 +4120,148 @@ addEventListener('keydown', e => {
    06's position instead, against a full screen button that did not exist yet.
 
    So it lives here, where the dependency is honest rather than accidental. */
+
+/* ---- a link that says what to play ---------------------------------------
+   ?map=fr&mode=practice&scoring=drift&theme=light
+
+   Four optional parameters, one per preference, so a link can hand someone the
+   exact game you meant them to play rather than the menu and an instruction.
+   Any subset works; anything else in the query is left alone.
+
+   The values are the ones storage uses, not the ones the buttons show. That is
+   the export's rule, kept for the export's reason: a second, prettier
+   vocabulary is a second thing to keep in step, and it rots the first time an
+   axis gains an option. The cost is that Test is spelled `trial` here, which is
+   the id its boards were saved under and cannot move.
+
+   A parameter is treated as a choice the player just made. It is written to
+   storage *before* anything reads it, so the rest of startup cannot tell a link
+   from a tap on the menu, and nothing here has a second copy of what setMode()
+   and friends do. It sticks, too: follow a practice link once and practice is
+   what the game opens in tomorrow, which is what "as if they had chosen it"
+   has to mean if it means anything.
+
+   The theme is the exception, and for the reason it is always the exception —
+   applying it here would be a frame too late and a light-theme link would flash
+   dark. The boot script in <head> reads the same parameter before the body
+   renders. check.py holds the two spellings together, as it already does for
+   the storage key.
+
+   Then the parameters are taken out of the address bar. Once saved they are
+   preferences like any other, and one left in the URL would quietly win again
+   on every reload — the link would keep overriding the person's own choices
+   long after they had made them. */
+const LINK_PARAMS = {
+  map: PREF_GEO, mode: PREF_MODE, scoring: PREF_SCORING, theme: PREF_THEME,
+};
+
+/* ---- the same link, written --------------------------------------------
+   Copy Link, in the dots menu, hands back a link to the game currently set
+   up. It reads the live preferences rather than the address bar, which was
+   emptied on the way in: what you send is what you are looking at.
+
+   **The theme is left out.** It is the one preference that is about the person
+   reading rather than the game being played, and a link that flips someone's
+   screen to light because yours is light is not sharing a setup. So the shared
+   set is LINK_PARAMS minus the theme — derived from it, so a new axis is
+   shared by default and leaving one out stays a decision somebody has to make
+   rather than one made by forgetting.
+
+   It is a copy rather than a share sheet: the Web Share API is another
+   permission, absent on desktop browsers, and what a person does with the link
+   afterwards is their business. */
+const SHARE_PARAMS = Object.keys(LINK_PARAMS)
+  .filter(p => LINK_PARAMS[p] !== PREF_THEME);
+
+function shareLink() {
+  const q = SHARE_PARAMS
+    .map(p => p + '=' + encodeURIComponent(PREFS[LINK_PARAMS[p]].now()))
+    .join('&');
+  // Everything before the query, so a link is never built on top of another
+  // one and no stray parameter rides along into someone else's game.
+  return location.href.split(/[?#]/)[0] + '?' + q;
+}
+
+/* The clipboard has three answers depending on where the game is running. The
+   published page is https and has the real API; the downloaded file is not a
+   secure context, so it does not, and falls back to the old selection trick;
+   and if even that is refused the link goes in the address bar, which is the
+   one place left that a person can copy from by hand. */
+const COPIED = 'Link copied. It opens this map, mode and scoring.';
+
+function copyBySelection(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.top = '-1000px';
+  /* The page turns text selection off everywhere, which would leave nothing to
+     copy. Same exception the import box needs, for the same reason. */
+  ta.style.userSelect = 'text';
+  ta.style.webkitUserSelect = 'text';
+  document.body.appendChild(ta);
+  let ok = false;
+  try {
+    ta.select();
+    ta.setSelectionRange(0, text.length);   // iOS ignores select() on its own
+    ok = document.execCommand('copy');
+  } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function copyLink() {
+  const url = shareLink();
+  const otherwise = () => {
+    if (copyBySelection(url)) { showTip(COPIED); return; }
+    try {
+      history.replaceState(null, '', url);
+      showTip('Could not copy — the link is in the address bar.');
+    } catch (e) { showTip('This browser would not copy the link.'); }
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => showTip(COPIED), otherwise);
+      return;
+    }
+  } catch (e) { /* no clipboard at all; the fallbacks below are the answer */ }
+  otherwise();
+}
+
+if (el.shareBtn) el.shareBtn.addEventListener('click', () => {
+  showDataMenu(false);
+  copyLink();
+});
+
+function applyLink() {
+  let q;
+  try { q = new URLSearchParams(location.search); } catch (e) { return; }
+
+  let seen = false;
+  for (const param in LINK_PARAMS) {
+    const value = q.get(param);
+    if (value === null) continue;
+    // Consumed either way: a parameter the game cannot honour is still a
+    // parameter, and leaving the bad one in the bar to be retried on every
+    // reload helps nobody.
+    seen = true;
+    q.delete(param);
+    if (prefLegal(LINK_PARAMS[param], value)) kvSet(LINK_PARAMS[param], value);
+  }
+  if (!seen) return;
+
+  const rest = q.toString();
+  try {
+    history.replaceState(null, '',
+      location.pathname + (rest ? '?' + rest : '') + location.hash);
+  } catch (e) {
+    /* A file:// page will not rewrite its own URL. Nothing downstream reads
+       the query again, so the address bar is simply left as it was. */
+  }
+}
+
 (() => {
+  applyLink();
   // The geography is built separately from anything that can fail: if reading a
   // saved preference throws, the game should still start, just without
   // remembering the choice.
@@ -4102,12 +4271,17 @@ addEventListener('keydown', e => {
     savedMode = kvGet(PREF_MODE);
     savedScoring = kvGet(PREF_SCORING);
   } catch (e) { reportCrash('storage: ' + e.message); }
+  /* localStorage is the player's to edit, so what comes back out of it is
+     checked the same way an imported file is. */
+  if (!prefLegal(PREF_GEO, savedGeo)) savedGeo = null;
+  if (!prefLegal(PREF_MODE, savedMode)) savedMode = null;
+  if (!prefLegal(PREF_SCORING, savedScoring)) savedScoring = null;
   // Every choice is remembered. Trial and counting are the default reading of
   // "play the game".
   MODE = MODES[savedMode] || MODES.trial;
   SCORING = SCORINGS[savedScoring] || SCORINGS.count;
   drawFsButton();
-  loadGeography(GEOS[savedGeo] ? savedGeo : DEFAULT_GEO);
+  loadGeography(savedGeo || DEFAULT_GEO);
   refreshCopy();
   resetRun();
   el.intro.hidden = false;

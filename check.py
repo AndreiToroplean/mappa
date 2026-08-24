@@ -905,20 +905,63 @@ else:
     print(f'  the boot script and the stored preference agree on {key}')
 
 # Everything the game remembers about a player goes in the export, so every
-# preference key needs a set of legal values for the import to check it
-# against. A key added to PREF_KEYS without one throws on `known[k][v]` — at
-# import time, on someone else's file, which is the worst place to find out.
+# preference key needs a set of legal values to be checked against on the way
+# back in. One table answers for the importer and for the link; a key added to
+# PREF_KEYS without an entry there is a preference nothing validates.
 board_js = (ROOT / 'src/js/06-board.js').read_text()
-transfer_js = (ROOT / 'src/js/13-transfer.js').read_text()
+start_js = (ROOT / 'src/js/14-start.js').read_text()
 pref_keys = re.search(r'const PREF_KEYS = \[([^\]]*)\]', board_js).group(1)
 pref_keys = [k.strip() for k in pref_keys.split(',') if k.strip()]
-known = re.search(r'const known = \{(.*?)\};', transfer_js, re.S).group(1)
-unchecked = [k for k in pref_keys if f'[{k}]' not in known]
+legal = re.search(r'function prefLegal\(key, value\) \{(.*?)\n\}', board_js, re.S).group(1)
+unchecked = [k for k in pref_keys if f'[{k}]' not in legal]
 if unchecked:
-    print(f'  FAIL exported but not validated on the way back: {", ".join(unchecked)}')
+    print(f'  FAIL no legal values declared for: {", ".join(unchecked)}')
     fails += 1
 else:
-    print(f'  all {len(pref_keys)} exported preferences are validated on import')
+    print(f'  all {len(pref_keys)} preferences have a set of legal values')
+
+# A plain lookup would say yes to `constructor`, which is a property of every
+# object, so a file or a link could set the mode to the Object constructor.
+if 'hasOwnProperty' not in legal:
+    print('  FAIL prefLegal uses a plain lookup, so `constructor` is a legal value')
+    fails += 1
+else:
+    print('  and a value has to be one the table owns, not one it inherits')
+
+# ------------------------------------------------------------- the link
+# ?map=fr&mode=practice&scoring=drift&theme=light — one parameter per
+# preference, written to storage before startup reads it, so a link and a tap
+# on the menu arrive by the same road.
+print('the link')
+params = re.search(r'const LINK_PARAMS = \{(.*?)\};', start_js, re.S).group(1)
+params = dict(re.findall(r'(\w+):\s*(PREF_\w+)', params))
+# Named rather than derived from the same lines being checked: the point is that
+# these four spellings are the published surface and cannot quietly change.
+want = {'map': 'PREF_GEO', 'mode': 'PREF_MODE',
+        'scoring': 'PREF_SCORING', 'theme': 'PREF_THEME'}
+if params != want:
+    print(f'  FAIL the link parameters are {params}, not {want}')
+    fails += 1
+else:
+    print(f'  {len(params)} parameters, one per preference: {", ".join(sorted(params))}')
+
+# Every preference should be reachable by link; one that is not is a link that
+# silently plays something other than what it says.
+pref_consts = [k for k in pref_keys]
+unreachable = [k for k in pref_consts if k not in params.values()]
+if unreachable:
+    print(f'  FAIL no link parameter sets: {", ".join(unreachable)}')
+    fails += 1
+else:
+    print('  every preference can be set by a link')
+
+# The theme is applied by the boot script in <head>, a frame before the module
+# that saves it runs, so that script has to read the same parameter name.
+if f"get('{[p for p, k in params.items() if k == 'PREF_THEME'][0]}')" not in html_src:
+    print('  FAIL the boot script does not read the theme parameter, so it starts dark')
+    fails += 1
+else:
+    print('  the boot script and the link agree on the theme parameter')
 
 # ------------------------------------------------------------- the choices
 # Three labelled rows on the menu — map, mode, scoring — each with a line

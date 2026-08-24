@@ -8,9 +8,12 @@
 __CSS__</style>
 <meta name="theme-color" content="#1E1810">
 <!-- Read before the body renders, so a light-theme player never sees a frame of
-     the dark one. The key here and THEME_KEY in the theme module are the same
-     string, and check.py holds them to it. -->
-<script>try{var t=localStorage.getItem('fifty:theme');
+     the dark one. The link wins over the stored value here for the same reason
+     it does in 14-start.js, which is where it gets saved: this only paints.
+     The key and the parameter name are both spelled again in that module, and
+     check.py holds the three together. -->
+<script>try{var q=new URLSearchParams(location.search).get('theme');
+var t=q===null?localStorage.getItem('fifty:theme'):q;
 if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>

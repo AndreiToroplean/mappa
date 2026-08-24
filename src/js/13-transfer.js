@@ -108,11 +108,9 @@ function validate(text) {
   }
 
   const prefs = {};
-  const known = { [PREF_GEO]: GEOS, [PREF_MODE]: MODES, [PREF_SCORING]: SCORINGS,
-                  [PREF_THEME]: THEMES };
   for (const k of PREF_KEYS) {
     const v = raw.prefs && raw.prefs[k];
-    if (typeof v === 'string' && known[k][v]) prefs[k] = v;
+    if (prefLegal(k, v)) prefs[k] = v;
   }
 
   const boards = {};

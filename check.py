@@ -912,7 +912,7 @@ board_js = (ROOT / 'src/js/06-board.js').read_text()
 start_js = (ROOT / 'src/js/14-start.js').read_text()
 pref_keys = re.search(r'const PREF_KEYS = \[([^\]]*)\]', board_js).group(1)
 pref_keys = [k.strip() for k in pref_keys.split(',') if k.strip()]
-legal = re.search(r'function prefLegal\(key, value\) \{(.*?)\n\}', board_js, re.S).group(1)
+legal = re.search(r'const PREFS = \{(.*?)\n\};', board_js, re.S).group(1)
 unchecked = [k for k in pref_keys if f'[{k}]' not in legal]
 if unchecked:
     print(f'  FAIL no legal values declared for: {", ".join(unchecked)}')
@@ -922,7 +922,7 @@ else:
 
 # A plain lookup would say yes to `constructor`, which is a property of every
 # object, so a file or a link could set the mode to the Object constructor.
-if 'hasOwnProperty' not in legal:
+if 'hasOwnProperty' not in board_js[board_js.index('function prefLegal'):]:
     print('  FAIL prefLegal uses a plain lookup, so `constructor` is a legal value')
     fails += 1
 else:
@@ -962,6 +962,26 @@ if f"get('{[p for p, k in params.items() if k == 'PREF_THEME'][0]}')" not in htm
     fails += 1
 else:
     print('  the boot script and the link agree on the theme parameter')
+
+# Copy Link writes the same parameters it reads, minus the theme: that one is
+# about the person looking at the screen, not about the game being played.
+# Named rather than derived, because "which axes are worth sharing" is a
+# decision and this is where it is written down.
+share = re.search(r'const SHARE_PARAMS = (.*?);', start_js, re.S).group(1)
+if 'Object.keys(LINK_PARAMS)' not in share:
+    print('  FAIL the shared parameters are a second list rather than the link\'s own')
+    fails += 1
+elif 'PREF_THEME' not in share:
+    print('  FAIL the theme is not held back from a copied link')
+    fails += 1
+else:
+    print('  a copied link carries every parameter but the theme')
+
+if 'id="shareBtn"' not in html_src:
+    print('  FAIL nothing on the card copies a link')
+    fails += 1
+else:
+    print('  and there is a button to copy one')
 
 # ------------------------------------------------------------- the choices
 # Three labelled rows on the menu — map, mode, scoring — each with a line

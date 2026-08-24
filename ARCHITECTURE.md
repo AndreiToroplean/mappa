@@ -72,7 +72,7 @@ src/js/06-board.js  storage, leaderboard, end of run
 src/js/11-review.js reading the finished map: facts on tap and under the lens
 src/js/12-theme.js  choosing between the two palettes, and remembering it
 src/js/13-transfer.js  exporting and importing the player's data as JSON
-src/js/14-start.js  startup: read the preferences, build the map, show the menu
+src/js/14-start.js  startup: the link, the preferences, the map, the menu
 DESIGN.md           why it is the way it is, and the mistakes behind that
 check.py            regression harness for the pure logic (no browser needed)
 render.py           rasterises a geography as the game shows it, in either theme
@@ -499,6 +499,41 @@ carried in. A failure is a sentence on the card and leaves storage untouched.
 The Import button stays disabled until something has passed, and what passed is
 summarised — run count, board count, the date on the file — before it is
 pressed.
+
+## A link that says what to play
+
+Four optional query parameters, one per preference, so a link can hand someone
+the exact game rather than the menu and an instruction:
+
+```
+?map=fr&mode=practice&scoring=drift&theme=light
+```
+
+| parameter | values |
+|---|---|
+| `map` | `us`, `fr` |
+| `mode` | `trial` (Test), `practice` |
+| `scoring` | `count` (Right or Wrong), `drift` (How Close) |
+| `theme` | `dark`, `light` |
+
+The values are the ids storage uses, not the labels the buttons show, which is
+why Test is spelled `trial` here — see `DESIGN.md`. Any subset works, anything
+unrecognised is ignored, and any other parameter in the query is left alone.
+
+`applyLink()` in `14-start.js` writes each one to storage *before* startup reads
+it, so a link and a tap on the menu arrive by the same road and there is no
+second copy of what `setMode()` and friends do. That also makes it stick: a
+link is a choice, and the game opens the same way next time.
+
+The theme is the exception, as always — applying it in module 14 would be a
+frame too late — so the boot script in `<head>` reads the same parameter before
+the body renders. `check.py` holds the two spellings together.
+
+The parameters are then removed from the address bar with `replaceState`. Once
+saved they are ordinary preferences, and one left in the URL would win again on
+every reload, overriding whatever the person chose in between. A `file://` page
+refuses to rewrite its own URL; nothing reads the query again, so it is left as
+it is.
 
 ## Themes
 

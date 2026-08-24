@@ -1219,6 +1219,56 @@ theme test compares two palettes to each other and both can agree perfectly
 about a name that the stylesheet never uses; this one asks whether the
 stylesheet is asking for names that exist.
 
+## A link is a choice, not a mode
+
+`?map=fr&mode=practice&scoring=drift&theme=light`. The point is being able to
+send someone the game you meant them to play instead of the menu and a
+paragraph telling them what to press.
+
+**The values are storage's spellings.** `mode=trial` for the mode the buttons
+call Test, because `trial` is the id its boards were saved under and cannot
+move. A prettier vocabulary in the URL would be a second naming scheme to keep
+in step with the first, which is the mistake behind two of the bugs in this
+file, and it would rot the day an axis gains an option. Same reasoning as the
+export writing `fifty:board2` rather than something readable — one spelling,
+even where it is the uglier one.
+
+**A parameter is saved, then read like any other preference.** `applyLink()`
+writes to storage and stops; startup reads storage a few lines later and cannot
+tell where the value came from. Applying the values directly would have meant a
+second copy of what `setMode()`, `setScoring()` and `setGeo()` already do, and
+those cannot be called that early anyway — they bail out when `GEO` is unset,
+which it is until `loadGeography()` runs.
+
+It sticks, which is the same decision seen from the other end. A link that only
+lasted the session would be a fourth kind of state — not a preference, not a
+run — and the answer to "what happens if I reload" would be different for the
+same three settings depending on how they were set. Follow a practice link and
+practice is what the game opens in tomorrow.
+
+**Then they leave the address bar.** A parameter that stays is a parameter that
+wins again on the next reload, silently undoing whatever the person chose in
+between; the link would keep speaking for them for as long as the tab lived.
+Stripping them makes it a choice made once. The link itself is unharmed — it is
+somewhere else, in a message, and still works.
+
+**A value the game does not know is dropped, and the parameter still leaves the
+bar.** It is nonsense either way, and a nonsense value retried on every reload
+is worse than one thrown away. There is no error on screen: the menu shows what
+is selected, which is the answer to "did my link work" and is already there.
+
+**`hasOwnProperty`, not a truthy lookup.** `MODES['constructor']` is a function,
+because every object in JavaScript has one, so `?mode=constructor` would have
+passed a plain check and handed the game the Object constructor as a mode. The
+import path had the same hole. Both go through `prefLegal()` now, which is one
+table of legal values for everything that takes a preference from outside —
+a file, a link, or `localStorage` itself, which is the player's to edit.
+
+**The theme is read twice, as it always is.** The boot script in `<head>` reads
+the parameter as well as the key, since a theme applied by module 12 is a theme
+applied one frame late and a light-theme link would flash dark before it took.
+It only paints; `14-start.js` is still the only thing that saves.
+
 ## Ideas not built
 
 Blind mode — no borders drawn, landmasses only — was the idea on this list that

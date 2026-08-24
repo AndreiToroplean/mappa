@@ -6,7 +6,7 @@ Two maps so far — the 50 US states and the 101 French départements — and tw
 
 The name is from *mappa mundi*. It was *Fifty* to begin with, back when the only map was the fifty US states.
 
-A link can carry the setup, so you can hand someone the exact game rather than the menu: `?map=fr`, `?mode=practice`, `?scoring=drift`, `?theme=light`, in any combination. `mode=trial` is the one the buttons call Test.
+A link can carry the setup, so you can hand someone the exact game rather than the menu: `?map=fr`, `?mode=practice`, `?scoring=drift`, `?theme=light`, in any combination. `mode=trial` is the one the buttons call Test. **Copy Link**, under the dots on the menu, writes one for whatever is set up — everything but the theme, which is yours rather than the game's.
 
 **[Play](https://andreitoroplean.github.io/mappa/)** · [Play beta](https://andreitoroplean.github.io/mappa/beta/)
 

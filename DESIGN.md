@@ -1269,6 +1269,36 @@ the parameter as well as the key, since a theme applied by module 12 is a theme
 applied one frame late and a light-theme link would flash dark before it took.
 It only paints; `14-start.js` is still the only thing that saves.
 
+**The theme is the only thing a copied link leaves out.** Copy Link, in the
+dots menu, writes the link to whatever is set up now. Map, mode and scoring are
+the game; the theme is the person looking at the screen, and a link that turns
+someone's phone light because yours is light is not sharing a setup. So
+`SHARE_PARAMS` is `LINK_PARAMS` minus the theme, derived from it rather than
+listed again — a fifth preference would be shared by default, and holding one
+back stays something somebody has to decide rather than something that happens
+by forgetting.
+
+It reads the live preferences rather than the address bar, which was emptied on
+the way in. What you send is what you are looking at, which is also the only
+version of this that survives the stripping above.
+
+**Copy, not share.** The Web Share API is another permission and is missing on
+most desktop browsers, and what someone does with a link after they have it is
+their business. Three ways of copying, because where the game is running
+decides which exist: the published page is https and has the clipboard API; a
+downloaded file is not a secure context and does not, so a hidden textarea and
+`execCommand` — which needed `user-select: text` set on it, since the page turns
+selection off everywhere and there would otherwise be nothing to copy, the same
+exception the import box needed. If even that is refused the link goes into the
+address bar and the tip says so, because that is the last surface left that a
+person can copy from by hand.
+
+**The dots button is called More now, not Your data.** It held two things you
+do to your data and the version stamp, which was already stretching it; a link
+to the game is not your data at all. What the menu actually collects is the
+card's errands — the things that are neither a choice about the run nor the
+start of one.
+
 ## Ideas not built
 
 Blind mode — no borders drawn, landmasses only — was the idea on this list that

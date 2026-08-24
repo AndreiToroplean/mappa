@@ -529,6 +529,14 @@ The theme is the exception, as always — applying it in module 14 would be a
 frame too late — so the boot script in `<head>` reads the same parameter before
 the body renders. `check.py` holds the two spellings together.
 
+**Copy Link**, in the dots menu beside Export and Import, writes the same link
+back: the live map, mode and scoring, and never the theme — that one is about
+the person looking at the screen rather than the game. `SHARE_PARAMS` is
+`LINK_PARAMS` minus the theme rather than a second list. The published page is
+https and has the clipboard API; a downloaded file is not a secure context, so
+it falls back to a hidden textarea and `execCommand`, and failing that the link
+goes in the address bar, which can at least be copied by hand.
+
 The parameters are then removed from the address bar with `replaceState`. Once
 saved they are ordinary preferences, and one left in the URL would win again on
 every reload, overriding whatever the person chose in between. A `file://` page

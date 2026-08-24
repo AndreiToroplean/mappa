@@ -26,25 +26,30 @@ const boardKey = () => keyFor(GEO.id, MODE.id, SCORING.id);
 
 const PREF_KEYS = [PREF_GEO, PREF_MODE, PREF_SCORING, PREF_THEME];
 
-/* Which values each preference may take. Asked by everything that accepts one
-   from outside the game — an imported file, a link — so there is one answer
-   rather than one per entry point.
+/* What each preference is: the values it may take, and the one in force. Asked
+   by everything that takes a preference from outside the game or hands one
+   back out — an imported file, a link read, a link written — so there is one
+   answer rather than one per door.
 
-   A function rather than a const because THEMES is declared in module 12 and
-   this is module 06; nothing calls it until the whole file has loaded.
+   Functions rather than values because THEMES and themeNow() are declared in
+   module 12 and this is module 06; nothing calls them until the whole file has
+   loaded. */
+const PREFS = {
+  [PREF_GEO]:     { values: () => GEOS,     now: () => GEO && GEO.id },
+  [PREF_MODE]:    { values: () => MODES,    now: () => MODE.id },
+  [PREF_SCORING]: { values: () => SCORINGS, now: () => SCORING.id },
+  [PREF_THEME]:   { values: () => THEMES,   now: () => themeNow() },
+};
 
-   hasOwnProperty rather than `table[value]`, because `constructor` is a
+/* hasOwnProperty rather than `table[value]`, because `constructor` is a
    property of every object in JavaScript: a plain lookup says yes to
    `MODES['constructor']` and would hand the game the Object constructor as a
    mode. Nothing normal sends that, which is exactly why it would be found
    late. */
 function prefLegal(key, value) {
-  const table = {
-    [PREF_GEO]: GEOS, [PREF_MODE]: MODES,
-    [PREF_SCORING]: SCORINGS, [PREF_THEME]: THEMES,
-  }[key];
-  return !!table && typeof value === 'string'
-    && Object.prototype.hasOwnProperty.call(table, value);
+  const pref = PREFS[key];
+  return !!pref && typeof value === 'string'
+    && Object.prototype.hasOwnProperty.call(pref.values(), value);
 }
 
 function boardKeys() {

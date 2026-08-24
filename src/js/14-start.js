@@ -49,6 +49,84 @@ const LINK_PARAMS = {
   map: PREF_GEO, mode: PREF_MODE, scoring: PREF_SCORING, theme: PREF_THEME,
 };
 
+/* ---- the same link, written --------------------------------------------
+   Copy Link, in the dots menu, hands back a link to the game currently set
+   up. It reads the live preferences rather than the address bar, which was
+   emptied on the way in: what you send is what you are looking at.
+
+   **The theme is left out.** It is the one preference that is about the person
+   reading rather than the game being played, and a link that flips someone's
+   screen to light because yours is light is not sharing a setup. So the shared
+   set is LINK_PARAMS minus the theme — derived from it, so a new axis is
+   shared by default and leaving one out stays a decision somebody has to make
+   rather than one made by forgetting.
+
+   It is a copy rather than a share sheet: the Web Share API is another
+   permission, absent on desktop browsers, and what a person does with the link
+   afterwards is their business. */
+const SHARE_PARAMS = Object.keys(LINK_PARAMS)
+  .filter(p => LINK_PARAMS[p] !== PREF_THEME);
+
+function shareLink() {
+  const q = SHARE_PARAMS
+    .map(p => p + '=' + encodeURIComponent(PREFS[LINK_PARAMS[p]].now()))
+    .join('&');
+  // Everything before the query, so a link is never built on top of another
+  // one and no stray parameter rides along into someone else's game.
+  return location.href.split(/[?#]/)[0] + '?' + q;
+}
+
+/* The clipboard has three answers depending on where the game is running. The
+   published page is https and has the real API; the downloaded file is not a
+   secure context, so it does not, and falls back to the old selection trick;
+   and if even that is refused the link goes in the address bar, which is the
+   one place left that a person can copy from by hand. */
+const COPIED = 'Link copied. It opens this map, mode and scoring.';
+
+function copyBySelection(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.top = '-1000px';
+  /* The page turns text selection off everywhere, which would leave nothing to
+     copy. Same exception the import box needs, for the same reason. */
+  ta.style.userSelect = 'text';
+  ta.style.webkitUserSelect = 'text';
+  document.body.appendChild(ta);
+  let ok = false;
+  try {
+    ta.select();
+    ta.setSelectionRange(0, text.length);   // iOS ignores select() on its own
+    ok = document.execCommand('copy');
+  } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function copyLink() {
+  const url = shareLink();
+  const otherwise = () => {
+    if (copyBySelection(url)) { showTip(COPIED); return; }
+    try {
+      history.replaceState(null, '', url);
+      showTip('Could not copy — the link is in the address bar.');
+    } catch (e) { showTip('This browser would not copy the link.'); }
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => showTip(COPIED), otherwise);
+      return;
+    }
+  } catch (e) { /* no clipboard at all; the fallbacks below are the answer */ }
+  otherwise();
+}
+
+if (el.shareBtn) el.shareBtn.addEventListener('click', () => {
+  showDataMenu(false);
+  copyLink();
+});
+
 function applyLink() {
   let q;
   try { q = new URLSearchParams(location.search); } catch (e) { return; }

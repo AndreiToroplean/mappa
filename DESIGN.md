@@ -83,6 +83,10 @@ metrics, and a preview that differs from the game is worse than none.
   moving it, so what you could see and what you could press disagreed. Replaced
   first by the magnifier alone, then by marks, which are geometry rather than a
   target bolted beside geometry.
+- **A hand-drawn lon/lat window** deciding which islands are in Europe. Every
+  bound was a number somebody chose, and it was wrong about the Azores, whose
+  eastern islands sit inside a box drawn wide enough to admit Iceland. Replaced
+  by a cost against the frame, which has no bounds to choose.
 - `src/build-coast.py` stays on master unused: it holds the recovered `albersUsa`
   transform, which anything aligning to the US map will need.
 

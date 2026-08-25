@@ -13,6 +13,8 @@ Sources (fetch into package-clues/):
   france-geojson                    regions-version-simplifiee.geojson
   usa-states (npm)                  src/usa-states.ts, state capitals
   cphalpert/census-regions          census.csv, US census divisions
+  mledoze/countries                 package-eu/mledoze-countries.json, capitals
+                                    and subregions — see build-eu.py
 """
 import json, re
 from geo import ROOT
@@ -58,7 +60,34 @@ def american():
     return out
 
 
-for geo, build in (('fr', french), ('us', american)):
+def european():
+    """Capitals and groupings out of the same file the map was drawn from.
+
+    build-eu.py decides who is in the map from this metadata, so the clue table
+    cannot disagree with the region set — there is nothing here to keep in step.
+
+    The grouping is mledoze's subregion rather than the UN's four. The UN puts
+    fifteen of these forty in one Southern Europe, from Portugal to Serbia, which
+    is barely a clue; six named groups of three to ten each narrow the map about
+    as far as a US census division does, and Central and Southeast Europe are
+    what people actually say.
+    """
+    meta = json.loads((ROOT / 'package-eu' / 'mledoze-countries.json').read_text())
+    by_name = {c['name']['common']: c for c in meta}
+    ours = json.loads((ROOT / 'data' / 'eu.json').read_text())
+
+    out = {}
+    for name in ours['abbr']:
+        c = by_name.get(name)
+        assert c, f'no source record for {name}'
+        caps = c.get('capital') or []
+        assert len(caps) == 1, f'{name}: {len(caps)} capitals, expected one'
+        assert c.get('subregion'), f'{name}: no subregion'
+        out[name] = {'capital': caps[0], 'group': c['subregion']}
+    return out
+
+
+for geo, build in (('fr', french), ('us', american), ('eu', european)):
     table = build()
     ours = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
     assert set(table) == set(ours['abbr']), f'{geo}: clue table does not cover the map'
@@ -66,7 +95,13 @@ for geo, build in (('fr', french), ('us', american)):
     assert not missing, f'{geo}: no capital for {missing[:3]}'
     p = ROOT / 'data' / f'clues-{geo}.json'
     p.write_text(json.dumps(table, separators=(',', ':'), ensure_ascii=False))
-    groups = {v['group'] for v in table.values() if v.get('group')}
+    # Every grouping named has to have geometry to outline, or the clue rung
+    # offers a name and draws nothing.
+    have = set(json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+               .get('groups', {}))
+    named = {v['group'] for v in table.values() if v.get('group')}
+    assert named <= have, f'{geo}: no outline for {sorted(named - have)}'
+    groups = named
     print(f'wrote {p.name}: {len(table)} regions, '
           f'{len(groups) if groups else "no"} grouping(s)')
     for k in list(table)[:3]:

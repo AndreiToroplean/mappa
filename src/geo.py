@@ -9,6 +9,27 @@ import json, math, heapq, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
+def lambert_conic(lon, lat, lat1, lat2, lat0, lon0):
+    """Lambert conformal conic, the projection a mid-latitude country is drawn in.
+
+    Conformal, so shapes stay recognisable — which matters more here than in most
+    maps, since recognising shapes is the whole game. The two standard parallels
+    bracket the latitudes covered; between them the scale error is small enough
+    that relative sizes still read true.
+
+    y is negated: screen coordinates grow downwards.
+    """
+    r = math.radians
+    lat1, lat2, lat0, lon0 = r(lat1), r(lat2), r(lat0), r(lon0)
+    n = (math.log(math.cos(lat1) / math.cos(lat2))
+         / math.log(math.tan(math.pi / 4 + lat2 / 2) / math.tan(math.pi / 4 + lat1 / 2)))
+    F = math.cos(lat1) * math.tan(math.pi / 4 + lat1 / 2) ** n / n
+    rho = F / math.tan(math.pi / 4 + r(lat) / 2) ** n
+    rho0 = F / math.tan(math.pi / 4 + lat0 / 2) ** n
+    theta = n * (r(lon) - lon0)
+    return (rho * math.sin(theta), -(rho0 - rho * math.cos(theta)))
+
+
 def simplify(pts, tol=0.45):
     if len(pts) < 4: return pts
     out = [pts[0]]

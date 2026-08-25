@@ -73,7 +73,12 @@ def compose(geo, aspect):
         raise SystemExit(res.stderr)
     L = json.loads(res.stdout)
     regions = []
-    for r in data['regions']:
+    # Marks last, the way the game stacks them: a mark sits inside a neighbour
+    # and would otherwise be painted over by it, which is what made Liechtenstein
+    # and Andorra invisible in this rasteriser while being perfectly visible in
+    # the game. A preview that quietly differs from the thing it previews is
+    # worse than no preview.
+    for r in sorted(data['regions'], key=lambda r: bool(r.get('dot'))):
         at = L['place'][r['p']]
         rings = []
         for part in r['d'].split('M'):

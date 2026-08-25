@@ -18,7 +18,7 @@ of mledoze/countries, joined to the geometry on the ISO 3166-1 numeric code.
 import json
 from collections import Counter
 from geo import (ROOT, region, emit, normalise, bounds, simplify, span_km,
-                 lambert_conic)
+                 lambert_conic, ink_box)
 
 # The panel is normalised to a 1000-unit span for ~4,000km of Europe, so one
 # unit is about 4km — four times as coarse as France's. The tolerance follows:
@@ -51,15 +51,24 @@ EXCLUDE = {
     # sheet, and the frame then ends just past Ukraine and Finland, which reads
     # as a cropped map rather than as a hole.
     'Russia',
-    # Four countries too small to aim at. At this scale Vatican City is a fifth
-    # of a unit across and Monaco a third — a hundredth of a phone pixel, and a
-    # twenty-fifth of one under the magnifier, which is the only answer this
-    # game has for a small region. San Marino and Liechtenstein are enclaved
-    # inside a neighbour, so a tap near them is *contained* in Italy or in
-    # Switzerland and containment wins outright: they could never be found.
-    # Andorra and Malta stay, at about the size Paris is on the French map.
-    'Vatican City', 'Monaco', 'San Marino', 'Liechtenstein',
 }
+
+# Below this inscribed radius a country is drawn as a mark rather than as its
+# own outline — see region() in geo.py. Six countries fall under it: Vatican
+# City, Monaco, San Marino, Liechtenstein, Malta and Andorra.
+#
+# Calibrated against the smallest region already shipping. Hauts-de-Seine, on
+# the French map, has an inscribed radius of 3.0 local units, and the magnifier
+# is documented as the whole answer for it; 3.5 clears that with a little margin
+# and still lands under Luxembourg's 3.7, so every country with a shape worth
+# drawing keeps it. At this scale the mark is about 15km across on the ground.
+#
+# Without it these six are not merely fiddly, they are unfindable. Vatican City
+# and Monaco come out a sixth of a phone pixel across *under the magnifier*, and
+# San Marino and Liechtenstein are enclaved, so a tap near them lands inside
+# Italy or Switzerland — see stateUnder() for the rule that lets a mark inside a
+# neighbour still win.
+DOT = 3.5
 
 # Land inside this window is Europe; land outside it belongs to a European
 # country but not to the continent. Applied per polygon, by its centre, so
@@ -136,16 +145,21 @@ order.sort()
 proj = {n: [[[project(x, y) for x, y in ring] for ring in poly]
             for poly in lonlat[n]] for n in order}
 flat = [poly for n in order for poly in proj[n]]
-placed, pw, ph = normalise(flat)
-
-panels = [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1),
-           'km': round(span_km([p for n in order for p in lonlat[n]]))}]
+placed, _, _ = normalise(flat)
 
 regions, i = [], 0
 for n in order:
     k = len(proj[n])
-    regions.append(region(n, placed[i:i + k], panel=0, tol=TOL, places=0))
+    regions.append(region(n, placed[i:i + k], panel=0, tol=TOL, places=0,
+                          dot=DOT))
     i += k
+
+# Measured from the regions rather than from the projection they came out of:
+# a mark reaches further than the country under it, and the layout packs by
+# this box. See ink_box().
+_, _, pw, ph = ink_box(regions)
+panels = [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1),
+           'km': round(span_km([p for n in order for p in lonlat[n]]))}]
 
 # --------------------------------------------- grouping outlines, dissolved
 # Same trick as the US: neighbours share arc indices in a TopoJSON topology, so
@@ -174,6 +188,9 @@ for gname, uses in arc_use.items():
 
 # ISO 3166-1 alpha-2, which is what a country's abbreviation is.
 ABBR = {c['name']['common']: c['cca2'] for c in ours}
+
+marks = sorted(r['n'] for r in regions if r.get('dot'))
+print(f'    {len(marks)} drawn as marks: ' + ', '.join(marks))
 
 emit('eu.json', panels, regions, ABBR, groups=groups,
      meta={'source': 'world-atlas v2.0.2 (ISC), from Natural Earth 1:50m; '

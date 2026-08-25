@@ -28,7 +28,10 @@ let lensPaths = {};
    The tiers are the lens classes STATUS hands out, written down rather than
    collected from it: a new status whose lens class is not on this list would
    otherwise be seated nowhere at all. check.py holds the two together. */
-const LENS_TIERS = ['', 'found', 'miss'];
+/* 'dot' is not a status; it is where the marks sit, above every tier a status
+   can put a region in and below the aimed one. The disc stacks its copy of the
+   map for the same reason the map does — see L_DOT in 02-map.js. */
+const LENS_TIERS = ['', 'found', 'miss', 'dot'];
 let lensLayers = {};
 
 function buildLens() {
@@ -40,7 +43,7 @@ function buildLens() {
   lensPaths = {};
   REGIONS.forEach(r => {
     const p = document.createElementNS(NS, 'path');   // compose() sets the path
-    lensLayers[''].appendChild(p);
+    lensLayers[r.dot ? 'dot' : ''].appendChild(p);
     lensPaths[r.name] = p;
   });
 }
@@ -48,7 +51,8 @@ function buildLens() {
 // back to the layer its status earns it, whatever it was borrowing
 function seat(name) {
   if (!lensPaths[name]) return;
-  const tier = lensLayers[STATUS[status(name)].lens] || lensLayers[''];
+  const tier = isDot(name) ? lensLayers.dot
+    : lensLayers[STATUS[status(name)].lens] || lensLayers[''];
   tier.appendChild(lensPaths[name]);
 }
 

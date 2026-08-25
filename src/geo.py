@@ -112,7 +112,22 @@ def path_data(rings, places=1):
         for r in rings)
 
 
-def region(name, polys, panel=0, min_area=1.2, tol=0.45, places=1):
+def circle(cx, cy, r, places=1, sides=24):
+    """A closed ring approximating a circle, as ordinary path data.
+
+    Used for a region too small to draw at true scale — see region()'s `dot`.
+    Deliberately a plain ring rather than an SVG arc or a <circle> element: it
+    then goes through simplification, hit testing, border distance, the
+    magnifier and the score ramp as the same kind of thing as every other
+    region, and nothing downstream needs to know a mark from a shape.
+    """
+    fmt = '{:.' + str(places) + 'f}'
+    pts = [(cx + r * math.cos(2 * math.pi * i / sides),
+            cy + r * math.sin(2 * math.pi * i / sides)) for i in range(sides)]
+    return 'M' + 'L'.join(fmt.format(x) + ',' + fmt.format(y) for x, y in pts) + 'Z'
+
+
+def region(name, polys, panel=0, min_area=1.2, tol=0.45, places=1, dot=0.0):
     """Build one region from its polygons (each a list of rings).
 
     tol bounds how far the simplified outline may stray from the original, in
@@ -137,13 +152,56 @@ def region(name, polys, panel=0, min_area=1.2, tol=0.45, places=1):
         rings = [simplify(r, tol) for r in max(polys, key=lambda p: area(p[0]))]
         parts.extend(rings)
         best_pt, best_r = polylabel(rings)
-    return {
+    out = {
         'n': name,
         'p': panel,
         'd': path_data(parts, places),
         'l': [round(best_pt[0], 1), round(best_pt[1], 1)],
         'r': round(best_r, 1),
     }
+    # A country can be real, named, and still too small to aim at. Below the
+    # floor the true outline is replaced by a mark of exactly the floor radius,
+    # centred on the label anchor so it sits where the country is. One size for
+    # every mark, because a mark is a mark: scaling it would imply it still
+    # meant an area, and the whole point is that it no longer does.
+    #
+    # This is a drawing convention, not a hit target bolted on beside the
+    # drawing. That distinction is the reason to trust it: the old invisible
+    # circles widened a shape without moving it, so what you could hit and what
+    # you could see disagreed, and the gaps between them were the bug. Here the
+    # mark *is* the geometry, so they cannot disagree.
+    if dot and best_r < dot:
+        out['d'] = circle(best_pt[0], best_pt[1], dot, places)
+        out['r'] = dot
+        out['dot'] = 1
+    return out
+
+
+def ink_box(regions, panel=0):
+    """The box the *drawn* geometry of a panel occupies, from the path data.
+
+    Not the same as what normalise() measured. A region drawn as a mark rather
+    than as its own outline (see region()'s `dot`) is a circle centred on the
+    label anchor, and a mark on a country at the edge of the panel reaches
+    further out than the country did — Malta's mark hangs about two units below
+    the southernmost real coast. Two units is nothing to look at and everything
+    to the layout, which packs panels by their declared boxes and had the ink
+    spilling out of the frame in landscape.
+
+    So the box is measured from what will actually be painted, which is the only
+    thing the layout is entitled to care about.
+    """
+    xs, ys = [], []
+    for r in regions:
+        if r['p'] != panel:
+            continue
+        for part in r['d'].split('M'):
+            if not part:
+                continue
+            for q in part.rstrip('Z').split('L'):
+                a, b = q.split(',')
+                xs.append(float(a)); ys.append(float(b))
+    return min(xs), min(ys), max(xs), max(ys)
 
 
 def bounds(polys):
@@ -153,6 +211,7 @@ def bounds(polys):
 
 
 PANEL_SPAN = 1000.0
+SLACK = 0.5        # what rounding path data to whole units can move a point by
 
 
 def span_km(lonlat_polys):
@@ -233,6 +292,23 @@ def emit(path, panels, regions, abbr, groups=None, meta=None):
         if i and not panel.get('fix'):
             assert panel.get('km'), f'panel {i} is laid out and needs km'
     assert not panels[0].get('fix'), 'panel 0 is the host and cannot be fixed'
+    # The layout packs panels by the boxes declared here and assumes the ink
+    # stays inside them. Nothing else notices when it does not: the frame is
+    # still the right shape, the map still draws, and a sliver of one panel
+    # simply sits outside the picture. Asserted rather than trusted — see
+    # ink_box() for the two units of Malta that found this.
+    # Half a unit of slack, which is what the coordinate rounding can produce
+    # on its own: path data is written to whole units at the coarsest, so a
+    # point measured at 879.6 is emitted as 880. That is not the failure being
+    # looked for — a panel whose box was measured before its marks were
+    # substituted spills by two units and more.
+    for i, panel in enumerate(panels):
+        x0, y0, x1, y1 = ink_box(regions, i)
+        assert x0 >= -SLACK and y0 >= -SLACK, \
+            f"panel {i} ({panel['id']}) has ink at {x0:.1f},{y0:.1f}, before its origin"
+        assert x1 <= panel['w'] + SLACK and y1 <= panel['h'] + SLACK, \
+            (f"panel {i} ({panel['id']}) declares {panel['w']:.1f}x{panel['h']:.1f} "
+             f"but its ink reaches {x1:.1f},{y1:.1f}")
     out = {'panels': panels, 'abbr': abbr, 'regions': regions}
     if groups:
         out['groups'] = groups

@@ -13,6 +13,7 @@
      n -> name    d -> SVG path data, in its panel's local units
      l -> label anchor (pole of inaccessibility)   r -> inscribed radius there
      p -> which panel it belongs to
+     dot -> this one is drawn as a mark, not as its own outline
 */
 const GEOS = {
   us: Object.assign({
@@ -32,20 +33,41 @@ const GEOS = {
     plural: 'départements',
     all: 'All 101',
   }, __FR__, { clues: __CLUES_FR__ }),
+
+  /* The first continent, and one panel: a continent is continuous, so there is
+     nothing to inset. Land a European country owns a long way from Europe is
+     left out of the map rather than given an inset of its own — the mainland is
+     what a player looks for, and the same will be true of every continent
+     after this one. Who is in the forty, and why Russia is not, is in
+     build-eu.py. */
+  eu: Object.assign({
+    id: 'eu',
+    label: 'Europe — countries',
+    noun: 'country',
+    plural: 'countries',
+    all: 'All forty',
+  }, __EU__, { clues: __CLUES_EU__ }),
 };
 
 const DEFAULT_GEO = 'us';
 
 /* Live geography, and the values derived from it. These are reassigned rather
    than rebound per module, so every module sees the switch. */
-let GEO, REGIONS, REGION_NAMES, TOTAL, ABBR;
+let GEO, REGIONS, REGION_NAMES, TOTAL, ABBR, DOTS = [];
 
 function useGeo(id) {
   GEO = GEOS[id] || GEOS[DEFAULT_GEO];
   REGIONS = GEO.regions.map(r => ({
-    name: r.n, d: r.d, anchor: r.l, radius: r.r, panel: r.p,
+    name: r.n, d: r.d, anchor: r.l, radius: r.r, panel: r.p, dot: !!r.dot,
   }));
   REGION_NAMES = REGIONS.map(r => r.name);
+  /* Countries too small to draw at true scale, which the build replaced with a
+     mark of a fixed radius. They are ordinary regions in every respect but two:
+     they paint above the map rather than in it, and a point inside one resolves
+     to it even when a neighbour's fill covers the same point. Both follow from
+     the same fact — a mark is drawn *over* the map — and keeping them together
+     is what stops what you can see and what you can hit from disagreeing. */
+  DOTS = REGIONS.filter(r => r.dot).map(r => r.name);
   TOTAL = REGIONS.length;
   ABBR = GEO.abbr;
 }

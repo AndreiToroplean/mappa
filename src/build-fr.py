@@ -11,7 +11,8 @@ five are full-resolution only. Simplification happens here instead, which also
 keeps the tolerance under our control.
 """
 import json, math
-from geo import ROOT, region, emit, normalise, bounds, simplify, span_km
+from geo import (ROOT, region, emit, normalise, bounds, simplify, span_km,
+                 lambert_conic)
 
 # Panels are stored in local coordinates, each normalised to a 1000-unit span,
 # so tolerance is per panel: what matters is the error once drawn. The mainland
@@ -23,21 +24,12 @@ TOL_MAIN = 3.5
 TOL_INSET = 9.0
 
 # ---------------------------------------------------------------- projection
-# Lambert-93: the official French projection. Conformal conic, so shapes stay
-# recognisable, which matters when the whole game is recognising shapes.
+# Lambert-93: the official French projection. Its standard parallels and origin,
+# handed to the shared conic in geo.py.
 LAMBERT = dict(lat1=44.0, lat2=49.0, lat0=46.5, lon0=3.0)
 
-def lambert_conic(lon, lat, p=LAMBERT):
-    r = math.radians
-    lat1, lat2, lat0, lon0 = r(p['lat1']), r(p['lat2']), r(p['lat0']), r(p['lon0'])
-    n = (math.log(math.cos(lat1) / math.cos(lat2))
-         / math.log(math.tan(math.pi / 4 + lat2 / 2) / math.tan(math.pi / 4 + lat1 / 2)))
-    F = math.cos(lat1) * math.tan(math.pi / 4 + lat1 / 2) ** n / n
-    rho = F / math.tan(math.pi / 4 + r(lat) / 2) ** n
-    rho0 = F / math.tan(math.pi / 4 + lat0 / 2) ** n
-    theta = n * (r(lon) - lon0)
-    # y is negated: screen coordinates grow downwards
-    return (rho * math.sin(theta), -(rho0 - rho * math.cos(theta)))
+def lambert(lon, lat):
+    return lambert_conic(lon, lat, **LAMBERT)
 
 def local_plane(lon, lat, lon0, lat0):
     """A flat projection around one point. The overseas departements are small
@@ -71,7 +63,7 @@ panels, regions = [], []
 groups = {}
 
 # --- panel 0: the mainland, one projection so relative sizes are true ------
-proj = {c: rings_of(by_code[c], lambert_conic) for c in mainland}
+proj = {c: rings_of(by_code[c], lambert) for c in mainland}
 flat = [poly for c in mainland for poly in proj[c]]
 placed, pw, ph = normalise(flat)
 main_km = span_km([rings_of(by_code[c], lambda a, b: (a, b))[0] for c in mainland])
@@ -92,7 +84,7 @@ bx0, by0, bx1, by1 = bounds(flat)
 gscale = 1000.0 / max(bx1 - bx0, by1 - by0)
 rfeats = json.load(open(ROOT / 'package-clues' / 'regions-version-simplifiee.geojson'))
 for f in rfeats['features']:
-    polys = rings_of(f, lambert_conic)
+    polys = rings_of(f, lambert)
     parts = []
     for poly in polys:
         for ring in poly:

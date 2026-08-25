@@ -17,6 +17,26 @@ data_src = (JS / '01-data.js').read_text()
 board_src = (JS / '06-board.js').read_text()
 
 
+MARK_SIDES = 48
+
+
+def local_pts(r, mark):
+    """A region's own points, in its panel's local units.
+
+    A marked region has no path data — see region() in geo.py — so its points
+    are generated from its label anchor and the map's mark radius, which is what
+    the game does to feed the same geometry code. One place knows this, because
+    two places knowing it is how they come to disagree.
+    """
+    if r.get('dot'):
+        return [(r['l'][0] + mark * math.cos(2 * math.pi * i / MARK_SIDES),
+                 r['l'][1] + mark * math.sin(2 * math.pi * i / MARK_SIDES))
+                for i in range(MARK_SIDES)]
+    return [tuple(map(float, q.split(',')))
+            for part in r['d'].split('M') if part
+            for q in part.rstrip('Z').split('L')]
+
+
 def seg_d2(px, py, ax, ay, bx, by):
     dx, dy = bx - ax, by - ay
     if dx or dy:
@@ -232,6 +252,13 @@ def composed(d, aspect):
     for r in d['regions']:
         at = L['place'][r['p']]
         parts = []
+        if r.get('dot'):
+            pts = [(x * at['s'] + at['dx'], y * at['s'] + at['dy'])
+                   for x, y in local_pts(r, d['mark'])]
+            out.append({'n': r['n'], 'd': 'M' + 'L'.join(f'{x:.3f},{y:.3f}' for x, y in pts) + 'Z',
+                        'p': r['p'],
+                        'l': [r['l'][0] * at['s'] + at['dx'], r['l'][1] * at['s'] + at['dy']]})
+            continue
         for part in r['d'].split('M'):
             if not part:
                 continue
@@ -327,22 +354,29 @@ for geo in GEOS:
     if got != sorted(MARKS[geo]):
         bad_marks += 1
         print(f'  FAIL {geo} draws {got} as marks, expected {sorted(MARKS[geo])}')
-    # Every mark is the same size, or it is not a mark but a bad shape.
-    radii = {r['r'] for r in d['regions'] if r.get('dot')}
-    if len(radii) > 1:
+    # A mark carries no outline. If one ever did, there would be two answers to
+    # where its edge is and the drawn circle would not be the authority.
+    withgeom = [r['n'] for r in d['regions'] if r.get('dot') and r['d']]
+    if withgeom:
         bad_marks += 1
-        print(f'  FAIL {geo} marks come in {len(radii)} sizes: {sorted(radii)}')
-    # And no mark may be larger than the smallest country still drawn true, or
-    # the map would be claiming a microstate is bigger than its neighbour.
-    shapes_r = [r['r'] for r in d['regions'] if not r.get('dot')]
-    if radii and shapes_r and max(radii) >= min(shapes_r):
+        print(f'  FAIL {geo}: marks carrying outline data: {withgeom}')
+    # One radius for the whole map, and within a band that keeps it both visible
+    # unzoomed and small enough to stay a mark. Named bounds: the failure to
+    # catch is a mark quietly tuned into a blob or into nothing.
+    if got:
+        mark = d.get('mark')
+        if not mark:
+            bad_marks += 1
+            print(f'  FAIL {geo}: regions are marked but the map declares no radius')
+        elif not 5.0 <= mark <= 15.0:
+            bad_marks += 1
+            print(f'  FAIL {geo}: a mark radius of {mark} is outside 5..15 units')
+    elif d.get('mark'):
         bad_marks += 1
-        print(f'  FAIL {geo}: a mark at {max(radii)} is not smaller than the '
-              f'smallest real shape at {min(shapes_r)}')
+        print(f'  FAIL {geo}: declares a mark radius but marks nothing')
 if not bad_marks:
     n = sum(len(v) for v in MARKS.values())
-    print(f'  {n} regions drawn as marks, all of one size and smaller than '
-          f'every shape drawn true')
+    print(f'  {n} regions drawn as marks, none carrying an outline of its own')
 fails += 1 if bad_marks else 0
 
 random.seed(7)
@@ -458,9 +492,19 @@ for geo in GEOS:
     pairs = [(rnd.choice(names), rnd.choice(names)) for _ in range(60)]
 
     panel = {r['n']: r['p'] for r in d['regions']}
-    pts = {r['n']: [tuple(map(float, q.split(',')))
-                    for part in r['d'].split('M') if part
-                    for q in part.rstrip('Z').split('L')] for r in d['regions']}
+    pts = {r['n']: local_pts(r, d.get('mark', 0)) for r in d['regions']}
+
+    # driftFrom() measures against `borders`, which compose() fills in — and for
+    # a marked region it fills it from the circle rather than from path data
+    # there is none of. This probe reads the file instead of running compose(),
+    # so the marks are expanded into it first. What is under test here is the
+    # scoring arithmetic; that a mark becomes the right ring is tested by the
+    # resolver comparison above, which does run the real code.
+    drift_data = json.loads(json.dumps(d))
+    for r in drift_data['regions']:
+        if r.get('dot'):
+            r['d'] = ('M' + 'L'.join(f'{x:.3f},{y:.3f}'
+                                     for x, y in local_pts(r, d['mark'])) + 'Z')
     anchor_at = {r['n']: tuple(r['l']) for r in d['regions']}
 
     # Independent diameter: every pair on the hull, compared exhaustively. The
@@ -482,7 +526,7 @@ for geo in GEOS:
 
     # two aspect ratios: the score must come out the same in both
     for aspect in (0.6, 2.4):
-        js = (LAYOUT + DIAM + '\nconst DATA = ' + json.dumps(d) + ';\n' + """
+        js = (LAYOUT + DIAM + '\nconst DATA = ' + json.dumps(drift_data) + ';\n' + """
 const FAR = 200;
 const GEO = {panels: DATA.panels};
 const PANEL_SPAN = 1000;

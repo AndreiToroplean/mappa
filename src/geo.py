@@ -112,21 +112,6 @@ def path_data(rings, places=1):
         for r in rings)
 
 
-def circle(cx, cy, r, places=1, sides=24):
-    """A closed ring approximating a circle, as ordinary path data.
-
-    Used for a region too small to draw at true scale — see region()'s `dot`.
-    Deliberately a plain ring rather than an SVG arc or a <circle> element: it
-    then goes through simplification, hit testing, border distance, the
-    magnifier and the score ramp as the same kind of thing as every other
-    region, and nothing downstream needs to know a mark from a shape.
-    """
-    fmt = '{:.' + str(places) + 'f}'
-    pts = [(cx + r * math.cos(2 * math.pi * i / sides),
-            cy + r * math.sin(2 * math.pi * i / sides)) for i in range(sides)]
-    return 'M' + 'L'.join(fmt.format(x) + ',' + fmt.format(y) for x, y in pts) + 'Z'
-
-
 def region(name, polys, panel=0, min_area=1.2, tol=0.45, places=1, dot=0.0):
     """Build one region from its polygons (each a list of rings).
 
@@ -160,24 +145,22 @@ def region(name, polys, panel=0, min_area=1.2, tol=0.45, places=1, dot=0.0):
         'r': round(best_r, 1),
     }
     # A country can be real, named, and still too small to aim at. Below the
-    # floor the true outline is replaced by a mark of exactly the floor radius,
-    # centred on the label anchor so it sits where the country is. One size for
-    # every mark, because a mark is a mark: scaling it would imply it still
-    # meant an area, and the whole point is that it no longer does.
+    # floor its outline is thrown away and it is marked instead: the game draws
+    # a circle at the label anchor, at the geography's own mark radius.
     #
-    # This is a drawing convention, not a hit target bolted on beside the
-    # drawing. That distinction is the reason to trust it: the old invisible
-    # circles widened a shape without moving it, so what you could hit and what
-    # you could see disagreed, and the gaps between them were the bug. Here the
-    # mark *is* the geometry, so they cannot disagree.
+    # Nothing is emitted for it but the flag. The centre is the label anchor,
+    # which every region already carries, and the radius belongs to the map
+    # rather than to the country — one size for every mark, because a mark is a
+    # mark and scaling it would imply it still meant an area. Keeping no
+    # geometry is the point: there is no outline here to fall out of step with
+    # what gets drawn.
     if dot and best_r < dot:
-        out['d'] = circle(best_pt[0], best_pt[1], dot, places)
-        out['r'] = dot
+        out['d'] = ''
         out['dot'] = 1
     return out
 
 
-def ink_box(regions, panel=0):
+def ink_box(regions, panel=0, mark=0.0):
     """The box the *drawn* geometry of a panel occupies, from the path data.
 
     Not the same as what normalise() measured. A region drawn as a mark rather
@@ -194,6 +177,14 @@ def ink_box(regions, panel=0):
     xs, ys = [], []
     for r in regions:
         if r['p'] != panel:
+            continue
+        # A marked region carries no outline; what gets drawn is a circle of the
+        # map's mark radius about its label anchor, and that is what has to fit.
+        if r.get('dot'):
+            xs += [r['l'][0] - mark, r['l'][0] + mark]
+            ys += [r['l'][1] - mark, r['l'][1] + mark]
+            continue
+        if not r['d']:
             continue
         for part in r['d'].split('M'):
             if not part:
@@ -275,7 +266,7 @@ def pin(polys, host_origin=(0.0, 0.0)):
                          'y': round(dy - host_origin[1], 1), 's': 1}}
 
 
-def emit(path, panels, regions, abbr, groups=None, meta=None):
+def emit(path, panels, regions, abbr, groups=None, meta=None, mark=None):
     """Write a geography: panels in local coordinates, and the regions in them.
 
     No view box and no placement — see normalise(). The game composes these
@@ -303,13 +294,17 @@ def emit(path, panels, regions, abbr, groups=None, meta=None):
     # looked for — a panel whose box was measured before its marks were
     # substituted spills by two units and more.
     for i, panel in enumerate(panels):
-        x0, y0, x1, y1 = ink_box(regions, i)
+        x0, y0, x1, y1 = ink_box(regions, i, mark or 0.0)
         assert x0 >= -SLACK and y0 >= -SLACK, \
             f"panel {i} ({panel['id']}) has ink at {x0:.1f},{y0:.1f}, before its origin"
         assert x1 <= panel['w'] + SLACK and y1 <= panel['h'] + SLACK, \
             (f"panel {i} ({panel['id']}) declares {panel['w']:.1f}x{panel['h']:.1f} "
              f"but its ink reaches {x1:.1f},{y1:.1f}")
+    if any(r.get('dot') for r in regions):
+        assert mark, 'regions are marked but no mark radius was given'
     out = {'panels': panels, 'abbr': abbr, 'regions': regions}
+    if mark:
+        out['mark'] = mark
     if groups:
         out['groups'] = groups
     if meta:

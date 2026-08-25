@@ -163,8 +163,8 @@
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
     -webkit-touch-callout:none;                /* long-press context menu */
     -webkit-user-select:none;user-select:none} /* stray text selection on labels */
-  svg,path.state{touch-action:none}
-  path.state:focus{outline:none}
+  svg,.state{touch-action:none}
+  .state:focus{outline:none}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--base);color:var(--text);font-family:var(--sans)}
   body{display:flex;flex-direction:column;background-image:var(--grain)}
 
@@ -209,19 +209,19 @@
   /* The map, by id. As a bare `svg` rule this reached every icon on the page,
      each of which then had to override it — one missed override away from the
      same bug twice. */
-  #map{width:100%;height:100%;max-height:100%;display:block}  path.state{fill:var(--land);stroke:var(--edge);stroke-width:1;cursor:pointer;
+  #map{width:100%;height:100%;max-height:100%;display:block}  .state{fill:var(--land);stroke:var(--edge);stroke-width:1;cursor:pointer;
     transition:fill .15s}
-  path.state:hover{fill:var(--landhi)}
-  path.state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
-  path.state.miss{fill:var(--missfill);stroke:var(--missline);stroke-width:1;cursor:default}
-  path.state.reveal{fill:var(--revealfill);stroke:var(--revealline);stroke-width:1}
+  .state:hover{fill:var(--landhi)}
+  .state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
+  .state.miss{fill:var(--missfill);stroke:var(--missline);stroke-width:1;cursor:default}
+  .state.reveal{fill:var(--revealfill);stroke:var(--revealline);stroke-width:1}
   /* Fill and stroke come from paintScore(), inline, one colour per score. */
-  path.state.scored{stroke-width:1;cursor:default;pointer-events:none}
+  .state.scored{stroke-width:1;cursor:default;pointer-events:none}
   /* A wrong tap under distance scoring, which is a moment rather than a state.
      Only the outline: filling it would read as the region having *become*
      something, which is what a filled shape means everywhere else in the game,
      and this one is still open and may be the region named next. */
-  path.state.wrongflash{stroke:var(--red);stroke-width:2.4;
+  .state.wrongflash{stroke:var(--red);stroke-width:2.4;
     animation:wrongfade 1600ms ease-out forwards}
   @keyframes wrongfade{
     0%{stroke:var(--missline);stroke-width:3.2}
@@ -237,7 +237,7 @@
      its colour as an inline style, which a class cannot outrank but an
      animation can; ending the animation rather than freezing it hands the
      region its own colour back at the moment the class is removed. */
-  path.state.pickflash{animation:pickfade 1600ms ease-out}
+  .state.pickflash{animation:pickfade 1600ms ease-out}
   @keyframes pickfade{
     0%{stroke:var(--revealline);stroke-width:3.4}
     60%{stroke:var(--revealline);stroke-width:2.4}
@@ -252,7 +252,7 @@
      and is set inline. paintScore() publishes it as --scorefill/--scoreline for
      exactly this, since keyframes can read a custom property off the element
      and an animation is the only thing that outranks an inline style. */
-  path.state.answerflash{animation:answerfade 1600ms ease-out}
+  .state.answerflash{animation:answerfade 1600ms ease-out}
   @keyframes answerfade{
     0%{fill:var(--revealfill);stroke:var(--revealline);stroke-width:2.6}
     58%{fill:var(--revealfill);stroke:var(--revealline);stroke-width:2.6}
@@ -691,7 +691,7 @@
   }
 
   /* the finished map takes a breath of its own */
-  body.won path.state.found{animation:winpulse 1.5s ease-out}
+  body.won .state.found{animation:winpulse 1.5s ease-out}
   @keyframes winpulse{
     0%{fill:var(--found)}
     30%{fill:var(--foundmid)}

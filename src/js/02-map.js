@@ -394,6 +394,30 @@ function chooseLayout(aspect, panels) {
 let localRings = {};    // region name -> rings in its panel's local units
 let layoutNow = null;
 
+/* The ring the distance code measures against, for a region drawn as a circle.
+
+   Everything geometric in the game speaks rings: borderDist2, nearestSelectable,
+   nearestPointOn, the panel diameter. Rather than teach each of them about
+   circles, the circle is handed to them as a fine polygon — and it is *derived
+   from the same centre and radius the circle is drawn from*, every time the map
+   composes, so the two cannot drift. That is the distinction from the invisible
+   tap circles this replaces: those were an independent target sitting beside a
+   shape, and independence was the bug.
+
+   Forty-eight sides puts the polygon within a fiftieth of a percent of the true
+   circle, which is far below anything a score or a snap can notice. */
+const MARK_SIDES = 48;
+
+function ringOfMark(at) {
+  const out = [];
+  for (let i = 0; i < MARK_SIDES; i++) {
+    const a = 2 * Math.PI * i / MARK_SIDES;
+    out.push(at[0] + GEO.mark * Math.cos(a), at[1] + GEO.mark * Math.sin(a));
+  }
+  out.push(out[0], out[1]);      // closed, the way parseRings leaves a ring
+  return out;
+}
+
 function parseRings(d) {
   return d.split('M').filter(Boolean).map(ring => {
     const pairs = ring.replace(/Z$/, '').split('L');
@@ -416,6 +440,23 @@ function composeRings(rings, s, dx, dy) {
     }
     return out;
   });
+}
+
+function setCircle(node, cx, cy, r) {
+  node.setAttribute('cx', cx.toFixed(1));
+  node.setAttribute('cy', cy.toFixed(1));
+  node.setAttribute('r', r.toFixed(1));
+}
+
+/* The disc holds a second element per region and has to be given the same
+   geometry, whichever kind it is. */
+function copyShape(from, to) {
+  if (from.tagName === 'circle') {
+    setCircle(to, +from.getAttribute('cx'), +from.getAttribute('cy'),
+              +from.getAttribute('r'));
+  } else {
+    to.setAttribute('d', from.getAttribute('d'));
+  }
 }
 
 function pathFrom(rings) {
@@ -442,10 +483,15 @@ function buildMap() {
   panelOf = {};
 
   REGIONS.forEach(r => {
-    localRings[r.name] = parseRings(r.d);
+    localRings[r.name] = r.dot ? [ringOfMark(r.anchor)] : parseRings(r.d);
     panelOf[r.name] = r.panel;
 
-    const p = document.createElementNS(NS, 'path');
+    /* A marked country is a <circle>, not a path approximating one. A
+       twenty-four-sided ring two pixels across renders as a visibly lopsided
+       blob, and the browser can draw a true circle at any size for free. It
+       also scales with the magnifier without being asked, since the disc zooms
+       by viewBox — the mark grows exactly as much as the land around it. */
+    const p = document.createElementNS(NS, r.dot ? 'circle' : 'path');
     p.setAttribute('class', 'state');
     p.dataset.name = r.name;
     (r.dot ? L_DOT : L_BASE).appendChild(p);
@@ -540,13 +586,20 @@ function compose() {
     const at = L.place[r.panel];
     const rings = composeRings(localRings[r.name], at.s, at.dx, at.dy);
     borders[r.name] = rings;
-    shapes[r.name].setAttribute('d', pathFrom(rings));
 
     const lx = r.anchor[0] * at.s + at.dx, ly = r.anchor[1] * at.s + at.dy;
+    if (r.dot) {
+      /* Placed rather than transformed, so the mark carries the panel's scale
+         the same way every other region does and nothing has to remember it. */
+      setCircle(shapes[r.name], lx, ly, GEO.mark * at.s);
+    } else {
+      shapes[r.name].setAttribute('d', pathFrom(rings));
+    }
+
     labels[r.name].setAttribute('x', lx);
     labels[r.name].setAttribute('y', ly + 4);
     anchorAt[r.name] = { x: lx, y: ly };
-    if (lensPaths[r.name]) lensPaths[r.name].setAttribute('d', shapes[r.name].getAttribute('d'));
+    if (lensPaths[r.name]) copyShape(shapes[r.name], lensPaths[r.name]);
   });
   // Anything else drawn in composed coordinates has to be rebuilt with them.
   redrawHints();

@@ -13,7 +13,8 @@
      n -> name    d -> SVG path data, in its panel's local units
      l -> label anchor (pole of inaccessibility)   r -> inscribed radius there
      p -> which panel it belongs to
-     dot -> this one is drawn as a mark, not as its own outline
+     dot -> this one is drawn as a circle at `l`, not as an outline; it has no
+            path data at all, and the radius is GEO.mark, one for the whole map
 */
 const GEOS = {
   us: Object.assign({

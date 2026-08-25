@@ -42,7 +42,8 @@ function buildLens() {
   });
   lensPaths = {};
   REGIONS.forEach(r => {
-    const p = document.createElementNS(NS, 'path');   // compose() sets the path
+    // same element kind as the map's, so compose() can copy geometry across
+    const p = document.createElementNS(NS, r.dot ? 'circle' : 'path');
     lensLayers[r.dot ? 'dot' : ''].appendChild(p);
     lensPaths[r.name] = p;
   });

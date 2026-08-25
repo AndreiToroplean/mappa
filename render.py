@@ -13,6 +13,7 @@ It reproduces what the map area actually gets: the viewport minus the header and
 footer, then the view box fitted inside that with preserveAspectRatio meet,
 which is where the wasted space shows up.
 """
+import math
 import json, pathlib, re, subprocess, sys
 from PIL import Image, ImageDraw, ImageFont
 
@@ -81,6 +82,18 @@ def compose(geo, aspect):
     for r in sorted(data['regions'], key=lambda r: bool(r.get('dot'))):
         at = L['place'][r['p']]
         rings = []
+        if r.get('dot'):
+            # The game draws a <circle> here; this rasteriser has only polygons,
+            # so it approximates one. Finely enough that the preview is honest
+            # about size and position, which is all it is consulted for.
+            cx = r['l'][0] * at['s'] + at['dx']
+            cy = r['l'][1] * at['s'] + at['dy']
+            rad = data['mark'] * at['s']
+            rings.append([(cx + rad * math.cos(2 * math.pi * i / 64),
+                           cy + rad * math.sin(2 * math.pi * i / 64))
+                          for i in range(64)])
+            regions.append({'n': r['n'], 'rings': rings})
+            continue
         for part in r['d'].split('M'):
             if not part:
                 continue

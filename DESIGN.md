@@ -81,8 +81,12 @@ metrics, and a preview that differs from the game is worse than none.
   Land is the honest primitive.
 - **Invisible tap circles** over small regions. They widened a shape without
   moving it, so what you could see and what you could press disagreed. Replaced
-  first by the magnifier alone, then by marks, which are geometry rather than a
-  target bolted beside geometry.
+  first by the magnifier alone, then by marks — a drawn circle rather than a
+  target bolted beside a shape.
+- **Marks as polygon rings.** Correct and ugly: a 24-gon two pixels across is a
+  visibly lopsided blob. They are `<circle>` elements now. The lesson generalises
+  — reach for the SVG primitive when there is one, and keep the polygon only
+  where the maths wants one.
 - **A hand-drawn lon/lat window** deciding which islands are in Europe. Every
   bound was a number somebody chose, and it was wrong about the Azores, whose
   eastern islands sit inside a box drawn wide enough to admit Iceland. Replaced

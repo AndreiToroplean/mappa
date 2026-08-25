@@ -107,14 +107,24 @@ screen size. `borderDist2` is the primitive underneath it and underneath distanc
 scoring.
 
 **Marks.** A country can be real, named, and still too small to aim at. Below an
-inscribed radius of 3.5 local units the build replaces the outline with a circle
-of that radius and flags the region `dot`; six of Europe's forty-four qualify.
-The mark *is* the geometry, ordinary path data, so hit testing, the magnifier and
-the score ramp treat it like any other region — unlike the invisible tap circles
-it replaces, which widened a shape without moving it so that what you could see
-and what you could press disagreed. Two rules follow from a mark being drawn
-*over* the map: it keeps its own layer whatever its status, and `stateUnder` asks
-the marks first (a point inside San Marino is inside Italy too).
+inscribed radius of 3.5 local units the build throws its outline away and flags
+the region `dot`; six of Europe's forty-four qualify. The game then draws a real
+`<circle>` at the label anchor, at the map's own `mark` radius — a second number,
+because "can this be drawn truthfully" and "how big to make it visible" have no
+reason to be the same answer. Being a circle primitive rather than a polygon
+matters twice: a 24-gon a few pixels across renders as a lopsided blob, and the
+magnifier zooms by `viewBox`, so a circle grows with the land for free.
+
+Marks carry no geometry in the data at all. `borders` gets a fine polygon
+generated from the same centre and radius the circle is drawn from, every time
+the map composes, so the distance code needs no branch and the two cannot drift.
+That is the distinction from the invisible tap circles this replaces: those were
+a target independent of the shape, and the independence was the bug.
+
+Two rules follow from a mark being drawn *over* the map rather than in it: it
+keeps its own layer whatever its status, and `stateUnder` asks the marks first,
+since a point inside San Marino is inside Italy too. The panel box has to cover
+the marks as well, or one near the edge spills out of the frame.
 
 ## Axes and storage
 

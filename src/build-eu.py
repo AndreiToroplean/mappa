@@ -70,6 +70,14 @@ EXCLUDE = {
 # neighbour still win.
 DOT = 3.5
 
+# How big the mark is drawn, in the same local units. Bigger than the threshold
+# on purpose: DOT asks whether a country can be drawn truthfully, MARK asks how
+# to make it visible, and the answers have no reason to be the same number. At
+# 8 units the mark is about 6px across on a portrait phone before the magnifier
+# touches it, and 24px under it — a country you can see without hunting and hit
+# without the lens if you are careful.
+MARK = 8.0
+
 # Every country keeps its largest landmass unconditionally — that is the country,
 # and dropping it would drop the country. Every *other* piece has to earn the
 # space it costs.
@@ -233,7 +241,7 @@ for n in order:
 # Measured from the regions rather than from the projection they came out of:
 # a mark reaches further than the country under it, and the layout packs by
 # this box. See ink_box().
-_, _, pw, ph = ink_box(regions)
+_, _, pw, ph = ink_box(regions, 0, MARK)
 panels = [{'id': 'mainland', 'w': round(pw, 1), 'h': round(ph, 1),
            'km': round(span_km([p for n in order for p in lonlat[n]]))}]
 
@@ -268,6 +276,6 @@ ABBR = {c['name']['common']: c['cca2'] for c in ours}
 marks = sorted(r['n'] for r in regions if r.get('dot'))
 print(f'    {len(marks)} drawn as marks: ' + ', '.join(marks))
 
-emit('eu.json', panels, regions, ABBR, groups=groups,
+emit('eu.json', panels, regions, ABBR, groups=groups, mark=MARK,
      meta={'source': 'world-atlas v2.0.2 (ISC), from Natural Earth 1:50m; '
                      'names, capitals and groupings from mledoze/countries'})

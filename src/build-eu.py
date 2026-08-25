@@ -18,7 +18,7 @@ of mledoze/countries, joined to the geometry on the ISO 3166-1 numeric code.
 import json
 from collections import Counter
 from geo import (ROOT, region, emit, normalise, bounds, simplify, span_km,
-                 lambert_conic, ink_box)
+                 lambert_conic, ink_box, area)
 
 # The panel is normalised to a 1000-unit span for ~4,000km of Europe, so one
 # unit is about 4km — four times as coarse as France's. The tolerance follows:
@@ -70,16 +70,44 @@ EXCLUDE = {
 # neighbour still win.
 DOT = 3.5
 
-# Land inside this window is Europe; land outside it belongs to a European
-# country but not to the continent. Applied per polygon, by its centre, so
-# nothing is ever cut in half: Réunion, Guadeloupe, the Canaries, Madeira, the
-# Azores, the Dutch Caribbean and Svalbard all drop out whole, while Corsica,
-# Crete, Cyprus and the Canary-sized Greek islands stay. Jan Mayen falls inside
-# it and is Norwegian, so it stays, as a speck in the Norwegian Sea.
+# Every country keeps its largest landmass unconditionally — that is the country,
+# and dropping it would drop the country. Every *other* piece has to earn the
+# space it costs.
 #
-# The point of a continent is that it is continuous. A player looking for France
-# taps the mainland, so the overseas départements would be four insets nobody
-# needs — and the same will be true of every continent after this one.
+# What it costs is the frame. Panels are laid out and scaled by their bounding
+# box, so an island outside the current box does not merely appear, it widens
+# the box and shrinks everything already in it. The Azores are the case that
+# forced this: nine islands totalling 2,300 km² were pushing the west edge out
+# by a quarter of the map's width, so a fifth of the frame was empty Atlantic
+# and continental Europe was drawn a fifth smaller than it needed to be.
+#
+# So each candidate is asked what it adds to the frame against what it is:
+# accepted when the box grows by no more than MARGIN times the island's own
+# area. Anything already inside the box costs nothing and is always kept, which
+# is most of them — Crete, Sicily, Sardinia, Corsica, Gotland, the Balearics,
+# the Danish and Greek islands. Only a piece that would extend the frame has to
+# argue for itself.
+#
+# Largest first, so the answer does not depend on the order the file happens to
+# list them in, and so a big island that has already widened the frame can make
+# a smaller neighbour free.
+#
+# On this continent the decision is not close, and the value below is not tuned:
+# every piece that is kept costs *nothing*, sitting inside the box the countries'
+# own mainlands already define, and the cheapest thing rejected asks 77 times its
+# area. Anything from about 1 to 70 gives the identical map. That is worth knowing
+# before trusting the number on a continent where it does have to arbitrate.
+#
+# This replaces a hand-drawn lon/lat window. The window worked but every bound
+# was a number somebody chose, and it was wrong about the Azores: the eastern
+# islands sit inside a box drawn to admit Iceland. A ratio has no bounds to
+# choose and will carry to the next continent unchanged.
+MARGIN = 25.0
+
+# Not a filter any more — a sanity check on the pieces that are kept
+# unconditionally. If a country's main landmass ever falls outside this, either
+# the source data has changed or the country does not belong on this map, and
+# both should stop the build rather than quietly reshape it.
 WINDOW = dict(lon=(-26.0, 42.0), lat=(34.0, 73.0))
 
 # ---------------------------------------------------------------------- input
@@ -114,36 +142,84 @@ by_code = {c['ccn3']: c for c in ours}
 assert len(by_code) == len(ours), 'two countries share a numeric code'
 
 # ------------------------------------------------------------------- geometry
-def in_window(ring):
-    """Is this polygon's centre inside the continent? Whole polygons only."""
-    xs = [p[0] for p in ring]
-    ys = [p[1] for p in ring]
-    lon = (min(xs) + max(xs)) / 2
-    lat = (min(ys) + max(ys)) / 2
-    return (WINDOW['lon'][0] <= lon <= WINDOW['lon'][1]
-            and WINDOW['lat'][0] <= lat <= WINDOW['lat'][1])
-
-
-lonlat, order, geoms = {}, [], {}
+# Every piece of every country, projected once so relative sizes are true, and
+# tagged with which country it belongs to.
+pieces = []
+order = []
 for g in topo['objects']['countries']['geometries']:
     c = by_code.get(g.get('id'))
     if not c:
         continue
     name = c['name']['common']
     raw = g['arcs'] if g['type'] == 'MultiPolygon' else [g['arcs']]
-    kept = [poly for poly in raw if in_window(ring_pts(poly[0]))]
-    assert kept, f'{name} has no land inside the continent'
-    lonlat[name] = [[ring_pts(r) for r in poly] for poly in kept]
-    geoms[name] = kept
+    for poly in raw:
+        lls = [ring_pts(r) for r in poly]
+        xy = [[project(x, y) for x, y in ring] for ring in lls]
+        pieces.append({'of': name, 'arcs': poly, 'lonlat': lls, 'xy': xy,
+                       'area': area(xy[0])})
     order.append(name)
 
 missing = sorted(set(c['name']['common'] for c in ours) - set(order))
 assert not missing, f'no geometry for {missing}'
 order.sort()
 
-# One projection over the whole continent, so relative sizes are true.
-proj = {n: [[[project(x, y) for x, y in ring] for ring in poly]
-            for poly in lonlat[n]] for n in order}
+
+def centre_lonlat(ring):
+    xs = [p[0] for p in ring]
+    ys = [p[1] for p in ring]
+    return (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+
+
+def box_of(polys):
+    xs = [x for poly in polys for ring in poly for x, y in ring]
+    ys = [y for poly in polys for ring in poly for x, y in ring]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def box_area(b):
+    return (b[2] - b[0]) * (b[3] - b[1])
+
+
+# The mainlands: one per country, the largest piece, kept whatever it costs.
+main = {}
+for pc in pieces:
+    if pc['area'] > main.get(pc['of'], {'area': -1})['area']:
+        main[pc['of']] = pc
+assert len(main) == len(order), 'a country with no pieces'
+
+for name, pc in main.items():
+    lon, lat = centre_lonlat(pc['lonlat'][0])
+    assert (WINDOW['lon'][0] <= lon <= WINDOW['lon'][1]
+            and WINDOW['lat'][0] <= lat <= WINDOW['lat'][1]), \
+        f'{name} has its main landmass at {lon:.1f},{lat:.1f}, outside Europe'
+
+kept = list(main.values())
+box = box_of([pc['xy'] for pc in kept])
+
+rest = sorted((pc for pc in pieces if pc not in kept),
+              key=lambda pc: (-pc['area'], pc['of']))
+dropped = []
+for pc in rest:
+    grown = box_of([pc['xy'], [[(box[0], box[1]), (box[2], box[3])]]])
+    cost = box_area(grown) - box_area(box)
+    if cost <= MARGIN * pc['area']:
+        kept.append(pc)
+        box = grown
+    else:
+        dropped.append((pc['of'], cost / pc['area']))
+
+print(f'    {len(kept)} landmasses kept, {len(dropped)} too costly for the frame')
+for nm in sorted({d[0] for d in dropped}):
+    n = sum(1 for d in dropped if d[0] == nm)
+    worst = max(d[1] for d in dropped if d[0] == nm)
+    print(f'      {nm}: {n} dropped, up to {worst:.0f}x their area in frame')
+
+lonlat, geoms = {}, {}
+for pc in kept:
+    lonlat.setdefault(pc['of'], []).append(pc['lonlat'])
+    geoms.setdefault(pc['of'], []).append(pc['arcs'])
+
+proj = {n: [pc['xy'] for pc in kept if pc['of'] == n] for n in order}
 flat = [poly for n in order for poly in proj[n]]
 placed, _, _ = normalise(flat)
 

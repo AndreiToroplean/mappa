@@ -5,6 +5,7 @@ package-fr/
 __pycache__/
 *.pyc
 package-clues/
+package-eu/
 package-water/
 
 # jsdom, pulled in for the probes that drive dist/mappa.html's real handlers —

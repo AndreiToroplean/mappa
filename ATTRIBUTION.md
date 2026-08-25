@@ -14,6 +14,10 @@ attribution:
                         under the Licence Ouverte. Attribution to IGN and Etalab
                         required. See data/LICENSE-france-geojson.
 
+  data/eu.json          derived from world-atlas (ISC, Mike Bostock), itself
+                        from Natural Earth 1:50m (public domain).
+                        See data/LICENSE-world-atlas.
+
   data/clues-fr.json    chef-lieux and régions from @etalab/decoupage-
                         administratif (INSEE/Etalab, Licence Ouverte);
                         région outlines from france-geojson.
@@ -22,6 +26,11 @@ attribution:
                         from cphalpert/census-regions, which states no licence —
                         the classification itself is US Census Bureau work and
                         so public domain. See data/LICENSE-clues.
+
+  data/clues-eu.json    country names, capitals and subregions from
+                        mledoze/countries (ODbL). Attribution required, and a
+                        derived database shared on the same terms.
+                        See data/LICENSE-clues-eu.
 
 All of the above permit redistribution, including commercially, so long as
 attribution is kept. Removing data/LICENSE-* would break that.

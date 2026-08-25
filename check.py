@@ -8,7 +8,7 @@ import json, math, pathlib, random, re, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
 JS = ROOT / 'src' / 'js'
-GEOS = ('us', 'fr')
+GEOS = ('us', 'fr', 'eu')
 fails = 0
 
 geo_src = (JS / '04-geometry.js').read_text()
@@ -30,9 +30,15 @@ def seg_d2(px, py, ax, ay, bx, by):
 class Ref:
     """Independent reference implementation, with bbox prefilters for speed."""
 
-    def __init__(self, regions):
+    def __init__(self, regions, dots=()):
         self.rings = {}
         self.bbox = {}
+        # Marks are consulted ahead of everything else. A mark is drawn over the
+        # map, so a point inside one is usually inside a neighbour's fill as
+        # well, and the answer has to be the thing on top. Expressed here as a
+        # separate first pass over a short list, which is a different shape from
+        # the game's loop over DOTS doing the same job.
+        self.dots = list(dots)
         for r in regions:
             rs = [[tuple(map(float, q.split(','))) for q in part.rstrip('Z').split('L')]
                   for part in r['d'].split('M') if part]
@@ -41,7 +47,23 @@ class Ref:
             ys = [p[1] for ring in rs for p in ring]
             self.bbox[r['n']] = (min(xs), min(ys), max(xs), max(ys))
 
+    def inside(self, nm, x, y):
+        b = self.bbox[nm]
+        if not (b[0] <= x <= b[2] and b[1] <= y <= b[3]):
+            return False
+        c = False
+        for ring in self.rings[nm]:
+            n = len(ring)
+            for i in range(n):
+                ax, ay = ring[i]; bx, by = ring[(i + 1) % n]
+                if (ay > y) != (by > y) and x < (bx - ax) * (y - ay) / (by - ay) + ax:
+                    c = not c
+        return c
+
     def contains(self, x, y):
+        for nm in self.dots:
+            if self.inside(nm, x, y):
+                return nm
         for nm, rs in self.rings.items():
             b = self.bbox[nm]
             if not (b[0] <= x <= b[2] and b[1] <= y <= b[3]):
@@ -85,11 +107,12 @@ class Ref:
         return 0.0 if self.contains(x, y) == nm else math.sqrt(self.border_d2(nm, x, y))
 
 
-def geometry_harness(regions, cases, dist_cases, anchor_cases, cap):
+def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=()):
     blk = geo_src[geo_src.index('const SNAP_UNITS'):]
-    blk = blk.replace(
-        blk[blk.index('function stateUnder'):blk.index('function borderDist2')],
-        'function stateUnder(u){ return polyHit(u.x, u.y); }\n\n')
+    # stateUnder is *not* stubbed. It used to be, and that hid the whole of the
+    # rule that puts marks first — a stub of a resolver cannot test the
+    # resolver. It needs only CAN_HIT, DOTS and a shapes proxy that answers a
+    # real per-region containment test, all supplied below.
     blk = blk.replace(
         blk[blk.index('function selectable'):blk.index('function segDist2')],
         'function selectable(name){ return !!name && !DEAD.has(name); }\n\n')
@@ -103,26 +126,32 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap):
     return (
         "const REGIONS = " + json.dumps([{'name': r['n'], 'd': r['d']} for r in regions]) + ";\n"
         "const REGION_NAMES = REGIONS.map(r => r.name);\n"
+        "const DOTS = " + json.dumps(dots) + ";\n"
+        "let CAN_HIT = true;\n"
         "let DEAD = new Set();\n"
-        "const shapes = new Proxy({}, { get: (_, n) => ({ isPointInFill: u => polyHit(u.x, u.y) === n }) });\n"
+        # A real point-in-fill per region, not "is this the first region
+        # containing the point": stateUnder asks each shape in turn and the old
+        # proxy could never answer yes for a mark inside its neighbour.
+        "const shapes = new Proxy({}, { get: (_, n) => ({ isPointInFill: u => polyIn(n, u.x, u.y) }) });\n"
         "const CASES = " + json.dumps(cases) + ";\n"
         "const DIST = " + json.dumps(dist_cases) + ";\n"
         "const ANCHORS = " + json.dumps(anchor_cases) + ";\n"
         """
-function polyHit(x, y){
-  for (const s of REGIONS){
-    let c = false;
-    for (const part of s.d.split('M')){
-      if(!part) continue;
-      const r = part.replace(/Z$/,'').split('L').map(q => q.split(',').map(Number));
-      for (let i = 0; i < r.length; i++){
-        const [ax,ay] = r[i], [bx,by] = r[(i+1) % r.length];
-        if ((ay > y) !== (by > y) && x < (bx-ax)*(y-ay)/(by-ay)+ax) c = !c;
-      }
+const BY_NAME = {};
+for (const s of REGIONS) BY_NAME[s.name] = s;
+function polyIn(name, x, y){
+  const s = BY_NAME[name];
+  if (!s) return false;
+  let c = false;
+  for (const part of s.d.split('M')){
+    if(!part) continue;
+    const r = part.replace(/Z$/,'').split('L').map(q => q.split(',').map(Number));
+    for (let i = 0; i < r.length; i++){
+      const [ax,ay] = r[i], [bx,by] = r[(i+1) % r.length];
+      if ((ay > y) !== (by > y) && x < (bx-ax)*(y-ay)/(by-ay)+ax) c = !c;
     }
-    if (c) return s.name;
   }
-  return null;
+  return c;
 }
 """ + blk + """
 // borders are filled by compose() in the real thing; here the regions arrive
@@ -278,6 +307,44 @@ print(f'  {"FAILED" if bad else "all panels inside the frame and non-overlapping
       f"{len(GEOS) * 9} layouts"}')
 fails += 1 if bad else 0
 
+# Which countries the map may draw as a mark instead of as their own outline.
+# Named here rather than collected from the data, because that is the decision:
+# a mark is a country whose true shape cannot be aimed at even under the
+# magnifier, and a seventh appearing — or one of these six quietly losing its
+# mark to a change in the tolerance — is something somebody should have to
+# agree to. Six microstates, and no other map has any.
+MARKS = {
+    'us': [],
+    'fr': [],
+    'eu': ['Andorra', 'Liechtenstein', 'Malta', 'Monaco', 'San Marino',
+           'Vatican City'],
+}
+print('marks')
+bad_marks = 0
+for geo in GEOS:
+    d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+    got = sorted(r['n'] for r in d['regions'] if r.get('dot'))
+    if got != sorted(MARKS[geo]):
+        bad_marks += 1
+        print(f'  FAIL {geo} draws {got} as marks, expected {sorted(MARKS[geo])}')
+    # Every mark is the same size, or it is not a mark but a bad shape.
+    radii = {r['r'] for r in d['regions'] if r.get('dot')}
+    if len(radii) > 1:
+        bad_marks += 1
+        print(f'  FAIL {geo} marks come in {len(radii)} sizes: {sorted(radii)}')
+    # And no mark may be larger than the smallest country still drawn true, or
+    # the map would be claiming a microstate is bigger than its neighbour.
+    shapes_r = [r['r'] for r in d['regions'] if not r.get('dot')]
+    if radii and shapes_r and max(radii) >= min(shapes_r):
+        bad_marks += 1
+        print(f'  FAIL {geo}: a mark at {max(radii)} is not smaller than the '
+              f'smallest real shape at {min(shapes_r)}')
+if not bad_marks:
+    n = sum(len(v) for v in MARKS.values())
+    print(f'  {n} regions drawn as marks, all of one size and smaller than '
+          f'every shape drawn true')
+fails += 1 if bad_marks else 0
+
 random.seed(7)
 
 for geo in GEOS:
@@ -287,7 +354,11 @@ for geo in GEOS:
     vx, vy, vw, vh = 0.0, 0.0, L['W'], L['H']
     print(f'{geo}: {len(regions)} regions, {len(d["panels"])} panel(s), '
           f'composed frame {vw:.0f}x{vh:.0f}')
-    ref = Ref(regions)
+    # Named, not read off the data: MARKS below says which countries the map is
+    # entitled to draw as marks, and the data has to agree. Passing the same
+    # list to both sides is then safe, because the list itself is checked.
+    dots = sorted(MARKS.get(geo, []))
+    ref = Ref(regions, dots)
 
     n_cases = 120 if geo == 'us' else 60
     cases = []
@@ -306,10 +377,18 @@ for geo in GEOS:
     for r in regions[:6]:
         dist_cases.append((r['l'][0], r['l'][1], r['n'], 0.0))
 
+    # Random points almost never land inside a mark — that is the whole problem
+    # marks exist to solve — so the centre of each one is added as a case, with
+    # nothing dead. These are the points where the rule bites: San Marino's
+    # centre is inside Italy's fill too, and Italy comes first alphabetically.
+    for nm in dots:
+        at = next(r['l'] for r in regions if r['n'] == nm)
+        cases.append((at[0], at[1], [], ref.resolve(at[0], at[1], set(), SNAP)))
+
     anchors = [(r['l'][0], r['l'][1], r['n']) for r in regions]
 
     p = pathlib.Path(f'/tmp/fifty-geom-{geo}.js')
-    p.write_text(geometry_harness(regions, cases, dist_cases, anchors, SNAP))
+    p.write_text(geometry_harness(regions, cases, dist_cases, anchors, SNAP, dots))
     r = subprocess.run(['node', str(p)], capture_output=True, text=True)
     print(r.stdout.rstrip() or r.stderr)
     fails += r.returncode
@@ -362,6 +441,13 @@ def convex_hull(pts):
         return out[:-1]
     return half(pts) + half(pts[::-1])
 
+
+# (target, missed) pairs that have to land at each end of the scale.
+ENDS = {
+    'us': (('Kansas', 'Nebraska'), ('Maine', 'California')),
+    'fr': (('Nord', 'Somme'), ('Finistère', 'Alpes-Maritimes')),
+    'eu': (('Belgium', 'Netherlands'), ('Iceland', 'Cyprus')),
+}
 
 drift_js = geo_src[geo_src.index('function driftFrom'):geo_src.index('function nearestSelectable')]
 bad_drift = n_drift = 0
@@ -461,13 +547,22 @@ console.log(JSON.stringify(OUT));
                   f'with the window shape')
         n_drift += 1
 
-    # the scale has to mean something at both ends
     same = [(t, m) for t, m in pairs if panel[t] == panel[m]]
+    # The scale has to mean something at both ends. Named pairs rather than
+    # whichever of sixty random ones happened to be extreme: Europe's random
+    # draw topped out at 49.9 against a threshold of 50, which is luck deciding
+    # whether the harness passes. These are geographic facts — two neighbours,
+    # and two countries at opposite corners.
     n_drift += 2
-    if not any(ref(t, m) < 20 for t, m in same):
-        bad_drift += 1; print(f'  drift FAIL {geo}: nothing scores as near')
-    if not any(ref(t, m) > 50 for t, m in same):
-        bad_drift += 1; print(f'  drift FAIL {geo}: nothing scores as far')
+    near, far = ENDS[geo]
+    if ref(*near) >= 20:
+        bad_drift += 1
+        print(f'  drift FAIL {geo}: {near[1]} -> {near[0]} scores '
+              f'{ref(*near):.1f}, not near')
+    if ref(*far) <= 50:
+        bad_drift += 1
+        print(f'  drift FAIL {geo}: {far[1]} -> {far[0]} scores '
+              f'{ref(*far):.1f}, not far')
     # the whole point of dividing by the diameter: the scale has an end
     n_drift += 1
     if max(ref(t, m) for t, m in same) > 100.0001:
@@ -493,10 +588,15 @@ APART = {
            ('Hawaii', 'California'), ('Alaska', 'Washington')],
     'fr': [('Guadeloupe', 'Ain'), ('Guyane', 'Nord'), ('Mayotte', 'La Réunion'),
            ('Martinique', 'Guadeloupe'), ('La Réunion', 'Paris')],
+    # A continent is continuous: Europe has one panel and nothing is off it, so
+    # the arrow rung is never skipped and no pair may come out apart. Iceland
+    # and Cyprus are the two that most look like insets and are not.
+    'eu': [],
 }
 TOGETHER = {
     'us': [('Texas', 'Oklahoma'), ('California', 'Maine')],
     'fr': [('Ain', 'Nord'), ('Paris', 'Corse-du-Sud')],
+    'eu': [('Iceland', 'Cyprus'), ('Portugal', 'Finland'), ('Malta', 'Norway')],
 }
 
 bad_apart = 0
@@ -566,7 +666,7 @@ fails += r.returncode
 # --------------------------------------------------- modes and board keying
 pathlib.Path('/tmp/fifty-modes.js').write_text(
     "let TOTAL = 50;\nlet GEO = {id:'us', all:'All fifty', noun:'state'};\n"
-    "let GEOS = {us:{id:'us'}, fr:{id:'fr'}};\n"
+    "let GEOS = {us:{id:'us'}, fr:{id:'fr'}, eu:{id:'eu'}};\n"
     + data_src[data_src.index('function byTally'):]
     + board_src[board_src.index('const PROBE'):board_src.index('/* localStorage, and nothing')]
     + board_src[board_src.index('const errorsOf'):board_src.index('const addEntry')]
@@ -600,16 +700,18 @@ eq('trial: zero-region run does not post', cb.some(r=>r.f===0), false);
 // old keys so boards saved before this feature survive
 const keys = [];
 for (const sc of ['count','drift'])
-  for (const g of ['us','fr']) for (const m of ['trial','practice']) {
+  for (const g of ['us','fr','eu']) for (const m of ['trial','practice']) {
     GEO = {id:g}; MODE = MODES[m]; SCORING = SCORINGS[sc]; keys.push(boardKey());
   }
 SCORING = SCORINGS.count; MODE = MODES.trial;
 GEO = {id:'us', all:'All fifty', noun:'state'};   // the key loop above blanked it
-eq('board keys unchanged for counting', keys.slice(0,4),
-   ['fifty:board2','fifty:practice1','fifty:fr:trial','fifty:fr:practice']);
-eq('distance boards are separate', keys.slice(4),
+eq('board keys unchanged for counting', keys.slice(0,6),
+   ['fifty:board2','fifty:practice1','fifty:fr:trial','fifty:fr:practice',
+    'fifty:eu:trial','fifty:eu:practice']);
+eq('distance boards are separate', keys.slice(6),
    ['fifty:us:trial:drift','fifty:us:practice:drift',
-    'fifty:fr:trial:drift','fifty:fr:practice:drift']);
+    'fifty:fr:trial:drift','fifty:fr:practice:drift',
+    'fifty:eu:trial:drift','fifty:eu:practice:drift']);
 
 // --- the scoring axis -----------------------------------------------------
 eq('a trial spends three misses', (MODE = MODES.trial, SCORING = SCORINGS.count, budget()), 3);
@@ -733,7 +835,7 @@ eq('same misses and clues replaces on time', [bb.kept, bb.board.length, bb.board
 bb = addEntry([{f:50,e:1,c:1,t:400,d:1}], {f:50,e:1,c:0,t:900,d:2});
 eq('different clue count is its own entry', bb.board.length, 2);
 eq('missing clue count reads as zero', cluesOf({f:50,e:1,t:1}), 0);
-eq('board keys are all distinct', new Set(keys).size, 8);
+eq('board keys are all distinct', new Set(keys).size, 12);
 /* The export walks every key the game could have written. Enumerated through
    keyFor() rather than listed, so the legacy US spellings come along, but it is
    a second path to the same strings and the two must not part company. */

@@ -12,7 +12,7 @@ SRC = ROOT / 'src'
 
 
 # One file per geography, each self-contained: view box, abbreviations, regions.
-GEOS = ('us', 'fr')
+GEOS = ('us', 'fr', 'eu')
 data = {g: (ROOT / 'data' / f'{g}.json').read_text() for g in GEOS}
 for g, raw in data.items():
     d = json.loads(raw)

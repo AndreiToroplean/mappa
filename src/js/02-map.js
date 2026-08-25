@@ -7,8 +7,13 @@ let labels = {};     // region name -> its abbreviation <text>
 // SVG paints in document order, so resolved states must physically move up the
 // stack or neighbours drawn later will clip their outlines.
 const layer = () => svg.appendChild(document.createElementNS(NS, 'g'));
+/* L_DOT sits above every layer a region can be moved into. A mark is small
+   enough to be covered by the shape it sits inside — Vatican City by Italy,
+   Liechtenstein by Switzerland — and a region that gets found moves *up* the
+   stack, so without its own layer a mark would vanish at the moment its
+   neighbour was solved, which is exactly when it is being looked for. */
 const L_BASE = layer(), L_FOUND = layer(), L_MISS = layer(),
-      L_ANSWER = layer(), L_LABEL = layer(), L_GROUP = layer(),
+      L_ANSWER = layer(), L_DOT = layer(), L_LABEL = layer(), L_GROUP = layer(),
       L_NUDGE = layer(), L_DRIFT = layer();
 
 /* Composed label anchors, kept because the nudge arrow needs to point from one
@@ -142,6 +147,8 @@ function wear(node, c) {
 }
 const LAYERS = { FOUND: L_FOUND, MISS: L_MISS, ANSWER: L_ANSWER };
 
+const isDot = name => DOTS.indexOf(name) >= 0;
+
 let statusOf = {};     // region name -> key of STATUS
 
 function strip(node) {
@@ -160,7 +167,10 @@ function setStatus(name, key) {
     if (lensPaths[name]) strip(lensPaths[name]);
   }
   shapes[name].setAttribute('class', spec.cls);
-  (spec.layer ? LAYERS[spec.layer] : L_BASE).appendChild(shapes[name]);
+  /* A mark keeps its own layer whatever happens to it: the status decides how it
+     looks, never where it sits. */
+  (isDot(name) ? L_DOT : spec.layer ? LAYERS[spec.layer] : L_BASE)
+    .appendChild(shapes[name]);
   setLabel(name, spec.label);
 }
 
@@ -425,7 +435,7 @@ function pathFrom(rings) {
    buildMap creates the nodes for a geography; compose places them. They are
    separate because a window resize needs the second without the first. */
 function buildMap() {
-  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT]
+  [L_BASE, L_FOUND, L_MISS, L_ANSWER, L_DOT, L_LABEL, L_GROUP, L_NUDGE, L_DRIFT]
     .forEach(g => { while (g.firstChild) g.removeChild(g.firstChild); });
   shapes = {}; labels = {}; statusOf = {}; localRings = {}; anchorAt = {};
   scoredPts = {};
@@ -438,7 +448,7 @@ function buildMap() {
     const p = document.createElementNS(NS, 'path');
     p.setAttribute('class', 'state');
     p.dataset.name = r.name;
-    L_BASE.appendChild(p);
+    (r.dot ? L_DOT : L_BASE).appendChild(p);
     shapes[r.name] = p;
 
     // one reusable label node per region, hidden until it is needed

@@ -61,8 +61,20 @@ function segDist2(px, py, ax, ay, bx, by) {
 }
 
 // which state's fill contains this point, selectable or not
+/* Marks are asked first, and there are only ever a handful of them.
+
+   This is the rule that makes a mark inside its neighbour reachable at all.
+   Vatican City is drawn over Rome and San Marino over Emilia-Romagna, so a
+   point inside either is inside Italy's fill too — and the plain scan below
+   returns whichever comes first alphabetically, which is Italy. Asking the
+   marks first makes hit testing agree with paint order, which is the same rule
+   the layers follow: what is drawn on top is what you hit. Anything else and
+   the game would show you a mark you could not press. */
 function stateUnder(u, clientX, clientY) {
   if (CAN_HIT) {
+    for (let i = 0; i < DOTS.length; i++) {
+      if (shapes[DOTS[i]].isPointInFill(u)) return DOTS[i];
+    }
     for (let i = 0; i < REGION_NAMES.length; i++) {
       const nm = REGION_NAMES[i];
       if (shapes[nm].isPointInFill(u)) return nm;

@@ -219,10 +219,20 @@ function missByDistance(name, at) {
   const from = at || anchorAt[name];
   const { cost, km } = driftFrom(target, name, from);
 
-  errors += cost;
+  /* A wrong pick is never free. Land close enough to a country and the distance
+     rounds to nothing, so picking the wrong neighbour announced itself as
+     costing zero — which reads as though it had been allowed. Being right is
+     already handled well before here, so anything reaching this point was wrong
+     and owes at least a point.
+
+     Floored before it is spent rather than only where it is printed, so the
+     counter and the number the player was told can never disagree. */
+  const owed = Math.max(1, cost);
+
+  errors += owed;
   drawCounter();
 
-  const charged = Math.round(cost);
+  const charged = Math.round(owed);
   const cost_ = km === null ? `A different landmass (\u2212${charged} pts)`
                             : `Off by ${fmtKm(km)} (\u2212${charged} pts)`;
   flashMiss(name);

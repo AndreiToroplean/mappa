@@ -596,11 +596,11 @@
      rename missed: an undefined custom property is not a fallback, it makes the
      whole declaration invalid, so stroke fell back to inherited — which is none
      — and the borders stopped being drawn at all. */
-  .lens path{fill:var(--land);stroke:var(--edge);stroke-width:1;
+  .lens .zone{fill:var(--land);stroke:var(--edge);stroke-width:1;
     vector-effect:non-scaling-stroke}
-  .lens path.found{fill:var(--found);stroke:var(--foundline)}
-  .lens path.miss{fill:var(--missfill);stroke:var(--missline)}
-  .lens path.aim{fill:var(--landhi);stroke:var(--amber);stroke-width:2.5}
+  .lens .zone.found{fill:var(--found);stroke:var(--foundline)}
+  .lens .zone.miss{fill:var(--missfill);stroke:var(--missline)}
+  .lens .zone.aim{fill:var(--landhi);stroke:var(--amber);stroke-width:2.5}
 
   /* An overlay that interrupts another overlay. Every overlay sits at the same
      z-index, so which one is on top comes down to which is written later in the

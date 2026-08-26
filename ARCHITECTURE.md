@@ -115,11 +115,18 @@ reason to be the same answer. Being a circle primitive rather than a polygon
 matters twice: a 24-gon a few pixels across renders as a lopsided blob, and the
 magnifier zooms by `viewBox`, so a circle grows with the land for free.
 
-Marks carry no geometry in the data at all. `borders` gets a fine polygon
-generated from the same centre and radius the circle is drawn from, every time
-the map composes, so the distance code needs no branch and the two cannot drift.
-That is the distinction from the invisible tap circles this replaces: those were
-a target independent of the shape, and the independence was the bug.
+A mark is easier to hit than to see: `MARK_REACH` makes the target half again
+wider than the drawn circle, since a mark is already the admission that the true
+area is too small to draw, so there is nothing to be wrong about. It is one
+multiple applied to every mark and always concentric — unlike the invisible tap
+circles this replaces, which were per-region and could sit where the shape was
+not. Kept modest because marks are asked first in `stateUnder`, so the reach
+beats the country underneath everywhere it lands.
+
+Marks carry no geometry in the data at all: a centre, and a radius belonging to
+the map. `borders` gets a fine polygon generated from the same numbers on every
+compose, at the reach, so snapping, distance scoring and containment all agree
+about where a mark ends.
 
 Two rules follow from a mark being drawn *over* the map rather than in it: it
 keeps its own layer whatever its status, and `stateUnder` asks the marks first,

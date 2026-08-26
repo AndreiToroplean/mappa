@@ -408,11 +408,34 @@ let layoutNow = null;
    circle, which is far below anything a score or a snap can notice. */
 const MARK_SIDES = 48;
 
+/* A mark is easier to hit than it is to see: you press a circle half again as
+   wide as the one drawn. A mark is not a claim about area — it is already the
+   admission that the true area is too small to draw — so there is nothing to be
+   wrong about by making the target generous, and a 3px dot on a phone is
+   otherwise a thumb's width of luck.
+
+   This is not the invisible tap circle that got deleted. That one was a separate
+   element with its own radius, sized per region, which is how it came to sit
+   somewhere the shape was not. This is one number, applied to every mark, always
+   concentric with what is drawn: the target is the drawn circle scaled, so it
+   cannot be somewhere else.
+
+   Kept modest for a reason. Marks are asked before anything else in
+   stateUnder(), so this reach beats the country underneath everywhere it lands —
+   at 1.5 that is about 26km around Vatican City, which is a fair aim at Rome
+   and no more. Much larger and it would start taking taps meant for Italy. */
+const MARK_REACH = 1.5;
+
+function markRadius() { return GEO.mark * MARK_REACH; }
+
+/* The ring is the *reach*, not the drawn edge, so that snapping, distance
+   scoring and the containment test in stateUnder() all agree about where the
+   mark ends. Two of them disagreeing is the whole failure mode here. */
 function ringOfMark(at) {
-  const out = [];
+  const out = [], r = markRadius();
   for (let i = 0; i < MARK_SIDES; i++) {
     const a = 2 * Math.PI * i / MARK_SIDES;
-    out.push(at[0] + GEO.mark * Math.cos(a), at[1] + GEO.mark * Math.sin(a));
+    out.push(at[0] + r * Math.cos(a), at[1] + r * Math.sin(a));
   }
   out.push(out[0], out[1]);      // closed, the way parseRings leaves a ring
   return out;

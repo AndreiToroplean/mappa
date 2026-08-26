@@ -127,7 +127,8 @@ class Ref:
         return 0.0 if self.contains(x, y) == nm else math.sqrt(self.border_d2(nm, x, y))
 
 
-def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=()):
+def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
+                     places=None, mark_composed=0.0):
     blk = geo_src[geo_src.index('const SNAP_UNITS'):]
     # stateUnder is *not* stubbed. It used to be, and that hid the whole of the
     # rule that puts marks first — a stub of a resolver cannot test the
@@ -144,9 +145,21 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=()):
   const u = {x: x, y: y};
   const under = stateUnder(u);""")
     return (
-        "const REGIONS = " + json.dumps([{'name': r['n'], 'd': r['d']} for r in regions]) + ";\n"
+        "const REGIONS = " + json.dumps([{'name': r['n'], 'd': r['d'],
+                                          'anchor': r['l'], 'panel': r['p']}
+                                         for r in regions]) + ";\n"
         "const REGION_NAMES = REGIONS.map(r => r.name);\n"
         "const DOTS = " + json.dumps(dots) + ";\n"
+        # stateUnder measures a mark rather than asking the drawn circle, so it
+        # reads the anchor, the panel scale and the reach. Regions arrive here
+        # already composed, so the scale is 1 and the reach is composed too —
+        # supplied, not special-cased, so the function runs verbatim.
+        "const anchorAt = {}; REGIONS.forEach(r => "
+        "anchorAt[r.name] = { x: r.anchor[0], y: r.anchor[1] });\n"
+        "const panelOf = {}; REGIONS.forEach(r => panelOf[r.name] = r.panel);\n"
+        "const layoutNow = { place: " + json.dumps(places) + " };\n"
+        "const MARK_COMPOSED = " + json.dumps(mark_composed) + ";\n"
+        "function markRadius(){ return MARK_COMPOSED; }\n"
         "let CAN_HIT = true;\n"
         "let DEAD = new Set();\n"
         # A real point-in-fill per region, not "is this the first region
@@ -228,6 +241,10 @@ process.exitCode = (fail || dfail || afail) ? 1 : 0;
 
 SNAP = int(geo_src.split('const SNAP_UNITS =')[1].split(';')[0])
 map_src = (JS / '02-map.js').read_text()
+# What you press on a mark is wider than what is drawn, by this much. Read from
+# the source rather than restated, so the harness measures the game's number;
+# the *policy* is named below, in the marks block, as a band it has to sit in.
+MARK_REACH = float(re.search(r'const MARK_REACH = ([\d.]+)', map_src).group(1))
 LAYOUT = map_src[map_src.index('const SHORT ='):map_src.index('/* ---- composing')]
 DIAM = map_src[map_src.index('function hull('):map_src.index('function measurePanels')]
 
@@ -253,10 +270,17 @@ def composed(d, aspect):
         at = L['place'][r['p']]
         parts = []
         if r.get('dot'):
-            pts = [(x * at['s'] + at['dx'], y * at['s'] + at['dy'])
-                   for x, y in local_pts(r, d['mark'])]
-            out.append({'n': r['n'], 'd': 'M' + 'L'.join(f'{x:.3f},{y:.3f}' for x, y in pts) + 'Z',
-                        'p': r['p'],
+            # Two rings, because a mark has two radii and they answer different
+            # questions. 'd' is the reach, which is what the geometry code
+            # measures against; 'ink' is the circle actually drawn, which is what
+            # has to fit inside the frame. Using the reach as ink would demand
+            # room for something invisible.
+            def ring(rad):
+                pts = [(x * at['s'] + at['dx'], y * at['s'] + at['dy'])
+                       for x, y in local_pts(r, rad)]
+                return 'M' + 'L'.join(f'{x:.3f},{y:.3f}' for x, y in pts) + 'Z'
+            out.append({'n': r['n'], 'd': ring(d['mark'] * MARK_REACH),
+                        'ink': ring(d['mark']), 'p': r['p'],
                         'l': [r['l'][0] * at['s'] + at['dx'], r['l'][1] * at['s'] + at['dy']]})
             continue
         for part in r['d'].split('M'):
@@ -282,7 +306,7 @@ for geo in GEOS:
         L, regs = composed(d, aspect)
         xs = []; ys = []
         for r in regs:
-            for part in r['d'].split('M'):
+            for part in r.get('ink', r['d']).split('M'):
                 if not part:
                     continue
                 for q in part.rstrip('Z').split('L'):
@@ -295,7 +319,7 @@ for geo in GEOS:
         # panel boxes, for overlap
         per = {}
         for r in regs:
-            for part in r['d'].split('M'):
+            for part in r.get('ink', r['d']).split('M'):
                 if not part:
                     continue
                 for q in part.rstrip('Z').split('L'):
@@ -368,12 +392,19 @@ for geo in GEOS:
         if not mark:
             bad_marks += 1
             print(f'  FAIL {geo}: regions are marked but the map declares no radius')
-        elif not 5.0 <= mark <= 15.0:
+        elif not 3.0 <= mark <= 12.0:
             bad_marks += 1
-            print(f'  FAIL {geo}: a mark radius of {mark} is outside 5..15 units')
+            print(f'  FAIL {geo}: a mark radius of {mark} is outside 3..12 units '
+                  f'— below 3 it is under two pixels on a phone, above 12 it stops '
+                  f'reading as a mark and starts looking like a claim about area')
     elif d.get('mark'):
         bad_marks += 1
         print(f'  FAIL {geo}: declares a mark radius but marks nothing')
+if not 1.0 <= MARK_REACH <= 2.0:
+    bad_marks += 1
+    print(f'  FAIL a mark reach of {MARK_REACH} is outside 1..2 — below 1 the '
+          f'target is smaller than the circle, above 2 it takes taps meant for '
+          f'the country underneath')
 if not bad_marks:
     n = sum(len(v) for v in MARKS.values())
     print(f'  {n} regions drawn as marks, none carrying an outline of its own')
@@ -422,7 +453,10 @@ for geo in GEOS:
     anchors = [(r['l'][0], r['l'][1], r['n']) for r in regions]
 
     p = pathlib.Path(f'/tmp/fifty-geom-{geo}.js')
-    p.write_text(geometry_harness(regions, cases, dist_cases, anchors, SNAP, dots))
+    p.write_text(geometry_harness(regions, cases, dist_cases, anchors, SNAP, dots,
+                                  places=[{'s': 1.0} for _ in d['panels']],
+                                  mark_composed=(d.get('mark', 0) * MARK_REACH
+                                                 * L['place'][0]['s'])))
     r = subprocess.run(['node', str(p)], capture_output=True, text=True)
     print(r.stdout.rstrip() or r.stderr)
     fails += r.returncode
@@ -492,7 +526,7 @@ for geo in GEOS:
     pairs = [(rnd.choice(names), rnd.choice(names)) for _ in range(60)]
 
     panel = {r['n']: r['p'] for r in d['regions']}
-    pts = {r['n']: local_pts(r, d.get('mark', 0)) for r in d['regions']}
+    pts = {r['n']: local_pts(r, d.get('mark', 0) * MARK_REACH) for r in d['regions']}
 
     # driftFrom() measures against `borders`, which compose() fills in — and for
     # a marked region it fills it from the circle rather than from path data
@@ -504,7 +538,7 @@ for geo in GEOS:
     for r in drift_data['regions']:
         if r.get('dot'):
             r['d'] = ('M' + 'L'.join(f'{x:.3f},{y:.3f}'
-                                     for x, y in local_pts(r, d['mark'])) + 'Z')
+                                     for x, y in local_pts(r, d['mark'] * MARK_REACH)) + 'Z')
     anchor_at = {r['n']: tuple(r['l']) for r in d['regions']}
 
     # Independent diameter: every pair on the hull, compared exhaustively. The

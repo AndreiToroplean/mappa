@@ -70,6 +70,7 @@
     --revealfill:#FFC24B; --revealline:#FFDFA6;
 
     /* a name written over one of those fills: the ink, and its knockout */
+    --foundink:#F1F6F3;  --foundhalo:rgba(8,18,15,.72);
     --wrongink:#FFE4E5;  --wronghalo:#4A0D10;
     --answerink:#3A2600; --answerhalo:#FFE3AE;
     --scoredink:#F6EEDD; --scoredhalo:rgba(14,11,7,.78);
@@ -138,6 +139,7 @@
     --missfill:#E39A93;   --missline:#9E2B26;
     --revealfill:#F2C25A; --revealline:#8A5A10;
 
+    --foundink:#123326;  --foundhalo:rgba(255,252,244,.82);
     --wrongink:#7A1F1B;  --wronghalo:#FDECEA;
     --answerink:#4A3208; --answerhalo:#FBEBC8;
     --scoredink:#33281A; --scoredhalo:rgba(255,252,244,.82);
@@ -313,8 +315,15 @@
     animation:driftfade 1600ms ease-out forwards}
   @keyframes driftfade{0%,62%{opacity:1}100%{opacity:0}}
 
-  text.label{font-family:var(--mono);font-size:11px;fill:var(--foundline);
-    text-anchor:middle;pointer-events:none;opacity:var(--labelfade)}
+  /* A found region's name used to be drawn in --foundline, the colour of its own
+     border, which on anything small read as a piece of the outline rather than as
+     writing — worst on the countries small enough that the name overhangs onto a
+     neighbour, where it sat in a colour belonging to neither. Its own ink and a
+     knocked-out halo instead: the same treatment the scored and revealed labels
+     already had, for the same reason. */
+  text.label{font-family:var(--mono);font-size:11px;fill:var(--foundink);
+    text-anchor:middle;pointer-events:none;opacity:var(--labelfade);
+    stroke:var(--foundhalo);stroke-width:3px;paint-order:stroke}
   text.label.wrong{fill:var(--wrongink);opacity:1;font-weight:600;
     stroke:var(--wronghalo);stroke-width:3px;paint-order:stroke}
   text.label.answer{fill:var(--answerink);opacity:1;font-weight:600;

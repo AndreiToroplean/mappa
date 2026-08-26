@@ -426,7 +426,25 @@ const MARK_SIDES = 48;
    and no more. Much larger and it would start taking taps meant for Italy. */
 const MARK_REACH = 1.5;
 
-function markRadius() { return GEO.mark * MARK_REACH; }
+/* Doubled while the magnifier is open, because opening it says what you are
+   doing: nobody presses and holds to find France. The disc is where a small
+   country is hunted, so that is where a mark can afford to be greedy.
+
+   Greedy enough to matter — at 3.0 the reach around Vatican City is about 50km,
+   which takes a real bite out of Lazio. What makes that acceptable is only true
+   inside the disc: it shows you what a release would pick, live, as you move. A
+   bias you can see and correct before committing is a different thing from a
+   bias applied to a blind tap, which is why the same number would be wrong
+   outside. */
+const MARK_REACH_AIMED = 3.0;
+
+/* Owned by the magnifier, declared here because the resolver reads it and loads
+   first. */
+let magnifying = false;
+
+function markRadius() {
+  return GEO.mark * (magnifying ? MARK_REACH_AIMED : MARK_REACH);
+}
 
 /* The ring is the *reach*, not the drawn edge, so that snapping, distance
    scoring and the containment test in stateUnder() all agree about where the

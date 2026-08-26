@@ -70,17 +70,24 @@ function segDist2(px, py, ax, ay, bx, by) {
    marks first makes hit testing agree with paint order, which is the same rule
    the layers follow: what is drawn on top is what you hit. Anything else and
    the game would show you a mark you could not press. */
+/* Whether a point counts as inside a mark — the only place that decides it.
+
+   Measured rather than asked of the element, because what you press is wider
+   than what is drawn and wider again under the magnifier, so isPointInFill on
+   the drawn circle would be the wrong question. A circle is the one shape where
+   the test is exact anyway. */
+function inMark(name, u) {
+  const c = anchorAt[name];
+  if (!c) return false;
+  const r = markRadius() * layoutNow.place[panelOf[name]].s;
+  const dx = u.x - c.x, dy = u.y - c.y;
+  return dx * dx + dy * dy <= r * r;
+}
+
 function stateUnder(u, clientX, clientY) {
   if (CAN_HIT) {
-    /* Measured rather than asked of the element: what you press is wider than
-       what is drawn (MARK_REACH), so isPointInFill on the drawn circle would be
-       the wrong question. A circle is the one shape where the test is exact
-       anyway. */
     for (let i = 0; i < DOTS.length; i++) {
-      const c = anchorAt[DOTS[i]];
-      if (!c) continue;
-      const dx = u.x - c.x, dy = u.y - c.y, r = markRadius() * layoutNow.place[panelOf[DOTS[i]]].s;
-      if (dx * dx + dy * dy <= r * r) return DOTS[i];
+      if (inMark(DOTS[i], u)) return DOTS[i];
     }
     for (let i = 0; i < REGION_NAMES.length; i++) {
       const nm = REGION_NAMES[i];
@@ -118,6 +125,11 @@ function borderDist2(name, u, ceiling) {
    game as it stands — it is the shape blind mode's error score needs, kept
    here next to the primitive it belongs with rather than reinvented later. */
 function distanceTo(name, u) {
+  /* Marks answer for themselves. Asking the drawn circle would score a tap that
+     resolved *to* this mark as a small miss, because the reach is wider than the
+     circle — the two have to be the same question or a correct pick costs
+     points. */
+  if (isDot(name)) return inMark(name, u) ? 0 : Math.sqrt(borderDist2(name, u));
   if (CAN_HIT && shapes[name].isPointInFill(u)) return 0;
   return Math.sqrt(borderDist2(name, u));
 }

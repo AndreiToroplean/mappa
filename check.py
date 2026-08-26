@@ -128,7 +128,8 @@ class Ref:
 
 
 def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
-                     places=None, mark_composed=0.0):
+                     places=None, mark_composed=0.0, mark_composed_aimed=0.0,
+                     reach_cases=()):
     blk = geo_src[geo_src.index('const SNAP_UNITS'):]
     # stateUnder is *not* stubbed. It used to be, and that hid the whole of the
     # rule that puts marks first — a stub of a resolver cannot test the
@@ -158,8 +159,14 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
         "anchorAt[r.name] = { x: r.anchor[0], y: r.anchor[1] });\n"
         "const panelOf = {}; REGIONS.forEach(r => panelOf[r.name] = r.panel);\n"
         "const layoutNow = { place: " + json.dumps(places) + " };\n"
+        # Same shape as the real markRadius: a branch on the same flag, with the
+        # radii composed. The values come from the constants read out of the
+        # source, so the harness cannot disagree with the game about either.
         "const MARK_COMPOSED = " + json.dumps(mark_composed) + ";\n"
-        "function markRadius(){ return MARK_COMPOSED; }\n"
+        "const MARK_COMPOSED_AIMED = " + json.dumps(mark_composed_aimed) + ";\n"
+        "let magnifying = false;\n"
+        "function markRadius(){ "
+        "return magnifying ? MARK_COMPOSED_AIMED : MARK_COMPOSED; }\n"
         "let CAN_HIT = true;\n"
         "let DEAD = new Set();\n"
         # A real point-in-fill per region, not "is this the first region
@@ -169,6 +176,8 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
         "const CASES = " + json.dumps(cases) + ";\n"
         "const DIST = " + json.dumps(dist_cases) + ";\n"
         "const ANCHORS = " + json.dumps(anchor_cases) + ";\n"
+        "const REACH = " + json.dumps([list(c) for c in reach_cases]) + ";\n"
+        + IS_DOT + "\n"
         """
 const BY_NAME = {};
 for (const s of REGIONS) BY_NAME[s.name] = s;
@@ -235,7 +244,27 @@ DEAD = new Set();
 console.log('    tapping a solved region snaps to a neighbour: ' + snapped + '/' + ANCHORS.length
   + (stuck ? '  (' + stuck + ' returned the solved region!)' : ''));
 if (stuck) process.exitCode = 1;
-process.exitCode = (fail || dfail || afail) ? 1 : 0;
+
+/* How far a mark reaches, shut and open. stateUnder rather than resolve, because
+   resolve would snap to the mark from outside it either way and hide the whole
+   effect — what is under test is containment, which is what the bias changes. */
+let rfail = 0;
+for (const [x, y, nm, shut, open_] of REACH){
+  for (const [on, want] of [[false, shut], [true, open_]]){
+    magnifying = on;
+    const got = stateUnder({x:x, y:y}) === nm;
+    if (got !== want){
+      rfail++;
+      if (rfail <= 3) console.log('    reach: ' + nm + (on ? ' magnified' : ' plain')
+        + ' at (' + x.toFixed(1) + ',' + y.toFixed(1) + ') '
+        + (want ? 'should have been inside' : 'should have been outside'));
+    }
+  }
+}
+magnifying = false;
+if (REACH.length) console.log('    mark reach, magnifier shut and open: '
+  + (REACH.length * 2 - rfail) + '/' + (REACH.length * 2));
+process.exitCode = (fail || dfail || afail || rfail) ? 1 : 0;
 """)
 
 
@@ -245,6 +274,13 @@ map_src = (JS / '02-map.js').read_text()
 # the source rather than restated, so the harness measures the game's number;
 # the *policy* is named below, in the marks block, as a band it has to sit in.
 MARK_REACH = float(re.search(r'const MARK_REACH = ([\d.]+)', map_src).group(1))
+MARK_REACH_AIMED = float(re.search(r'const MARK_REACH_AIMED = ([\d.]+)',
+                                   map_src).group(1))
+# distanceTo() asks whether a region is a mark, and the predicate lives in
+# 02-map.js because setStatus needs it too and that module loads first. Lifted
+# verbatim rather than reimplemented over the DOTS list the harness already has:
+# one line is exactly the size of thing that gets quietly rewritten wrong.
+IS_DOT = re.search(r'const isDot = [^\n]+', map_src).group(0)
 LAYOUT = map_src[map_src.index('const SHORT ='):map_src.index('/* ---- composing')]
 DIAM = map_src[map_src.index('function hull('):map_src.index('function measurePanels')]
 
@@ -450,13 +486,39 @@ for geo in GEOS:
         at = next(r['l'] for r in regions if r['n'] == nm)
         cases.append((at[0], at[1], [], ref.resolve(at[0], at[1], set(), SNAP)))
 
+    # How far a mark reaches, at named multiples of the radius it is *drawn* at,
+    # with the magnifier shut and open. The expectations are written down rather
+    # than computed from the constants: the point is that the reach is 1.5 and
+    # 3.0 of the drawn circle, so deriving the probes from those numbers would
+    # agree with any pair of values whatsoever.
+    #
+    # 8 directions per probe, because a circle has no excuse to be lopsided.
+    drawn = d.get('mark', 0) * L['place'][0]['s']
+    reach_cases = []
+    for nm in dots:
+        at = next(r['l'] for r in regions if r['n'] == nm)
+        for mult, shut, open_ in ((0.5, True, True),    # inside the circle drawn
+                                  (1.4, True, True),    # inside the plain reach
+                                  (1.6, False, True),   # only the magnifier's
+                                  (2.9, False, True),
+                                  (3.1, False, False)): # outside both
+            for k in range(8):
+                a = 2 * math.pi * k / 8
+                reach_cases.append((at[0] + drawn * mult * math.cos(a),
+                                    at[1] + drawn * mult * math.sin(a),
+                                    nm, shut, open_))
+
     anchors = [(r['l'][0], r['l'][1], r['n']) for r in regions]
 
     p = pathlib.Path(f'/tmp/fifty-geom-{geo}.js')
     p.write_text(geometry_harness(regions, cases, dist_cases, anchors, SNAP, dots,
                                   places=[{'s': 1.0} for _ in d['panels']],
                                   mark_composed=(d.get('mark', 0) * MARK_REACH
-                                                 * L['place'][0]['s'])))
+                                                 * L['place'][0]['s']),
+                                  mark_composed_aimed=(d.get('mark', 0)
+                                                       * MARK_REACH_AIMED
+                                                       * L['place'][0]['s']),
+                                  reach_cases=reach_cases))
     r = subprocess.run(['node', str(p)], capture_output=True, text=True)
     print(r.stdout.rstrip() or r.stderr)
     fails += r.returncode

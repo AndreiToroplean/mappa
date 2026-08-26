@@ -120,8 +120,12 @@ wider than the drawn circle, since a mark is already the admission that the true
 area is too small to draw, so there is nothing to be wrong about. It is one
 multiple applied to every mark and always concentric — unlike the invisible tap
 circles this replaces, which were per-region and could sit where the shape was
-not. Kept modest because marks are asked first in `stateUnder`, so the reach
-beats the country underneath everywhere it lands.
+not. `MARK_REACH_AIMED` doubles it while the magnifier is open, on the grounds
+that opening the magnifier says what you are doing; that is only safe there
+because the disc shows what a release would pick, so the bias is visible and
+correctable rather than applied to a blind tap. `inMark` is the single decision,
+used by both the resolver and distance scoring — the reach is wider than the
+circle, so asking the drawn circle would charge points for a correct pick.
 
 Marks carry no geometry in the data at all: a centre, and a radius belonging to
 the map. `borders` gets a fine polygon generated from the same numbers on every

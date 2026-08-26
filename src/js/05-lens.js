@@ -72,6 +72,7 @@ let boxW = DISC_R * 2, boxH = DISC_R * 2;
 
 function openLens(x, y) {
   lensOn = true;
+  magnifying = true;      // widens the reach of a mark; see markRadius()
   // the STATUS table decides how a status looks in the disc too, so the disc
   // and the map can never drift apart — and where it sits, for the same reason
   for (const nm in lensPaths) {
@@ -201,6 +202,7 @@ function closeLens(commit) {
   const pick = commit ? settled() : null;
   if (aim && lensPaths[aim]) { lensPaths[aim].classList.remove('aim'); seat(aim); }
   lensOn = false;
+  magnifying = false;
   lensBox.hidden = true;
   aim = null;
   trail = [];

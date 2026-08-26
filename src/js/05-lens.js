@@ -22,22 +22,28 @@ let lensPaths = {};
    the map's layers were added to fix: a neighbour drawn later paints over the
    shared border, so the amber outline of the aimed region came out with pieces
    missing wherever a region later in the list touched it. Same fix, same
-   order — a resolved state moves up the stack, and the aimed one moves above
-   all of them, since it is the one thing the disc exists to show.
+   order — a resolved state moves up the stack, and the aimed one above those.
 
-   The tiers are the lens classes STATUS hands out, written down rather than
+   Most tiers are the lens classes STATUS hands out, written down rather than
    collected from it: a new status whose lens class is not on this list would
-   otherwise be seated nowhere at all. check.py holds the two together. */
-/* 'dot' is not a status; it is where the marks sit, above every tier a status
-   can put a region in and below the aimed one. The disc stacks its copy of the
-   map for the same reason the map does — see L_DOT in 02-map.js. */
-const LENS_TIERS = ['', 'found', 'miss', 'dot'];
+   otherwise be seated nowhere at all. check.py holds the two together.
+
+   'aim' and 'dot' are not statuses. 'aim' is where the region under the
+   crosshair goes; 'dot' is where the marks sit, and it is last. Aiming at Italy
+   used to lift Italy over Vatican City and San Marino and they vanished from the
+   disc — at exactly the moment somebody hunting for them would be looking. A
+   mark is the smallest thing on the map, so it is the last thing painted. */
+const LENS_TIERS = ['', 'found', 'miss', 'aim', 'dot'];
 let lensLayers = {};
 
 function buildLens() {
   while (lensMap.firstChild) lensMap.removeChild(lensMap.firstChild);
   lensLayers = {};
-  LENS_TIERS.concat('aim').forEach(t => {
+  /* No `.concat('aim')` any more: 'aim' is in the list now, in its place, and
+     appending it again created a *second* group after the marks and handed
+     lensLayers.aim to that one — so the aimed region still painted over them.
+     The list is the order, and there is nothing outside the list. */
+  LENS_TIERS.forEach(t => {
     lensLayers[t] = lensMap.appendChild(document.createElementNS(NS, 'g'));
   });
   lensPaths = {};
@@ -69,7 +75,11 @@ function openLens(x, y) {
   // the STATUS table decides how a status looks in the disc too, so the disc
   // and the map can never drift apart — and where it sits, for the same reason
   for (const nm in lensPaths) {
-    lensPaths[nm].setAttribute('class', STATUS[status(nm)].lens);
+    /* 'zone' first, then the status. The base class is what the stylesheet hangs
+       the region look on; before it existed the rules were qualified by element
+       and a mark, being a <circle> and not a <path>, matched none of them and
+       came out filled black. */
+    lensPaths[nm].setAttribute('class', 'zone ' + STATUS[status(nm)].lens);
     seat(nm);
   }
   trail = [];
@@ -131,7 +141,9 @@ function moveLens(x, y) {
     aim = name;
     if (name) {
       lensPaths[name].classList.add('aim');
-      lensLayers.aim.appendChild(lensPaths[name]);   // nothing paints over it
+      /* A mark stays in its own tier, which is already above everything. Moving
+         it down into 'aim' would put it under the other marks for no reason. */
+      if (!isDot(name)) lensLayers.aim.appendChild(lensPaths[name]);
     }
     trail.push({ name: name, t0: now, t1: now, u: u });
     /* Deliberately never the state's name during a run. Naming what you are

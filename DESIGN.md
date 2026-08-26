@@ -87,6 +87,12 @@ metrics, and a preview that differs from the game is worse than none.
   visibly lopsided blob. They are `<circle>` elements now. The lesson generalises
   — reach for the SVG primitive when there is one, and keep the polygon only
   where the maths wants one.
+- **`mledoze/countries`** for European names, capitals and groupings. Good data,
+  but ODbL: share-alike, reaching `data/clues-eu.json` and the built file that
+  embeds it, which is a poor thing to bake in under a project with no code licence
+  yet. Everything it supplied is in Natural Earth's own attributes, public domain,
+  and the geometry already came from there. Lesson: check the licence of a data
+  source before building on it, not after.
 - **A hand-drawn lon/lat window** deciding which islands are in Europe. Every
   bound was a number somebody chose, and it was wrong about the Azores, whose
   eastern islands sit inside a box drawn wide enough to admit Iceland. Replaced

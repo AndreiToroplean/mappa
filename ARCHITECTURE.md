@@ -64,9 +64,10 @@ Adding one is a build script, an entry in `GEOS`, an `<option>`, and a line in
 export — follows from `GEOS` being enumerated rather than listed.
 
 Membership decisions are pushed into the source data wherever possible. Europe's
-forty-four are "an independent country that mledoze/countries files under region
-Europe", which excludes Turkey and the Caucasus for free; the exceptions and the
-reasoning are commented in `build-eu.py`, which is the right place for them.
+forty-four are "a Natural Earth admin-0 country that names itself as its own
+sovereign and is filed under the continent Europe", which excludes Turkey and the
+Caucasus for free, and dependencies with it; the exceptions and the reasoning are
+commented in `build-eu.py`, which is the right place for them.
 
 ## The five structural ideas
 

@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Build data/eu.json from the world-atlas TopoJSON.
 
-Needs package-eu/countries-50m.json and package-eu/mledoze-countries.json:
+Needs package-eu/countries-50m.json and package-eu/ne_50m_admin_0_countries.geojson:
     npm pack world-atlas@2 && mkdir -p package-eu \\
       && tar xzf world-atlas-2.0.2.tgz -C package-eu --strip-components=1
-    curl -o package-eu/mledoze-countries.json \\
-      https://raw.githubusercontent.com/mledoze/countries/master/countries.json
+    curl -o package-eu/ne_50m_admin_0_countries.geojson \\
+      https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson
+
+Geometry and metadata now come from the same place. world-atlas is a repackaging
+of Natural Earth 1:50m with everything but the name and the ISO numeric code
+stripped out; the geojson above is the same layer with its attributes intact, so
+the names, the codes, the continent and the groupings are the source's own
+account of the countries it drew.
 
 50m rather than 110m: 110m drops every microstate and reduces the Greek and
 Croatian islands to nothing. 10m is five times the size for detail no phone can
@@ -13,7 +19,7 @@ draw at this scale.
 
 Who is in the map is decided by the metadata, not by hand — see MEMBERSHIP
 below. Every fact a player reads (the name, the capital, the grouping) comes out
-of mledoze/countries, joined to the geometry on the ISO 3166-1 numeric code.
+of Natural Earth, joined to the geometry on the ISO 3166-1 numeric code.
 """
 import json
 from collections import Counter
@@ -37,12 +43,22 @@ def project(lon, lat):
 
 
 # ------------------------------------------------------------- what is Europe
-# MEMBERSHIP: an independent country that mledoze/countries places in the region
-# Europe. That is a sourced rule rather than a list somebody typed, and it does
-# the transcontinental work for free — Turkey, Georgia, Armenia, Azerbaijan and
-# Kazakhstan are all filed under Asia there and drop out without an exception.
+# MEMBERSHIP: a Natural Earth admin-0 unit that is a country, names itself as its
+# own sovereign, and is filed under the continent Europe. Still a sourced rule
+# rather than a list somebody typed, and it still does the transcontinental work
+# for free — Turkey, Georgia, Armenia, Azerbaijan and Kazakhstan are filed under
+# Asia and drop out without an exception.
 #
-# Two exceptions, both about drawing rather than about geography:
+# The self-naming test is what separates a state from its dependencies. Natural
+# Earth splits a sovereignty that has dependencies into several admin-0 units
+# sharing a SOV_A3: France, Guernsey and Åland are all TYPE 'Country', and what
+# distinguishes the metropolitan one is that its SOVEREIGNT is itself. Guernsey's
+# is the United Kingdom and Åland's is Finland, so both drop out, while the
+# Channel Islands and Greenland never arrive. Four name fields are checked
+# because the source is not consistent about which one SOVEREIGNT matches —
+# Serbia's is its formal name and Czechia's is its short one.
+#
+# Three exceptions:
 EXCLUDE = {
     # Russia is in Europe by that rule and is left out anyway. Two thirds of a
     # Europe map would be Russia, or its border would have to be cut at a
@@ -52,6 +68,17 @@ EXCLUDE = {
     # as a cropped map rather than as a hole.
     'Russia',
 }
+
+# Filed under Asia by the source, and on every atlas of Europe ever printed. Kept
+# because unlike Turkey and the Caucasus there is nothing Asian about it to draw:
+# it is an island, an EU member state, and it costs the frame nothing. One line,
+# and it is the only place geography and cartography are allowed to disagree here.
+INCLUDE = {'Cyprus'}
+
+# The source files it under Western Asia along with its continent, so it needs a
+# European grouping to be a clue at all. Southern Europe is where an atlas puts
+# it. build-clues.py repeats this line; check.py holds the two together.
+REGROUP = {'Cyprus': 'Southern Europe'}
 
 # Below this inscribed radius a country is drawn as a mark rather than as its
 # own outline — see region() in geo.py. Six countries fall under it: Vatican
@@ -121,7 +148,7 @@ WINDOW = dict(lon=(-26.0, 42.0), lat=(34.0, 73.0))
 
 # ---------------------------------------------------------------------- input
 topo = json.load(open(ROOT / 'package-eu' / 'countries-50m.json'))
-meta = json.load(open(ROOT / 'package-eu' / 'mledoze-countries.json'))
+meta = json.load(open(ROOT / 'package-eu' / 'ne_50m_admin_0_countries.geojson'))
 
 sc, tr = topo['transform']['scale'], topo['transform']['translate']
 arcs = []
@@ -144,11 +171,33 @@ def ring_pts(idxs):
     return out
 
 
-ours = [c for c in meta
-        if c['region'] == 'Europe' and c['independent']
-        and c['name']['common'] not in EXCLUDE]
-by_code = {c['ccn3']: c for c in ours}
+def self_named(p):
+    """Is this unit its own sovereign, rather than somebody's dependency?"""
+    return p['SOVEREIGNT'] in (p['NAME'], p['NAME_EN'], p['NAME_LONG'],
+                               p.get('FORMAL_EN'))
+
+
+ours = [f['properties'] for f in meta['features']
+        if f['properties']['TYPE'] in ('Sovereign country', 'Country')
+        and self_named(f['properties'])
+        and (f['properties']['CONTINENT'] == 'Europe'
+             or f['properties']['NAME_EN'] in INCLUDE)
+        and f['properties']['NAME_EN'] not in EXCLUDE]
+
+# ISO_N3_EH / ISO_A2_EH rather than ISO_N3 / ISO_A2: the plain fields are -99 for
+# a handful of countries, Norway among them, and the _EH variants are the source's
+# own repair of exactly that.
+by_code = {c['ISO_N3_EH']: c for c in ours}
 assert len(by_code) == len(ours), 'two countries share a numeric code'
+assert all(c['ISO_A2_EH'] != '-99' for c in ours), 'a country with no alpha-2'
+
+
+def display(c):
+    return c['NAME_EN']
+
+
+def grouping(c):
+    return REGROUP.get(display(c), c['SUBREGION'])
 
 # ------------------------------------------------------------------- geometry
 # Every piece of every country, projected once so relative sizes are true, and
@@ -159,7 +208,7 @@ for g in topo['objects']['countries']['geometries']:
     c = by_code.get(g.get('id'))
     if not c:
         continue
-    name = c['name']['common']
+    name = display(c)
     raw = g['arcs'] if g['type'] == 'MultiPolygon' else [g['arcs']]
     for poly in raw:
         lls = [ring_pts(r) for r in poly]
@@ -168,7 +217,7 @@ for g in topo['objects']['countries']['geometries']:
                        'area': area(xy[0])})
     order.append(name)
 
-missing = sorted(set(c['name']['common'] for c in ours) - set(order))
+missing = sorted(display(c) for c in ours if display(c) not in order)
 assert not missing, f'no geometry for {missing}'
 order.sort()
 
@@ -258,7 +307,7 @@ gscale = 1000.0 / max(bx1 - bx0, by1 - by0)
 arc_use = {}
 for n in order:
     idxs = [i for poly in geoms[n] for ring in poly for i in ring]
-    grp = by_code[[c['ccn3'] for c in ours if c['name']['common'] == n][0]]['subregion']
+    grp = grouping(next(c for c in ours if display(c) == n))
     arc_use.setdefault(grp, Counter()).update(i if i >= 0 else ~i for i in idxs)
 
 groups = {}
@@ -272,11 +321,12 @@ for gname, uses in arc_use.items():
     groups[gname] = {'p': 0, 'd': ''.join(parts)}
 
 # ISO 3166-1 alpha-2, which is what a country's abbreviation is.
-ABBR = {c['name']['common']: c['cca2'] for c in ours}
+ABBR = {display(c): c['ISO_A2_EH'] for c in ours}
 
 marks = sorted(r['n'] for r in regions if r.get('dot'))
 print(f'    {len(marks)} drawn as marks: ' + ', '.join(marks))
 
 emit('eu.json', panels, regions, ABBR, groups=groups, mark=MARK,
      meta={'source': 'world-atlas v2.0.2 (ISC), from Natural Earth 1:50m; '
-                     'names, capitals and groupings from mledoze/countries'})
+                     'names, codes and groupings from Natural Earth admin-0 '
+                     '(public domain)'})

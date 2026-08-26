@@ -72,8 +72,15 @@ function segDist2(px, py, ax, ay, bx, by) {
    the game would show you a mark you could not press. */
 function stateUnder(u, clientX, clientY) {
   if (CAN_HIT) {
+    /* Measured rather than asked of the element: what you press is wider than
+       what is drawn (MARK_REACH), so isPointInFill on the drawn circle would be
+       the wrong question. A circle is the one shape where the test is exact
+       anyway. */
     for (let i = 0; i < DOTS.length; i++) {
-      if (shapes[DOTS[i]].isPointInFill(u)) return DOTS[i];
+      const c = anchorAt[DOTS[i]];
+      if (!c) continue;
+      const dx = u.x - c.x, dy = u.y - c.y, r = markRadius() * layoutNow.place[panelOf[DOTS[i]]].s;
+      if (dx * dx + dy * dy <= r * r) return DOTS[i];
     }
     for (let i = 0; i < REGION_NAMES.length; i++) {
       const nm = REGION_NAMES[i];

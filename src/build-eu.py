@@ -73,10 +73,11 @@ DOT = 3.5
 # How big the mark is drawn, in the same local units. Bigger than the threshold
 # on purpose: DOT asks whether a country can be drawn truthfully, MARK asks how
 # to make it visible, and the answers have no reason to be the same number. At
-# 8 units the mark is about 6px across on a portrait phone before the magnifier
-# touches it, and 24px under it — a country you can see without hunting and hit
-# without the lens if you are careful.
-MARK = 8.0
+# 4 units the mark is about 3px across on a portrait phone before the magnifier
+# touches it, and 12px under it.
+#
+# What you press is larger than this — see MARK_REACH in 02-map.js.
+MARK = 4.0
 
 # Every country keeps its largest landmass unconditionally — that is the country,
 # and dropping it would drop the country. Every *other* piece has to earn the

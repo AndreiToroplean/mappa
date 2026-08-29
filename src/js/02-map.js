@@ -623,6 +623,15 @@ function compose() {
   layoutNow = L;
   svg.setAttribute('viewBox', `0 0 ${L.W.toFixed(1)} ${L.H.toFixed(1)}`);
 
+  /* preserveAspectRatio is meet, so one scale fits both axes — this is the
+     CTM's own, arrived at without asking for the CTM. GRACE_PX is a measurement
+     of the screen and everything downstream of it works in composed units, so
+     the conversion belongs here, where the fit is decided and where it is
+     redone on every resize. */
+  const fit = (box.width && box.height)
+    ? Math.min(box.width / L.W, box.height / L.H) : 0;
+  grace = fit ? GRACE_PX / fit : 0;
+
   REGIONS.forEach(r => {
     const at = L.place[r.panel];
     const rings = composeRings(localRings[r.name], at.s, at.dx, at.dy);

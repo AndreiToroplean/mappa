@@ -35,6 +35,24 @@ function userPoint(x, y) {
 
 const SNAP_UNITS = 40;   // reach in map units — see DESIGN.md for why not px
 
+/* How far outside the region being asked for a tap may land and still count as
+   being on it. In screen pixels, and the contrast with SNAP_UNITS is the whole
+   point: reaching from open water to the nearest coast is a question about the
+   map, so it is asked in map units and means the same thing at any size, while
+   this forgives a thumb landing a millimetre off the edge, which is a fact
+   about fingers and glass. The same slip has to be forgiven on a phone and on a
+   desktop, where the very same region is drawn twice as wide.
+
+   Six is about a millimetre and a half. For scale, on a portrait phone the
+   median region of every geography is around 27px across, and the snap that
+   already runs from open water reaches roughly 22px. */
+const GRACE_PX = 6;
+
+/* GRACE_PX in composed units. Written by compose(), which is the only thing
+   that knows how the view box was fitted to the window — the same arrangement
+   as `borders` below, and for the same reason. */
+let grace = 0;
+
 // boundary points, parsed once out of the same path data the map draws from
 /* Region name -> boundary points, in the composed flat space. Written by
    compose(), which is the only thing that knows how panels were placed. */
@@ -214,9 +232,45 @@ function nearestSelectable(u) {
    distinction was just an inconsistency — a tap two pixels inside a solved
    neighbour and a tap two pixels into the sea are the same mistake, and
    silently discarding one of them reads as the game ignoring you. */
+/* The region being asked for, when the tap landed close enough to count as on
+   it. Nothing else is ever forgiven this way: it returns the answer or nobody.
+
+   Why a distance and not a fatter shape. Growing a polygon by pushing its edges
+   outward is the obvious move and it is the wrong one — at a reflex corner the
+   offset edges cross, and across a spur narrower than the offset they fold
+   through each other, so an outward offset can and does cut pieces off the
+   shape it was asked to grow. The set of points within `grace` of a region has
+   no such failure mode: it is that region swept by a disc, so it contains the
+   original for any grace >= 0, opens no gaps, and rounds every corner off
+   instead of losing it. And borderDist2 already computes that distance, for the
+   snap and for distance scoring, so the whole of it is a threshold on a number
+   the game was working out anyway.
+
+   One direction only, which is the property to hold on to: this can turn a miss
+   into a hit and can never do the reverse, because it is only ever asked about
+   `current` and only ever answers with it. Nothing that used to resolve
+   correctly stops doing so, and no region becomes harder to reach.
+
+   Not while the magnifier is open. The disc's one promise is that the shape
+   lit in amber is the shape a release will pick, and the magnifier is already
+   this problem's better answer — the miss is visible before the finger lifts,
+   and correctable. Forgiving a slip there would move the pick off the shape the
+   player is watching, for a slip they are not making. markRadius() reads the
+   same flag in the opposite direction, and for the matching reason: a mark's
+   bias is safe to widen precisely because the disc puts it on screen. */
+function forgiven(u) {
+  if (!running || reviewing || magnifying || !grace) return null;
+  if (!selectable(current)) return null;
+  return distanceTo(current, u) <= grace ? current : null;
+}
+
 function resolve(clientX, clientY) {
   const u = userPoint(clientX, clientY);
   if (!u) return null;
+  // Asked before containment: beating the region the tap actually landed in is
+  // the entire job.
+  const near = forgiven(u);
+  if (near) return near;
   const under = stateUnder(u, clientX, clientY);
   if (under && selectable(under)) return under;
   return nearestSelectable(u);

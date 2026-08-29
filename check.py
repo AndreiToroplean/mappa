@@ -117,7 +117,12 @@ class Ref:
                 bd, best = d, nm
         return best
 
-    def resolve(self, x, y, dead, cap):
+    def resolve(self, x, y, dead, cap, cur=None, grace=0.0):
+        # The bias toward the region being asked for, ahead of containment,
+        # because outvoting the region the tap landed in is the point of it.
+        if (grace and cur is not None and cur not in dead
+                and self.distance(x, y, cur) <= grace):
+            return cur
         u = self.contains(x, y)
         if u and u not in dead:
             return u
@@ -129,22 +134,39 @@ class Ref:
 
 def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
                      places=None, mark_composed=0.0, mark_composed_aimed=0.0,
-                     reach_cases=()):
+                     reach_cases=(), grace_composed=0.0, grace_cases=()):
     blk = geo_src[geo_src.index('const SNAP_UNITS'):]
     # stateUnder is *not* stubbed. It used to be, and that hid the whole of the
     # rule that puts marks first — a stub of a resolver cannot test the
     # resolver. It needs only CAN_HIT, DOTS and a shapes proxy that answers a
     # real per-region containment test, all supplied below.
+    #
+    # forgiven() is not stubbed either, for the same reason, and it sits outside
+    # the range replaced here on purpose. Only the two things it reads that
+    # belong to a browser — the run's state and the fit of the view box — are
+    # supplied from outside.
     blk = blk.replace(
         blk[blk.index('function selectable'):blk.index('function segDist2')],
         'function selectable(name){ return !!name && !DEAD.has(name); }\n\n')
     blk = blk.replace("""function resolve(clientX, clientY) {
   const u = userPoint(clientX, clientY);
   if (!u) return null;
+  // Asked before containment: beating the region the tap actually landed in is
+  // the entire job.
+  const near = forgiven(u);
+  if (near) return near;
   const under = stateUnder(u, clientX, clientY);""",
 """function resolve(x, y) {
   const u = {x: x, y: y};
+  const near = forgiven(u);
+  if (near) return near;
   const under = stateUnder(u);""")
+    # A replacement that silently stops matching would leave the browser-only
+    # calls in and the harness would die in node with a bare ReferenceError,
+    # several screens away from the rename that caused it. Say so here instead.
+    if 'userPoint' in blk or 'function forgiven' not in blk:
+        raise SystemExit('check.py: the geometry harness no longer matches '
+                         '04-geometry.js — resolve() or forgiven() has moved')
     return (
         "const REGIONS = " + json.dumps([{'name': r['n'], 'd': r['d'],
                                           'anchor': r['l'], 'panel': r['p']}
@@ -169,6 +191,12 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
         "return magnifying ? MARK_COMPOSED_AIMED : MARK_COMPOSED; }\n"
         "let CAN_HIT = true;\n"
         "let DEAD = new Set();\n"
+        # forgiven() reads the run rather than the map: which region is being
+        # asked for, and whether there is a run at all. Declared here because
+        # they belong to 03-run.js and 11-review.js, neither of which is under
+        # test.
+        "let running = true, reviewing = false, current = null;\n"
+        "const GRACE_COMPOSED = " + json.dumps(grace_composed) + ";\n"
         # A real point-in-fill per region, not "is this the first region
         # containing the point": stateUnder asks each shape in turn and the old
         # proxy could never answer yes for a mark inside its neighbour.
@@ -177,6 +205,7 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
         "const DIST = " + json.dumps(dist_cases) + ";\n"
         "const ANCHORS = " + json.dumps(anchor_cases) + ";\n"
         "const REACH = " + json.dumps([list(c) for c in reach_cases]) + ";\n"
+        "const GRACE_CASES = " + json.dumps([list(c) for c in grace_cases]) + ";\n"
         + IS_DOT + "\n"
         """
 const BY_NAME = {};
@@ -264,11 +293,77 @@ for (const [x, y, nm, shut, open_] of REACH){
 magnifying = false;
 if (REACH.length) console.log('    mark reach, magnifier shut and open: '
   + (REACH.length * 2 - rfail) + '/' + (REACH.length * 2));
-process.exitCode = (fail || dfail || afail || rfail) ? 1 : 0;
+
+/* The bias toward the region being asked for. Three separate things, because
+   agreeing with the reference is on its own no evidence that the rule does
+   anything — a grace of zero would agree with a reference told the same. */
+let gfail = 0, mfail = 0, oneway = 0, bit = 0, held = 0;
+grace = GRACE_COMPOSED;
+for (const [x, y, dead, cur, plain, want] of GRACE_CASES){
+  DEAD = new Set(dead);
+  current = cur;
+  magnifying = false;
+  const got = resolve(x, y);
+  if (got !== want){
+    gfail++;
+    if (gfail <= 3) console.log('    grace: asked for ' + cur + ' at ('
+      + x.toFixed(1) + ',' + y.toFixed(1) + ') js=' + got + ' ref=' + want);
+  }
+  /* One direction only. The answer is either what it would have been without
+     any of this, or the region being asked for — never some third region. */
+  if (got !== plain && got !== cur) oneway++;
+  if (got === cur && plain !== cur) bit++;    // a miss forgiven
+  else if (got === plain) held++;             // left exactly as it was
+  /* The magnifier is the aimed path and gets no bias. Held against the same
+     resolver with the grace turned off rather than against the reference: the
+     magnifier also triples a mark's reach, which is a real difference and not
+     this one, and comparing to the shut-magnifier reference would charge that
+     to grace. */
+  magnifying = true;
+  grace = 0;
+  const aimed = resolve(x, y);
+  grace = GRACE_COMPOSED;
+  if (resolve(x, y) !== aimed) mfail++;
+}
+magnifying = false;
+current = null;
+grace = 0;
+DEAD = new Set();
+if (GRACE_CASES.length){
+  console.log('    grace:      ' + (GRACE_CASES.length - gfail) + '/'
+    + GRACE_CASES.length + ' match the reference');
+  console.log('    it only ever adds: ' + bit + ' misses forgiven, ' + held
+    + ' left alone' + (oneway ? ', ' + oneway + ' RESOLVED TO A THIRD REGION!' : ''));
+  console.log('    inert while the magnifier is open: '
+    + (GRACE_CASES.length - mfail) + '/' + GRACE_CASES.length);
+  /* Both sides have to be represented or the run proves nothing: all forgiven
+     would pass with an infinite grace, all left alone with none at all. */
+  if (!bit || !held){
+    console.log('    FAIL the cases never exercise both sides of the threshold');
+    gfail++;
+  }
+}
+process.exitCode = (fail || dfail || afail || rfail || gfail || mfail || oneway) ? 1 : 0;
 """)
 
 
 SNAP = int(geo_src.split('const SNAP_UNITS =')[1].split(';')[0])
+GRACE_PX = float(re.search(r'const GRACE_PX = ([\d.]+)', geo_src).group(1))
+# GRACE_PX is a measurement of the screen, so turning it into the composed units
+# everything else here works in needs a screen to be named. This is the phone the
+# resolver cases are already composed for: 390 CSS pixels wide, and the map area
+# as tall as PHONE_ASPECT makes it — a 390x793 handset once the header and the
+# footer are taken off.
+PHONE_ASPECT = 0.603
+PHONE_W = 390.0
+# The band the bias has to sit in, stated as policy rather than derived. Below a
+# pixel it forgives nothing anyone could feel; above a quarter of the snap that
+# already runs from open water it has stopped being a nudge and started being a
+# second, sloppier way to play.
+if not 1.0 <= GRACE_PX <= 12.0:
+    print(f'  FAIL a grace of {GRACE_PX}px is outside 1..12 — under 1 it '
+          f'forgives nothing, over 12 it is answering for the player')
+    fails += 1
 map_src = (JS / '02-map.js').read_text()
 # What you press on a mark is wider than what is drawn, by this much. Read from
 # the source rather than restated, so the harness measures the game's number;
@@ -510,6 +605,40 @@ for geo in GEOS:
 
     anchors = [(r['l'][0], r['l'][1], r['n']) for r in regions]
 
+    # The bias toward the region being asked for, in the units everything here
+    # is composed in. preserveAspectRatio is meet, so one scale fits both axes.
+    g = GRACE_PX / min(PHONE_W / L['W'], (PHONE_W / PHONE_ASPECT) / L['H'])
+
+    # Cases have to straddle the threshold to say anything, and a random point
+    # in the frame is almost never within a few units of any particular region.
+    # So they are built off the borders themselves: stand on a vertex of the
+    # region being asked for and step away in each of eight directions, at
+    # fractions of the grace either side of one. What that lands on is the
+    # reference's business, not this loop's — the point is only that some of
+    # them are inside the bias and some outside.
+    grace_cases = []
+    for r in random.sample(regions, min(12, len(regions))):
+        ring = max(ref.rings[r['n']], key=len)
+        for v in random.sample(ring, min(4, len(ring))):
+            for mult in (0.35, 0.8, 1.5, 3.0):
+                for k in range(8):
+                    a = 2 * math.pi * k / 8
+                    x = round(v[0] + g * mult * math.cos(a), 3)
+                    y = round(v[1] + g * mult * math.sin(a), 3)
+                    grace_cases.append((
+                        x, y, [], r['n'],
+                        ref.resolve(x, y, set(), SNAP),
+                        ref.resolve(x, y, set(), SNAP, cur=r['n'], grace=g)))
+
+    # And the same rule where it has to lose: the region being asked for is
+    # already off the board, so nothing is owed to it however near the tap fell.
+    for x, y, dead, want in cases[:20]:
+        nm = random.choice(names)
+        grace_cases.append((x, y, sorted(set(dead) | {nm}), nm,
+                            ref.resolve(x, y, set(dead) | {nm}, SNAP),
+                            ref.resolve(x, y, set(dead) | {nm}, SNAP,
+                                        cur=nm, grace=g)))
+
     p = pathlib.Path(f'/tmp/fifty-geom-{geo}.js')
     p.write_text(geometry_harness(regions, cases, dist_cases, anchors, SNAP, dots,
                                   places=[{'s': 1.0} for _ in d['panels']],
@@ -518,7 +647,8 @@ for geo in GEOS:
                                   mark_composed_aimed=(d.get('mark', 0)
                                                        * MARK_REACH_AIMED
                                                        * L['place'][0]['s']),
-                                  reach_cases=reach_cases))
+                                  reach_cases=reach_cases,
+                                  grace_composed=g, grace_cases=grace_cases))
     r = subprocess.run(['node', str(p)], capture_output=True, text=True)
     print(r.stdout.rstrip() or r.stderr)
     fails += r.returncode

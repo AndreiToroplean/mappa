@@ -42,28 +42,27 @@ const GEO = flag('geo', 'fr');
 /* Every scene is a query string plus a script run once the page is up. Kept as
  * data so `all` is a loop rather than five near-copies. The link parameters are
  * a published surface and do the setup work no script has to repeat. */
+/* Steps by name, not by reference: a scene is a list of snippets to run in
+ * order, and naming them keeps the table readable without the snippets having
+ * to live in it. */
 const SCENES = {
-  menu: { q: '', act: null },
-  board: { q: '', act: FAKE_BOARD },
-  map: { q: '', act: START },
-  found: { q: '', act: START + PLAY_A_FEW },
-  drift: { q: '&scoring=drift', act: START + PLAY_A_FEW },
-  end: { q: '&scoring=drift', act: START + PLAY_ALL },
+  menu:  { q: '', act: [] },
+  board: { q: '', act: ['FAKE_BOARD'] },
+  map:   { q: '', act: ['START'] },
+  found: { q: '', act: ['START', 'PLAY_A_FEW'] },
+  drift: { q: '&scoring=drift', act: ['START', 'PLAY_A_FEW'] },
+  end:   { q: '&scoring=drift', act: ['START', 'PLAY_ALL'] },
 };
-
-function FAKE_BOARD() {}      // replaced below; named here for readability
-function START() {}
-function PLAY_A_FEW() {}
-function PLAY_ALL() {}
 
 /* Written as source text because it is evaluated in the page, not here. */
 const SRC = {
   FAKE_BOARD: `
     const key = keyFor(GEO.id, MODE.id, SCORING.id);
+    // the shape saveBoard writes: found, revealed, spend, clues, ms, when
     const rows = [[62,20,683400],[78,0,659400],[82,0,222200],
                   [87,0,695500],[94,14,546800],[120,13,430800]];
     kvSet(key, JSON.stringify(rows.map(([e,c,t]) =>
-      ({ errors: e, clues: c, ms: t, at: Date.now() }))));
+      ({ f: TOTAL, v: TOTAL, e: e, c: c, t: t, d: Date.now() }))));
     showBoards(loadBoard(), null);`,
   START: `
     el.startBtn.click();
@@ -132,11 +131,17 @@ async function main() {
       { width: W, height: H, deviceScaleFactor: SCALE, mobile: true });
     await send('Page.navigate', { url });
     await sleep(900);
-    const code = SRC[act ? act.name : ''] || (act ? SRC[String(act)] : '');
-    if (act) {
-      await send('Runtime.evaluate',
-        { expression: `(() => { ${SRC[act.name]} })()`, awaitPromise: true });
-      await sleep(500);
+    for (const step of act) {
+      if (!SRC[step]) throw new Error('no such step: ' + step);
+      const r = await send('Runtime.evaluate',
+        { expression: `(() => { ${SRC[step]} })()`, awaitPromise: true });
+      // A step that threw would otherwise leave a screenshot of the wrong scene
+      // and nothing to say so, which is how a styling bug gets invented.
+      if (r.exceptionDetails) {
+        throw new Error(`${s}/${step}: ` + (r.exceptionDetails.exception
+          ? r.exceptionDetails.exception.description : r.exceptionDetails.text));
+      }
+      await sleep(350);
     }
     const { data } = await send('Page.captureScreenshot', { format: 'png' });
     const file = path.join(OUT, `${s}-${GEO}-${THEME}-${W}x${H}.png`);

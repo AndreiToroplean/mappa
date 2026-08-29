@@ -1,3 +1,15 @@
+  /* ---- type -------------------------------------------------------------
+     Three families, each with one job, embedded by src/make.py where __FONTS__
+     is. All three are SIL OFL 1.1 and subset to the game's own alphabet; see
+     src/build-fonts.py and data/fonts/LICENSE-*.
+
+     The fallbacks are not decoration. font-display is block, so a face that
+     failed to decode leaves the text invisible rather than wrong, and the stack
+     is what catches that — every one of them names a real serif that ships on
+     some platform, because the failure this guards against is the game arriving
+     as one file on a machine nobody tested. */
+__FONTS__
+
   /* ---- palette -----------------------------------------------------------
      Every colour in the file is named here and nowhere else, so a theme is a
      block of values rather than a search through the stylesheet.
@@ -86,8 +98,69 @@
 
     --confetti:#4FCBA4,#FFC24B,#F2E9D6,#D98E4A,#D97A7E;
 
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* Type, by the job it does rather than by what it looks like — the same
+       rule the colours follow.
+
+       --display is a capitals face in the Trajan tradition: its lowercase are
+       small capitals, so it can set a heading and nothing else, which is
+       exactly what it is asked for. --serif is the book face, for everything
+       read rather than glanced at. --figures is that same face with its
+       lining, tabular numerals switched on, because EB Garamond's default
+       figures are old-style — right in a sentence, wrong in a column of times
+       that has to line up. --script sets one line in the whole game.
+
+       They are here rather than in each theme because a theme is the light in
+       the room, and the light does not change which typeface is on the paper.
+       Both palettes still declare them, so the two blocks stay comparable. */
+    --display: 'Mappa Cinzel', Optima, Palatino, Georgia, serif;
+    --serif: 'Mappa Garamond', 'EB Garamond', Palatino, Georgia, serif;
+    --figures: 'Mappa Garamond', 'EB Garamond', Palatino, Georgia, serif;
+    --script: 'Mappa Pinyon', 'Snell Roundhand', 'Apple Chancery', cursive;
+
+    /* ---- surfaces that are not flat -------------------------------------
+       The desk is lit from the top right, and every raised thing on it agrees
+       about that: --lightfall is the one declaration of where the lamp is, so
+       moving it moves every highlight at once.
+
+       --parchment is two scales of the same noise, a coarse mottle and a fine
+       vertical fibre. --foxing is the sparse warm blooms an old sheet picks
+       up, at a frequency low enough to read as staining rather than as grain.
+       Neither is an image: a photographed texture would be somebody's
+       copyright and a quarter of a megabyte, and this is a filter written in
+       fourteen lines that tiles seamlessly and costs nothing.
+
+       --swell is the sea's long roll and --waves its surface, two scales for
+       the same reason the parchment has two. */
+    /* Where the lamp is, declared once so it can be moved without hunting for
+       it: every highlight on every raised thing reads it. --shade is the same
+       fact said as an angle, for the falloff across a whole sheet. Night is lit
+       from the top right; day comes in from the left, which is the only thing
+       about the light the two themes disagree on. */
+    --lightfall: 92% 0%;  --shade: 206deg;
+    /* Paper, and the ink on it. A card is a sheet on the desk: it does not go
+       dark when the room does, it is lit by less. These are what a .card
+       switches --text and --muted to, which is how one rule recolours
+       everything inside a card instead of thirty rules doing it one at a time. */
+    --paper:#C3AE8B; --ink:#2B2118; --inkmuted:#6A583C;
+    --paperline:rgba(74,58,32,.34); --paperfaint:rgba(74,58,32,.15);
+    --paperhover:rgba(74,58,32,.07);
+    /* Brass: rules, borders and marks on a card. One colour at two strengths. */
+    --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.42);
+    /* The two kinds of button the mockup has: pressed into the sheet, in near
+       black with brass lettering, and sitting proud of it in cream. */
+    --sunk:#241B12; --sunkink:#C6A96A;
+    --risen:#E8DBBC; --risenink:#2B2118;
+    /* The one blue button, and the dark strip the prompt sits on over the map. */
+    --navy:#1C3A5C; --navyink:#EBDCB6;
+    --bar:#181309; --barink:#EFE4CC; --barmuted:#9E8A68;
+    /* Red and green re-chosen for paper: the ones that carry on a dark ground
+       are neon on a tan one. */
+    --inkred:#8E2B22; --inkgreen:#2F6153;
+    --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
+    --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
+    --swell: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27700%27%20height=%27700%27%3E%3Cfilter%20id=%27w%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.0032%20.0075%27%20numOctaves=%274%27%20seed=%2711%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.75%27%20intercept=%27-.30%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width=%27700%27%20height=%27700%27%20filter=%27url%28%23w%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
+    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2758%27%20height=%2738%27%3E%3Cg%20fill=%27none%27%20stroke=%27%2523CFE4FF%27%20stroke-opacity=%27.14%27%20stroke-width=%271.1%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M5%209q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M33%2021q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M16%2032q4.5-3.6%209%200t9%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%25239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
 
   /* ---- the light theme -----------------------------------------------------
@@ -160,6 +233,29 @@
     --grain: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='200'%20height='200'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.8'%20numOctaves='4'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='200'%20height='200'%20filter='url%28%23g%29'%20opacity='.055'/%3E%3C/svg%3E");
     --vignette: radial-gradient(ellipse at 50% 50%,
        transparent 58%, rgba(120,96,56,.15) 100%);
+
+    --display: 'Mappa Cinzel', Optima, Palatino, Georgia, serif;
+    --serif: 'Mappa Garamond', 'EB Garamond', Palatino, Georgia, serif;
+    --figures: 'Mappa Garamond', 'EB Garamond', Palatino, Georgia, serif;
+    --script: 'Mappa Pinyon', 'Snell Roundhand', 'Apple Chancery', cursive;
+
+    /* Daylight, which arrives from the other side. Everything else here is the
+       night values opened up: the same paper with more light on it. */
+    --lightfall: 8% 0%;  --shade: 154deg;
+    --paper:#E3D3AE; --ink:#33281A; --inkmuted:#7A6647;
+    --paperline:rgba(74,58,32,.30); --paperfaint:rgba(74,58,32,.13);
+    --paperhover:rgba(74,58,32,.06);
+    --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.40);
+    --sunk:#3B2D1C; --sunkink:#DCC38A;
+    --risen:#FBF3DE; --risenink:#33281A;
+    --navy:#2C5480; --navyink:#F6EACA;
+    --bar:#2A2114; --barink:#F4EAD4; --barmuted:#AC9873;
+    --inkred:#8E2B22; --inkgreen:#2F6153;
+    --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
+    --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
+    --swell: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27700%27%20height=%27700%27%3E%3Cfilter%20id=%27w%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.0032%20.0075%27%20numOctaves=%274%27%20seed=%2711%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.75%27%20intercept=%27-.30%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width=%27700%27%20height=%27700%27%20filter=%27url%28%23w%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
+    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2758%27%20height=%2738%27%3E%3Cg%20fill=%27none%27%20stroke=%27%2523CFE4FF%27%20stroke-opacity=%27.14%27%20stroke-width=%271.1%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M5%209q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M33%2021q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M16%2032q4.5-3.6%209%200t9%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2734%27%20height=%2714%27%3E%3Cg%20fill=%27%25238A7148%27%3E%3Cpath%20d=%27M17%201.6%2018.5%206%2023%207%2018.5%208%2017%2012.4%2015.5%208%2011%207%2015.5%206Z%27/%3E%3C/g%3E%3Cg%20stroke=%27%25238A7148%27%20stroke-width=%271%27%20opacity=%27.55%27%3E%3Cpath%20d=%27M0%207h9%27/%3E%3Cpath%20d=%27M25%207h9%27/%3E%3C/g%3E%3C/svg%3E);
   }
   *{box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
@@ -167,7 +263,7 @@
     -webkit-user-select:none;user-select:none} /* stray text selection on labels */
   svg,.state{touch-action:none}
   .state:focus{outline:none}
-  html,body{margin:0;height:100%;overflow:hidden;background:var(--base);color:var(--text);font-family:var(--sans)}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--base);color:var(--text);font-family:var(--serif)}
   body{display:flex;flex-direction:column;background-image:var(--grain)}
 
   header{
@@ -187,7 +283,7 @@
   #progress{min-width:72px}
   #clock{min-width:94px}
   .eyebrow{
-    font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    font-family:var(--display);font-size:11px;letter-spacing:.20em;
     text-transform:uppercase;color:var(--muted);margin-bottom:4px;
   }
   .caret{display:inline-block;width:9px;height:26px;background:var(--amber);
@@ -201,13 +297,22 @@
   .pip.lastgone{animation:pipout .5s ease-out}
   @keyframes pipout{0%{background:var(--red);transform:rotate(45deg) scale(1.6)}}
 
-  .stat .val{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+  .stat .val{font-family:var(--figures);font-size:24px;font-weight:600;
+    font-variant-numeric:lining-nums tabular-nums}
   .pip{width:11px;height:11px;background:var(--amber);transform:rotate(45deg);
     transition:background .25s, transform .25s}
   .pip.gone{background:transparent;box-shadow:inset 0 0 0 1px var(--line);transform:rotate(45deg) scale(.8)}
 
+  /* Two scales of water, the way the paper has two scales of fibre: --swell is
+     the long roll, --waves the stylised marks on the surface. The glint is the
+     same lamp as everywhere else, read from --lightfall, so the light does not
+     change direction when you start a run. */
   main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;min-height:0;
-    background-color:var(--sea);background-image:var(--vignette),var(--grain)}
+    background-color:var(--sea);
+    background-image:
+      radial-gradient(ellipse 85% 60% at var(--lightfall),
+        rgba(196,224,255,.15), rgba(196,224,255,0) 62%),
+      var(--vignette), var(--waves), var(--swell)}
   /* The map, by id. As a bare `svg` rule this reached every icon on the page,
      each of which then had to override it — one missed override away from the
      same bug twice. */
@@ -285,7 +390,7 @@
      grouping outline all use it, so it never has to be learned twice. */
   path.group{fill:none;stroke:var(--amber);stroke-width:2.4;stroke-linejoin:round;
     opacity:.95;pointer-events:none}
-  text.grouplabel{font-family:var(--mono);font-size:12px;font-weight:600;
+  text.grouplabel{font-family:var(--display);font-size:12px;font-weight:600;
     fill:var(--amber);text-anchor:middle;pointer-events:none;
     paint-order:stroke;stroke:var(--halo);stroke-width:3.5px}
   .hint{color:var(--amber);font-weight:600}
@@ -339,7 +444,7 @@
      neighbour, where it sat in a colour belonging to neither. Its own ink and a
      knocked-out halo instead: the same treatment the scored and revealed labels
      already had, for the same reason. */
-  text.label{font-family:var(--mono);font-size:11px;fill:var(--foundink);
+  text.label{font-family:var(--display);font-size:11px;fill:var(--foundink);
     text-anchor:middle;pointer-events:none;opacity:var(--labelfade);
     stroke:var(--foundhalo);stroke-width:3px;paint-order:stroke}
   text.label.wrong{fill:var(--wrongink);opacity:1;font-weight:600;
@@ -352,7 +457,7 @@
     stroke:var(--scoredhalo);stroke-width:3px;paint-order:stroke}
 
   footer{
-    font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);
+    font-family:var(--display);font-size:12px;letter-spacing:.06em;color:var(--muted);
     padding:0 22px;border-top:1px solid var(--line);
     background-color:var(--panel);background-image:var(--grain);
     height:48px;flex:none;display:flex;align-items:center;overflow:hidden;
@@ -366,19 +471,57 @@
   .overlay{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;background:var(--scrim);
     display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
   .overlay[hidden]{display:none}
-  .card{position:relative;background-color:var(--panel);background-image:var(--grain);
-    border:1px solid var(--line);border-radius:14px;
-    padding:32px;width:100%;max-width:400px;box-shadow:0 18px 44px var(--shadow)}
-  .card h2{margin:0;font-size:26px;letter-spacing:-0.02em}
+  /* A sheet of paper on the desk, and the one place the whole idea lives.
+     Paper does not go dark when the room does — it is lit by less — so a card
+     is parchment in both themes and only the light on it changes.
+
+     The trick that keeps this to one rule: --text and --muted are *rebound*
+     here, so every descendant already asking for them picks up ink on paper
+     without a single one of those rules being touched. The same goes for the
+     hairlines and the accent. Adding a new element to a card needs no new
+     colour rule, which is the property worth having.
+
+     Four background layers, back to front: the paper's own colour, the fibre
+     and mottle, the foxing, the falloff across the sheet, and the lamp. The
+     lamp is last so it lies over everything, which is what a lamp does. */
+  .card{position:relative;
+    --text:var(--ink); --muted:var(--inkmuted);
+    --line:var(--paperline); --hairline:var(--paperfaint);
+    --hover:var(--paperhover); --amber:var(--gold);
+    --red:var(--inkred); --foundline:var(--inkgreen);
+    color:var(--ink);
+    background-color:var(--paper);
+    background-image:
+      radial-gradient(ellipse 120% 95% at var(--lightfall),
+        rgba(255,246,220,.30), rgba(255,246,220,0) 58%),
+      linear-gradient(var(--shade), rgba(255,248,225,.10) 0%,
+        rgba(255,248,225,0) 30%, rgba(58,42,20,.26) 100%),
+      radial-gradient(ellipse 108% 104% at 50% 50%,
+        rgba(58,42,20,0) 62%, rgba(58,42,20,.20) 100%),
+      var(--foxing), var(--parchment);
+    border:1px solid var(--gold);border-radius:5px;
+    padding:30px 28px;width:100%;max-width:400px;
+    /* Sitting on a surface, not floating over one: a tight contact shadow and
+       a long soft one, and a brass hairline inside the edge the way a plate is
+       ruled in from its trim. */
+    box-shadow:0 2px 4px rgba(0,0,0,.30), 0 22px 50px var(--shadow),
+      inset 0 0 0 1px rgba(255,244,214,.14)}
+  .card h2{margin:0;font-size:26px;letter-spacing:-0.01em;font-family:var(--serif);
+    font-weight:600}
   /* The name, set as a mark rather than as a word. Uppercased in CSS rather
      than typed that way, so the accessible name a screen reader announces is
      still "Mappa" and not five letters read out one at a time. */
-  .card h2.wordmark{text-transform:uppercase;letter-spacing:.06em;font-weight:700}
-  .card .sub{font-family:var(--mono);font-size:12px;color:var(--muted);
+  .card h2.wordmark{font-family:var(--display);text-transform:uppercase;
+    letter-spacing:.10em;font-weight:400;font-size:38px;line-height:1.05}
+  .card .sub{font-family:var(--display);font-size:11.5px;color:var(--muted);
     letter-spacing:.1em;text-transform:uppercase;margin:6px 0 24px}
   /* The tagline is a phrase, not a label, so it keeps its own capitals. The
      rest of .sub — a run's summary line on the end card — stays uppercase. */
-  .sub.tagline{text-transform:none;letter-spacing:.04em;font-size:12.5px}
+  /* The one line in the game set in the script face. Far bigger than its
+     nominal size suggests, because a copperplate's x-height is tiny: at 12px
+     it is a smudge, and the flourish is the entire point of it. */
+  .sub.tagline{font-family:var(--script);text-transform:none;letter-spacing:0;
+    font-size:24px;line-height:1.1;margin:0 0 20px}
   /* The build's version, so a phone can be identified without asking it
      anything. On the tagline's own row rather than a line of its own: it costs no
      height, and the row is already the quietest text on the card. Dimmer again
@@ -390,17 +533,27 @@
      ride along on the tagline, which put it on the card at all times for the
      sake of the rare moment it is wanted. */
   .ver{margin:6px 4px 2px;padding-top:7px;border-top:1px solid var(--line);
-    font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+    font-family:var(--display);font-size:9px;letter-spacing:.06em;
     color:var(--muted);opacity:.7;text-align:center;cursor:default}
 
-  .board{border-top:1px solid var(--line);margin-top:8px;padding-top:14px}
-  .board h3{font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  /* The break between choosing a run and looking at past ones. A rule with a
+     compass star on it rather than a plain border: the star is drawn in --star
+     rather than typed, because a character would depend on a font having it and
+     this shape has to be identical in both themes and at every size. */
+  .board{margin-top:14px;padding-top:16px;position:relative}
+  .board::before{content:"";position:absolute;top:0;left:0;right:0;height:14px;
+    background:
+      var(--star) center/18px 14px no-repeat,
+      linear-gradient(90deg, rgba(138,109,46,0), var(--goldsoft) 22%,
+        var(--goldsoft) 78%, rgba(138,109,46,0)) center/100% 1px no-repeat}
+  .board h3{font-family:var(--display);font-size:11px;letter-spacing:.20em;
     text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:400}
   .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-    font-family:var(--mono);font-size:13px;padding:6px 0;font-variant-numeric:tabular-nums;
+    font-family:var(--figures);font-size:15px;padding:7px 0;
+    font-variant-numeric:lining-nums tabular-nums;
     border-bottom:1px solid var(--hairline)}
   .row:last-child{border-bottom:0}
-  .row .rank{color:var(--muted);width:22px;flex:none}
+  .row .rank{color:var(--muted);width:26px;flex:none;font-size:14px}
   .row .tally{flex:1;min-width:0;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
   .row .errs{flex:none;min-width:62px;text-align:right;font-size:11px;
@@ -419,9 +572,10 @@
     padding-left:8px;margin-left:-8px}
   .row.you .rank,.row.you .time{color:var(--amber)}
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 20px}
-  .geoSel{width:100%;margin:0;padding:10px 11px;border-radius:8px;
-    background:var(--well);color:var(--text);border:1px solid var(--line);
-    font-family:var(--sans);font-size:14px;-webkit-appearance:none;appearance:none;
+  .geoSel{width:100%;margin:0;padding:11px 12px;border-radius:6px;
+    background:var(--sunk);color:var(--sunkink);border:1px solid var(--gold);
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.22);
+    font-family:var(--serif);font-size:15px;-webkit-appearance:none;appearance:none;
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
       linear-gradient(135deg,var(--muted) 50%,transparent 50%);
     background-position:calc(100% - 17px) 19px, calc(100% - 12px) 19px;
@@ -444,8 +598,15 @@
      sixteen with the next axis. The rule that makes that work is that no line
      may depend on another row's selection — if one ever has to, the axes are
      not independent and the design needs looking at rather than the copy. */
-  .pick{margin:0 0 14px}
-  .pick .eyebrow{margin-bottom:7px}
+  .pick{margin:0 0 15px}
+  /* A section label with a rule running off it to the right, the way a plate is
+     titled. A gradient rather than a border, so it fades rather than stopping,
+     and flex rather than a pseudo-element with a guessed width. */
+  .pick .eyebrow, .board h3{display:flex;align-items:center;gap:11px}
+  .bhead h3{flex:1}
+  .pick .eyebrow::after, .board h3::after{content:"";flex:1;height:1px;
+    background:linear-gradient(90deg, var(--goldsoft), rgba(138,109,46,0))}
+  .pick .eyebrow{margin-bottom:8px}
 
   /* Mode is the choice that matters; scoring refines it. They were two
      identical rows, which said they were equally weighty and they are not. The
@@ -463,8 +624,9 @@
   .headbtns{display:flex;gap:8px;flex:none}
   .headbtn{flex:none;width:34px;height:34px;margin:0;
     padding:0;display:flex;align-items:center;justify-content:center;
-    border-radius:9px;background:transparent;color:var(--muted);
-    box-shadow:inset 0 0 0 1px var(--line)}
+    border-radius:4px;background:var(--sunk);color:var(--sunkink);
+    border:1px solid var(--gold);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.2)}
   .headbtn:hover{filter:none;color:var(--text)}
   .headbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
   .fsbtn[hidden]{display:none}
@@ -490,12 +652,23 @@
   .pop button:hover{filter:none;background:var(--land)}
   .fsbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .modes button{margin:0;flex:1;padding:10px 6px;font-size:13px;font-weight:500;
-    border-radius:8px;background:transparent;color:var(--muted);
-    box-shadow:inset 0 0 0 1px var(--line)}
+  /* Pressed into the sheet: near black with brass lettering, a dark inner
+     shadow along the lit edge and a paper-coloured one along the other, which
+     is what makes a hole look like a hole under a lamp at a known angle. */
+  .modes button{margin:0;flex:1;padding:11px 6px;font-size:14px;font-weight:400;
+    border-radius:4px;background:var(--sunk);color:var(--sunkink);
+    font-family:var(--serif);
+    border:1px solid var(--gold);
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.55),
+      0 1px 0 rgba(255,246,220,.22)}
   .modes button:hover{filter:none;color:var(--text)}
-  .modes button.on{background:var(--amber);color:var(--onaccent);
-    box-shadow:none;font-weight:600}
+  /* And raised off it: cream, sitting proud, with the light on its top edge
+     and its shadow cast down and away from the lamp. */
+  .modes button.on{background:var(--risen);color:var(--risenink);
+    font-weight:500;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.75),
+      inset 0 -1px 0 rgba(74,58,32,.18),
+      0 2px 3px rgba(40,28,12,.34)}
   .modes button.on:hover{color:var(--onaccent)}
   /* Practice has no lives to spend, so the same column counts what it does
      have. Keeping the column rather than hiding it holds the header layout
@@ -507,7 +680,7 @@
   body.numeric #missCount{display:block}
   body.numeric #lives{display:none}
   .val.bad{color:var(--softred)}
-  .empty{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.5}
+  .empty{font-family:var(--serif);font-size:12px;color:var(--muted);line-height:1.5}
   .bhead{display:flex;align-items:center;justify-content:space-between;
     gap:10px;margin:0 0 10px}
   .bhead h3{margin:0}
@@ -521,8 +694,8 @@
   /* same gap between the rows as within them */
   #paused .btnrow{margin-top:10px}
   .btnrow button{margin-top:0;flex:1}
-  button.ghost{background:transparent;color:var(--text);
-    box-shadow:inset 0 0 0 1px var(--line)}
+  button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);
+    box-shadow:none}
   button.ghost:hover{filter:none;background:var(--hover)}
   /* The only literal left in the file. Red is dark on both grounds, so the
      text on it is white in both. */
@@ -534,7 +707,7 @@
      selected into or pasted into, the one thing it exists for. */
   #impText{width:100%;margin-top:10px;padding:8px 10px;resize:vertical;
     background:var(--well);color:var(--text);border:1px solid var(--line);
-    border-radius:8px;font:400 11px/1.45 var(--mono);
+    border-radius:8px;font:400 12px/1.45 var(--serif);
     -webkit-user-select:text;user-select:text;
     -webkit-touch-callout:default}
   #impText:focus{outline:none;border-color:var(--amber)}
@@ -543,19 +716,20 @@
      a file chooser can hand back nothing at all and never say why, so there is
      always a line here saying where the import has got to. */
   .impnote{margin-top:12px;font-size:11px;line-height:1.45;color:var(--muted);
-    min-height:16px;font-family:var(--mono)}
+    min-height:16px;font-family:var(--serif)}
   .impnote.warn{color:var(--amber)}
   .impnote.ok{color:var(--foundline)}
   #impPick{margin-top:14px}
   #impGo:disabled{opacity:.45}
   .card.narrow{max-width:340px}
-  .storenote{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  .storenote{font-family:var(--serif);font-style:italic;font-size:12px;letter-spacing:.01em;
     color:var(--muted);margin-top:12px;line-height:1.45}
   .storenote.warn{color:var(--amber)}
   /* What a miss just cost, under distance scoring. Beside the miss rather than
      in the header, because the header shows the running total and this is the
      one number the total does not tell you. */
-  .cost{color:var(--amber);font-family:var(--mono);font-size:12px}
+  .cost{color:var(--amber);font-family:var(--figures);font-size:13px;
+    font-variant-numeric:lining-nums tabular-nums}
 
   /* Both menus' height comes from the window, not from what is in them. Almost
      everything on the card changes size: 'département' wraps where 'state' does
@@ -599,7 +773,7 @@
   .lens .cross::before{top:-8px}
   .lens .cross::after{bottom:-8px}
   .lens .cap{margin-top:9px;max-width:184px;text-align:center;
-    font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--onaccent);
+    font-family:var(--display);font-size:12px;letter-spacing:.05em;color:var(--onaccent);
     background:var(--amber);border-radius:7px;padding:5px 8px;font-weight:600;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lens .cap.none{background:var(--panel);border:1px solid var(--line);
@@ -669,6 +843,17 @@
      uses. */
   .card.menu .btnrow{margin-top:10px}
 
+  /* The two small stars either side of Start. Pseudo-elements on the button
+     rather than markup, so nothing in the DOM has to know about them, and only
+     on the card's main action — the quiet pair below it are not occasions. */
+  .card.menu > button{position:relative}
+  .card.menu > button::before, .card.menu > button::after{
+    content:"";position:absolute;top:50%;width:13px;height:13px;
+    transform:translateY(-50%);opacity:.7;
+    background:var(--star) center/13px 10px no-repeat}
+  .card.menu > button::before{left:18px}
+  .card.menu > button::after{right:16px}
+
   /* What a choice means, said once and then gone. The alternative was a line of
      copy under every row, which cost four lines of card height permanently to
      answer a question asked once — and the card is the one place in the game
@@ -702,7 +887,7 @@
   /* Shown only when something threw; selectable so it can be quoted back. */
   .crash{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 12px;
     background:var(--crashbg);color:var(--crashink);border-top:1px solid var(--red);
-    font-family:var(--mono);font-size:11px;line-height:1.45;
+    font-family:ui-monospace, Menlo, Consolas, monospace;font-size:11px;line-height:1.45;
     -webkit-user-select:text;user-select:text}
   .crash[hidden]{display:none}
   .confetti{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:22;pointer-events:none}
@@ -710,7 +895,7 @@
   .fanfare{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:23;display:flex;
     align-items:center;justify-content:center;pointer-events:none}
   .fanfare[hidden]{display:none}
-  .fanfare span{font-family:var(--mono);font-size:56px;font-weight:700;
+  .fanfare span{font-family:var(--figures);font-size:56px;font-weight:700;
     color:var(--foundline);letter-spacing:-0.02em;text-align:center;
     text-shadow:0 0 34px var(--foundglow), 0 6px 24px var(--haze);
     animation:fanfarein 1.9s cubic-bezier(.2,1.3,.4,1) forwards}
@@ -737,13 +922,20 @@
   .countdown{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;
     pointer-events:none;z-index:20;background:var(--veil)}
   .countdown[hidden]{display:none}
-  .countdown span{font-family:var(--mono);font-size:104px;font-weight:700;color:var(--amber);
+  .countdown span{font-family:var(--figures);font-size:104px;font-weight:700;color:var(--amber);
     font-variant-numeric:tabular-nums;animation:tickin .68s ease-out}
   @keyframes tickin{0%{transform:scale(1.5);opacity:0}30%{transform:scale(1);opacity:1}
     100%{transform:scale(.94);opacity:.55}}
-  button{margin-top:22px;width:100%;background:var(--amber);color:var(--onaccent);border:0;
-    padding:13px;border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;
-    font-family:var(--sans)}
+  /* The card's own action. Indigo rather than brass: it is the only thing on
+     the sheet that is not paper, ink or metal, and it should read as the one
+     thing to press. */
+  button{margin-top:20px;width:100%;background:var(--navy);color:var(--navyink);
+    border:1px solid var(--gold);
+    padding:13px;border-radius:4px;font-size:17px;font-weight:400;cursor:pointer;
+    font-family:var(--serif);letter-spacing:.02em;
+    box-shadow:inset 0 1px 0 rgba(255,246,220,.20),
+      inset 0 0 0 1px rgba(255,246,220,.10),
+      0 2px 4px rgba(20,14,6,.40)}
   button:hover{filter:brightness(1.08)}
   button:focus-visible{outline:2px solid var(--foundline);outline-offset:3px}
 

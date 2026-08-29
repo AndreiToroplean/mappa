@@ -44,3 +44,24 @@ copyright: it is public to read and GitHub's terms let people fork it on the
 platform, but nobody has permission to reuse it elsewhere. If that should change,
 adding a LICENSE file is the whole of the change — the data terms above are
 already compatible with a permissive one.
+
+## Type
+
+Three families, all under the SIL Open Font License 1.1, which permits
+subsetting, embedding and redistribution, asks that the licence travel with the
+font, and requires that a modified copy not carry the original's reserved name.
+The copies here are modified — instanced to one weight and subset to the game's
+own alphabet by `src/build-fonts.py` — so they are renamed to `Mappa Cinzel`,
+`Mappa Garamond` and `Mappa Pinyon`.
+
+| family | used for | upstream |
+|---|---|---|
+| Cinzel | the wordmark and the small letterspaced labels | [NDISCOVER/Cinzel](https://github.com/NDISCOVER/Cinzel) |
+| EB Garamond | everything read rather than glanced at | [octaviopardo/EBGaramond12](https://github.com/octaviopardo/EBGaramond12) |
+| Pinyon Script | the tagline, and nothing else | [SorkinType/Pinyon](https://github.com/SorkinType/Pinyon) |
+
+The licences are in `data/fonts/LICENSE-*.txt` and must not be removed.
+
+The paper, foxing, sea swell and wave textures are not images and have no
+attribution to make: they are SVG filters written in `src/style.css`, which is
+also why they tile seamlessly and cost a few hundred bytes each.

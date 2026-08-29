@@ -5,7 +5,7 @@ The output stays a single HTML file with no external references, which is the
 whole point of the project. The split exists for editing, not for shipping:
 the CSS, the JS modules and the region data are inlined here, in order.
 """
-import json, os, pathlib, subprocess
+import base64, json, os, pathlib, subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'src'
@@ -53,9 +53,48 @@ for g in GEOS:
     assert f'__{g.upper()}__' in js, f'missing placeholder __{g.upper()}__'
     assert f'__CLUES_{g.upper()}__' in js, f'missing placeholder __CLUES_{g.upper()}__'
 
+
 ver = version()
+
+
+def faces():
+    """The @font-face block, with the type inlined.
+
+    A self-contained file cannot link a font, so each face is base64'd into a
+    data URI, which costs a third again on top of the woff2. The files are cut
+    down to the game's own alphabet by src/build-fonts.py; see its docstring and
+    data/fonts/LICENSE-* for what they are and what may be done with them.
+
+    Generated here rather than written into style.css because base64 in the
+    stylesheet would make it unreadable and undiffable, and because the src line
+    is the one part of a face that depends on how the game is being shipped.
+    """
+    cuts = [
+        # file, family, weight, style
+        ('cinzel-400',    'Mappa Cinzel',   400, 'normal'),
+        ('garamond-400',  'Mappa Garamond', 400, 'normal'),
+        ('garamond-600',  'Mappa Garamond', 600, 'normal'),
+        ('garamond-400i', 'Mappa Garamond', 400, 'italic'),
+        ('pinyon-400',    'Mappa Pinyon',   400, 'normal'),
+    ]
+    out, total = [], 0
+    for stem, family, weight, style in cuts:
+        raw = (ROOT / 'data' / 'fonts' / f'{stem}.woff2').read_bytes()
+        total += len(raw)
+        b64 = base64.b64encode(raw).decode('ascii')
+        out.append(
+            f"@font-face{{font-family:'{family}';font-style:{style};"
+            f"font-weight:{weight};font-display:block;"
+            f"src:url(data:font/woff2;base64,{b64}) format('woff2')}}")
+    print(f'  type: {len(cuts)} faces, {total:,} bytes before encoding')
+    return '\n'.join(out)
+
+
 html = html.replace('__VERSION__', ver)
-html = html.replace('__CSS__', (SRC / 'style.css').read_text()).replace('__JS__', js)
+css = (SRC / 'style.css').read_text()
+assert '__FONTS__' in css, 'missing placeholder __FONTS__ in style.css'
+css = css.replace('__FONTS__', faces())
+html = html.replace('__CSS__', css).replace('__JS__', js)
 clues = {g: (ROOT / 'data' / f'clues-{g}.json').read_text() for g in GEOS}
 for g in GEOS:
     html = html.replace(f'__CLUES_{g.upper()}__', clues[g])

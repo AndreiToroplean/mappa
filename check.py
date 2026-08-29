@@ -1275,6 +1275,42 @@ else:
     print(f'  the highlight fill is used {len(lit)} times, none of them '
           f'unguarded on a touchscreen')
 
+print('type')
+# The script face is subset to letters and a few marks, because a copperplate's
+# outlines are heavy and it sets exactly one line in the game. That is only safe
+# while the line stays inside the subset: a character outside it falls back to
+# the serif, which is subtle enough to ship without anybody noticing.
+SCRIPT_OK = set(chr(c) for lo, hi in
+                [(0x41, 0x5A), (0x61, 0x7A), (0x20, 0x20), (0x27, 0x27),
+                 (0x2C, 0x2E)] for c in range(lo, hi + 1))
+tag = re.search(r'class="sub tagline">([^<]+)<', html_src)
+if not tag:
+    print('  FAIL cannot find the tagline')
+    fails += 1
+else:
+    outside = sorted(set(tag.group(1)) - SCRIPT_OK)
+    if outside:
+        print(f'  FAIL the tagline uses {outside}, which the script face was '
+              f'not cut to carry — see ONE_LINE in src/build-fonts.py')
+        fails += 1
+    else:
+        print(f'  the tagline stays inside the script face: "{tag.group(1)}"')
+
+# Every face the build inlines has to exist, or make.py dies with a traceback
+# naming a path and nothing about why.
+faces = ['cinzel-400', 'garamond-400', 'garamond-600', 'garamond-400i', 'pinyon-400']
+missing = [f for f in faces if not (ROOT / 'data' / 'fonts' / f'{f}.woff2').exists()]
+lic = list((ROOT / 'data' / 'fonts').glob('LICENSE-*'))
+if missing:
+    print(f'  FAIL no such face: {", ".join(missing)}')
+    fails += 1
+elif len(lic) < 3:
+    print(f'  FAIL {len(lic)} licences for 3 families — the OFL asks that they travel along')
+    fails += 1
+else:
+    kb = sum((ROOT / 'data' / 'fonts' / f'{f}.woff2').stat().st_size for f in faces) / 1024
+    print(f'  {len(faces)} faces, {kb:.0f}KB, {len(lic)} licences beside them')
+
 print('themes')
 
 

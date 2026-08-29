@@ -149,7 +149,7 @@ __FONTS__
        dark when the room does, it is lit by less. These are what a .card
        switches --text and --muted to, which is how one rule recolours
        everything inside a card instead of thirty rules doing it one at a time. */
-    --paper:#C3AE8B; --ink:#2B2118; --inkmuted:#6A583C;
+    --paper:#B09A75; --ink:#241B12; --inkmuted:#5C4A33;
     --paperline:rgba(74,58,32,.34); --paperfaint:rgba(74,58,32,.15);
     --paperhover:rgba(74,58,32,.07);
     /* Brass: rules, borders and marks on a card. One colour at two strengths. */
@@ -163,7 +163,7 @@ __FONTS__
     --bar:#181309; --barink:#EFE4CC; --barmuted:#9E8A68;
     /* Red and green re-chosen for paper: the ones that carry on a dark ground
        are neon on a tan one. */
-    --inkred:#8E2B22; --inkgreen:#2F6153;
+    --inkred:#A8362A; --inkgreen:#2F6153;
     /* What a cast shadow is made of. The offset and the blur are written per
        element by 15-light.js, which is the only thing that knows where a
        control is sitting relative to the lamp; the fallbacks here are a plain
@@ -171,13 +171,17 @@ __FONTS__
        stays a theme's business rather than the light's. */
     --castx:0px; --casty:2px; --castblur:5px; --away:.5;
     --castink:rgba(18,12,4,.45);
+    /* A lamp in a dark room: steep falloff, and no window to throw rays. */
+    --falloff:radial-gradient(ellipse 140% 118% at var(--lightfall),
+      rgba(10,7,3,0) 0%, rgba(10,7,3,.07) 42%, rgba(10,7,3,.30) 100%);
+    --rays:none;
     /* The pool the moon throws across the water. */
     --moonpool:rgba(150,190,240,.13);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
     --swell: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27700%27%20height=%27700%27%3E%3Cfilter%20id=%27w%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.0032%20.0075%27%20numOctaves=%274%27%20seed=%2711%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.75%27%20intercept=%27-.30%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width=%27700%27%20height=%27700%27%20filter=%27url%28%23w%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
-    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2746%27%20height=%2730%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23D8E9FF%27%20stroke-opacity=%27.30%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M3%207q4-3.2%208%200%27/%3E%3Cpath%20d=%27M25%204q4-3.2%208%200%27/%3E%3Cpath%20d=%27M14%2016q4-3.2%208%200%27/%3E%3Cpath%20d=%27M34%2020q4-3.2%208%200%27/%3E%3Cpath%20d=%27M5%2025q4-3.2%208%200%27/%3E%3Cpath%20d=%27M24%2027q4-3.2%208%200%27/%3E%3C/g%3E%3C/svg%3E);
-    --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27190%27%20height=%27130%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.16%27%20stroke-width=%271.6%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M8%2026q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M96%2014q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M40%2064q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M120%2078q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M0%20104q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M104%20116q13-9%2026%200t26%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2783%27%20height=%2761%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23DCECFF%27%20stroke-opacity=%27.34%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M4%208q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M31%205q4-3.2%208%200%27/%3E%3Cpath%20d=%27M58%2011q3-2.4%206%200%27/%3E%3Cpath%20d=%27M17%2021q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M46%2025q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M70%2030q4-3.2%208%200%27/%3E%3Cpath%20d=%27M7%2034q4-3.2%208%200%27/%3E%3Cpath%20d=%27M33%2041q3-2.4%206%200%27/%3E%3Cpath%20d=%27M60%2045q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M21%2052q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M48%2056q4-3.2%208%200%27/%3E%3Cpath%20d=%27M74%2014q3-2.4%206%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27263%27%20height=%27179%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.19%27%20stroke-width=%271.7%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M11%2023q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M132%2012q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M62%2057q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M186%2071q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M6%2096q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M118%20108q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M210%20128q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M40%20141q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M150%20158q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M88%20168q11-8%2022%200t22%200%27/%3E%3C/g%3E%3C/svg%3E);
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%238A6D2E%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
 
@@ -212,16 +216,16 @@ __FONTS__
     --shadowdeep:rgba(92,72,42,.30);
     --haze:rgba(250,244,231,.92);
 
-    --sea:#DCEAEF;
-    --land:#DCC9A2; --landhi:#C7AF80;
+    --sea:#48708F;
+    --land:#E4D5B4; --landhi:#D3C099;
     --edge:#63502F;
-    --halo:#FBF6EA;
+    --halo:#E8DCC0;
 
     --text:#382C1A; --muted:#7A6647;
     --labelfade:1;
     --onaccent:#FCF7EA;
 
-    --found:#9FC4AE; --foundline:#175A40; --foundmid:#7EBA9C;
+    --found:#A8CDB6; --foundline:#14523A; --foundmid:#86C0A2;
     --amber:#9C600C; --red:#B3322C; --softred:#A8443E;
     --washsoft:rgba(156,96,12,.12);
     --washfirm:rgba(156,96,12,.17);
@@ -260,7 +264,7 @@ __FONTS__
     /* Daylight, which arrives from the other side. Everything else here is the
        night values opened up: the same paper with more light on it. */
     --lightfall: 8% 0%;  --shade: 154deg;
-    --paper:#E3D3AE; --ink:#33281A; --inkmuted:#7A6647;
+    --paper:#EFE6D0; --ink:#33281A; --inkmuted:#7A6647;
     --paperline:rgba(74,58,32,.30); --paperfaint:rgba(74,58,32,.13);
     --paperhover:rgba(74,58,32,.06);
     --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.40);
@@ -273,12 +277,25 @@ __FONTS__
        a dark room does, because the whole sky fills in around it. */
     --castx:0px; --casty:2px; --castblur:5px; --away:.5;
     --castink:rgba(74,58,32,.28);
+    /* Daylight bounces, so the far corner of the room is only a little dimmer.
+       The rays are four bands of unequal width, which is what stops them reading
+       as a pattern: a window has glazing bars, not a screen. */
+    --falloff:radial-gradient(ellipse 130% 110% at var(--lightfall),
+      rgba(74,58,32,0) 0%, rgba(74,58,32,.05) 50%, rgba(74,58,32,.20) 100%);
+    --rays:
+      linear-gradient(126deg,
+        rgba(255,251,232,0) 4%,  rgba(255,251,232,.52) 11%,
+        rgba(255,251,232,0) 20%, rgba(255,251,232,0) 26%,
+        rgba(255,251,232,.30) 32%, rgba(255,251,232,0) 38%,
+        rgba(255,251,232,0) 50%, rgba(255,251,232,.40) 58%,
+        rgba(255,251,232,0) 66%, rgba(255,251,232,0) 76%,
+        rgba(255,251,232,.20) 82%, rgba(255,251,232,0) 89%);
     --moonpool:rgba(255,250,225,.16);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
     --swell: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27700%27%20height=%27700%27%3E%3Cfilter%20id=%27w%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.0032%20.0075%27%20numOctaves=%274%27%20seed=%2711%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.75%27%20intercept=%27-.30%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width=%27700%27%20height=%27700%27%20filter=%27url%28%23w%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
-    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2746%27%20height=%2730%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23D8E9FF%27%20stroke-opacity=%27.30%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M3%207q4-3.2%208%200%27/%3E%3Cpath%20d=%27M25%204q4-3.2%208%200%27/%3E%3Cpath%20d=%27M14%2016q4-3.2%208%200%27/%3E%3Cpath%20d=%27M34%2020q4-3.2%208%200%27/%3E%3Cpath%20d=%27M5%2025q4-3.2%208%200%27/%3E%3Cpath%20d=%27M24%2027q4-3.2%208%200%27/%3E%3C/g%3E%3C/svg%3E);
-    --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27190%27%20height=%27130%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.16%27%20stroke-width=%271.6%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M8%2026q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M96%2014q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M40%2064q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M120%2078q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M0%20104q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M104%20116q13-9%2026%200t26%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2783%27%20height=%2761%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23DCECFF%27%20stroke-opacity=%27.34%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M4%208q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M31%205q4-3.2%208%200%27/%3E%3Cpath%20d=%27M58%2011q3-2.4%206%200%27/%3E%3Cpath%20d=%27M17%2021q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M46%2025q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M70%2030q4-3.2%208%200%27/%3E%3Cpath%20d=%27M7%2034q4-3.2%208%200%27/%3E%3Cpath%20d=%27M33%2041q3-2.4%206%200%27/%3E%3Cpath%20d=%27M60%2045q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M21%2052q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M48%2056q4-3.2%208%200%27/%3E%3Cpath%20d=%27M74%2014q3-2.4%206%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27263%27%20height=%27179%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.19%27%20stroke-width=%271.7%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M11%2023q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M132%2012q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M62%2057q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M186%2071q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M6%2096q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M118%20108q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M210%20128q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M40%20141q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M150%20158q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M88%20168q11-8%2022%200t22%200%27/%3E%3C/g%3E%3C/svg%3E);
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
   *{box-sizing:border-box;
@@ -288,6 +305,31 @@ __FONTS__
   svg,.state{touch-action:none}
   .state:focus{outline:none}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--base);color:var(--text);font-family:var(--serif)}
+  /* ---- the room ----------------------------------------------------------
+     One layer over the whole game carrying the light that is in it, rather than
+     each surface being lit on its own. Two things live here.
+
+     --falloff is how much darker the room gets away from the source. At night
+     that is steep, because a lamp on a desk lights a small part of a dark room
+     and everything else falls off fast; by day it is barely there, because a
+     window fills a room with light that has bounced off every wall in it.
+
+     --rays is the daylight one: the bands a window throws across a desk. They
+     are parallel because the sun is far enough away to be a directional source,
+     and they run down and to the right because the window is high on the left —
+     the same fact 15-light.js uses to point every shadow the same way.
+
+     Above the map and below the cards, so the map is in the same room the menu
+     is. It was not, and that was most of why the two halves of the game did not
+     look like one place. */
+  body::after{content:"";position:fixed;inset:0;top:0;right:0;bottom:0;left:0;
+    /* Above the overlays, not below them. At z-index 8 it sat under every card
+       — so the menu was in a different room from the map behind it, which is
+       the whole thing this layer exists to prevent. Below the tip, the crash
+       band and the countdown, which have to stay readable whatever the room is
+       doing. */
+    pointer-events:none;z-index:12;
+    background-image:var(--rays), var(--falloff)}
   body{display:flex;flex-direction:column;background-image:var(--grain)}
 
   header{
@@ -354,10 +396,10 @@ __FONTS__
   main::before{content:"";position:absolute;inset:0;top:0;right:0;bottom:0;left:0;
     pointer-events:none;z-index:0;
     background-image:var(--waves), var(--crests);
-    -webkit-mask-image:radial-gradient(ellipse 105% 78% at var(--lightfall),
-      rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 34%, rgba(0,0,0,0) 78%);
-    mask-image:radial-gradient(ellipse 105% 78% at var(--lightfall),
-      rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 34%, rgba(0,0,0,0) 78%)}
+    -webkit-mask-image:radial-gradient(ellipse 130% 100% at var(--lightfall),
+      rgba(0,0,0,1) 0%, rgba(0,0,0,.62) 38%, rgba(0,0,0,.28) 100%);
+    mask-image:radial-gradient(ellipse 130% 100% at var(--lightfall),
+      rgba(0,0,0,1) 0%, rgba(0,0,0,.62) 38%, rgba(0,0,0,.28) 100%)}
   /* The moon's own wash on the water, under the crests it is lighting. */
   main::after{content:"";position:absolute;inset:0;top:0;right:0;bottom:0;left:0;
     pointer-events:none;z-index:0;
@@ -551,8 +593,8 @@ __FONTS__
     /* Sitting on a surface, not floating over one: a tight contact shadow and
        a long soft one, and a brass hairline inside the edge the way a plate is
        ruled in from its trim. */
-    box-shadow:0 2px 4px rgba(0,0,0,.30), 0 22px 50px var(--shadow),
-      inset 0 0 0 1px rgba(255,244,214,.14)}
+    box-shadow:inset 0 0 0 1px rgba(255,244,214,.14),
+      var(--castx) var(--casty) var(--castblur) var(--castink), 0 26px 56px var(--shadow)}
   .card h2{margin:0;font-size:26px;letter-spacing:-0.01em;font-family:var(--serif);
     font-weight:600}
   /* The name, set as a mark rather than as a word. Uppercased in CSS rather
@@ -621,7 +663,8 @@ __FONTS__
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 20px}
   .geoSel{width:100%;margin:0;padding:11px 12px;border-radius:6px;
     background:var(--sunk);color:var(--sunkink);border:1px solid var(--gold);
-    box-shadow:inset 0 2px 5px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.22);
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.22),
+      var(--castx) var(--casty) var(--castblur) var(--castink);
     font-family:var(--serif);font-size:15px;-webkit-appearance:none;appearance:none;
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
       linear-gradient(135deg,var(--muted) 50%,transparent 50%);
@@ -673,7 +716,8 @@ __FONTS__
     padding:0;display:flex;align-items:center;justify-content:center;
     border-radius:4px;background:var(--sunk);color:var(--sunkink);
     border:1px solid var(--gold);
-    box-shadow:inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.2)}
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.2),
+      var(--castx) var(--casty) var(--castblur) var(--castink)}
   /* Every state of these is brass on near black. They took --text and --amber,
      which a card rebinds to ink and to a dark brass meant for reading *on
      paper* — so pressing one made its icon vanish into its own button. What a
@@ -700,7 +744,7 @@ __FONTS__
     min-width:170px;padding:5px;
     background-color:var(--risen);background-image:var(--parchment);
     border:1px solid var(--gold);border-radius:5px;
-    box-shadow:0 2px 3px rgba(40,28,12,.30), 0 14px 30px var(--shadow)}
+    box-shadow:var(--castx) var(--casty) var(--castblur) var(--castink), 0 14px 30px var(--shadow)}
   .pop[hidden]{display:none}
   .pop button{margin:0;width:100%;text-align:left;background:transparent;
     color:var(--ink);font-size:14px;font-weight:400;padding:9px 11px;
@@ -712,17 +756,16 @@ __FONTS__
      is what makes a hole look like a hole under a lamp at a known angle. */
   .modes button{margin:0;flex:1;padding:11px 6px;font-size:14px;font-weight:400;
     border-radius:4px;background:var(--sunk);color:var(--sunkink);
-    font-family:var(--serif);
+    font-family:var(--serif);position:relative;
     border:1px solid var(--gold);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.55),
-      0 1px 0 rgba(255,246,220,.22)}
+      0 1px 0 rgba(255,246,220,.22), var(--castx) var(--casty) var(--castblur) var(--castink)}
   /* And raised off it: cream, sitting proud, with the light on its top edge
      and its shadow cast down and away from the lamp. */
   .modes button.on{background:var(--risen);color:var(--risenink);
     font-weight:500;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.75),
-      inset 0 -1px 0 rgba(74,58,32,.18),
-      0 2px 3px rgba(40,28,12,.34)}
+      inset 0 -1px 0 rgba(74,58,32,.18), var(--castx) var(--casty) var(--castblur) var(--castink)}
   /* Practice has no lives to spend, so the same column counts what it does
      have. Keeping the column rather than hiding it holds the header layout
      steady between modes. */
@@ -894,6 +937,17 @@ __FONTS__
      uses. */
   .card.menu .btnrow{margin-top:10px}
 
+  /* Ruled the way a plate is: a second line inside the first with a hair of
+     ground showing between them. One rule for every button that has a brass
+     edge, rather than a border-image or a second element per button. */
+  .modes button::after, .card > button::after, .geoSel + .rule,
+  .headbtn::after{content:"";position:absolute;inset:2px;top:2px;right:2px;
+    bottom:2px;left:2px;border:1px solid var(--goldsoft);border-radius:2px;
+    pointer-events:none}
+  .card > button{position:relative}
+  .headbtn{position:relative}
+  .headbtn::after{inset:3px;top:3px;right:3px;bottom:3px;left:3px}
+
   /* The two small stars either side of Start. Pseudo-elements on the button
      rather than markup, so nothing in the DOM has to know about them, and only
      on the card's main action — the quiet pair below it are not occasions. */
@@ -985,8 +1039,7 @@ __FONTS__
     padding:13px;border-radius:4px;font-size:17px;font-weight:400;cursor:pointer;
     font-family:var(--serif);letter-spacing:.02em;
     box-shadow:inset 0 1px 0 rgba(255,246,220,.20),
-      inset 0 0 0 1px rgba(255,246,220,.10),
-      0 2px 4px rgba(20,14,6,.40)}
+      inset 0 0 0 1px rgba(255,246,220,.10), var(--castx) var(--casty) var(--castblur) var(--castink)}
   button:focus-visible{outline:2px solid var(--foundline);outline-offset:3px}
 
   @media (max-width:600px){

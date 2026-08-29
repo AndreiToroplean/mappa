@@ -47,10 +47,16 @@ const LAMP = { x: 0.94, y: -0.10 };
    the range it is allowed to land in. The cap is what keeps a long shadow from
    becoming a smear the length of the card: past a point the eye stops reading
    it as depth. */
-const THROW = 0.085, THROW_MIN = 1.5, THROW_MAX = 26;
+/* How long the longest shadow in the room is, and how fast one grows on the way
+   out to it. The curve is the part that matters: linear in distance made the
+   corner icons and the Start button look nearly alike, because a card is not
+   that tall next to the distance to the lamp. Raising it to a power puts most
+   of the change at the far end, which is also what actually happens — a light
+   this close to the surface drops its angle quickly. */
+const THROW_MAX = 40, THROW_MIN = 1.2, THROW_CURVE = 1.8;
 /* Blur grows with the throw, because a real penumbra widens with distance from
    the surface. Slower than the offset, or a long shadow turns into fog. */
-const HAZE = 0.55, HAZE_MIN = 2;
+const HAZE = 0.42, HAZE_MIN = 2;
 
 /* Sunlight: one direction for everything, and one length. 34 degrees below the
    horizontal, going down and to the right, which is a window high on the left
@@ -78,12 +84,13 @@ function relight() {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const vx = cx - lx, vy = cy - ly;
       const d = Math.hypot(vx, vy) || 1;
-      const len = Math.min(THROW_MAX, Math.max(THROW_MIN, d * THROW));
+      const out = Math.min(1, d / reach);
+      const len = Math.max(THROW_MIN, THROW_MAX * Math.pow(out, THROW_CURVE));
       dx = vx / d * len;
       dy = vy / d * len;
       blur = HAZE_MIN + len * HAZE;
       // How far out of the light it is, for the ones that also darken with it.
-      node.style.setProperty('--away', (d / reach).toFixed(3));
+      node.style.setProperty('--away', out.toFixed(3));
     }
     node.style.setProperty('--castx', dx.toFixed(1) + 'px');
     node.style.setProperty('--casty', dy.toFixed(1) + 'px');

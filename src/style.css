@@ -148,7 +148,7 @@ __FONTS__
     --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.42);
     /* The two kinds of button the mockup has: pressed into the sheet, in near
        black with brass lettering, and sitting proud of it in cream. */
-    --sunk:#241B12; --sunkink:#C6A96A;
+    --sunk:#241B12; --sunkink:#C6A96A; --brasslit:#F0D391;
     --risen:#E8DBBC; --risenink:#2B2118;
     /* The one blue button, and the dark strip the prompt sits on over the map. */
     --navy:#1C3A5C; --navyink:#EBDCB6;
@@ -246,7 +246,7 @@ __FONTS__
     --paperline:rgba(74,58,32,.30); --paperfaint:rgba(74,58,32,.13);
     --paperhover:rgba(74,58,32,.06);
     --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.40);
-    --sunk:#3B2D1C; --sunkink:#DCC38A;
+    --sunk:#3B2D1C; --sunkink:#DCC38A; --brasslit:#FFEBBE;
     --risen:#FBF3DE; --risenink:#33281A;
     --navy:#2C5480; --navyink:#F6EACA;
     --bar:#2A2114; --barink:#F4EAD4; --barmuted:#AC9873;
@@ -335,7 +335,6 @@ __FONTS__
      would pick, drawn on purpose and on every input. It is the other place
      --landhi is used; see .lens .zone.aim. */
   @media (hover: hover) {
-    .state:hover{fill:var(--landhi)}
   }
   .state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
   .state.miss{fill:var(--missfill);stroke:var(--missline);stroke-width:1;cursor:default}
@@ -406,12 +405,10 @@ __FONTS__
     width:38px;height:38px;flex:none;margin:0 0 0 14px;order:9;padding:0;
     font-size:12px;letter-spacing:.1em;border-radius:10px;background:transparent;
     color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
-  body.playing .pausebtn:hover{filter:none;color:var(--text)}
   .cluebtn{display:none}
   body.practice .cluebtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
     padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;
     color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);font-weight:600}
-  body.practice .cluebtn:hover{filter:none;background:var(--washfirm)}
   body.practice .cluebtn:disabled{color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line);background:transparent}
   /* Back to the card, from the corner the clue button had during the run. One
@@ -422,7 +419,6 @@ __FONTS__
   body.reviewing .backbtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
     padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;
     color:var(--text);box-shadow:inset 0 0 0 1px var(--line);font-weight:600}
-  body.reviewing .backbtn:hover{filter:none;background:var(--hover)}
   body.reviewing .cluebtn{display:none}
   path.nudge{stroke:var(--amber);stroke-linecap:round;stroke-linejoin:round;
     fill:none;opacity:.95}
@@ -627,8 +623,12 @@ __FONTS__
     border-radius:4px;background:var(--sunk);color:var(--sunkink);
     border:1px solid var(--gold);
     box-shadow:inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.2)}
-  .headbtn:hover{filter:none;color:var(--text)}
-  .headbtn.on{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+  /* Every state of these is brass on near black. They took --text and --amber,
+     which a card rebinds to ink and to a dark brass meant for reading *on
+     paper* — so pressing one made its icon vanish into its own button. What a
+     control stands on decides its colours, not what its container reads like. */
+  .headbtn.on{color:var(--brasslit);box-shadow:inset 0 1px 3px rgba(0,0,0,.5),
+    inset 0 0 0 1px var(--brasslit)}
   .fsbtn[hidden]{display:none}
   /* The icon is the theme you would get, not the one you are in — the same
      reading as the button beside it, where the expand icon expands. */
@@ -640,16 +640,20 @@ __FONTS__
   /* The menu behind the dots. Everything here is something you do to your data
      rather than to a run, which is why it is not on the card with the things
      you do to a run — it would sit next to Start looking like a way to play. */
+  /* A slip of paper laid on the card, not a dark panel sitting on one. It took
+     --panel, which is the dark surface, while inheriting the card's ink — so
+     every item on it was near-black text on a near-black ground and the menu
+     appeared to be empty. Paper on paper is both correct and the version that
+     cannot go invisible. */
   .pop{position:absolute;top:calc(100% + 8px);right:0;z-index:5;
-    min-width:162px;padding:5px;
-    background-color:var(--panel);background-image:var(--grain);
-    border:1px solid var(--line);border-radius:11px;
-    box-shadow:0 12px 28px var(--shadow)}
+    min-width:170px;padding:5px;
+    background-color:var(--risen);background-image:var(--parchment);
+    border:1px solid var(--gold);border-radius:5px;
+    box-shadow:0 2px 3px rgba(40,28,12,.30), 0 14px 30px var(--shadow)}
   .pop[hidden]{display:none}
   .pop button{margin:0;width:100%;text-align:left;background:transparent;
-    color:var(--text);font-size:13px;font-weight:500;padding:9px 11px;
-    border-radius:7px}
-  .pop button:hover{filter:none;background:var(--land)}
+    color:var(--ink);font-size:14px;font-weight:400;padding:9px 11px;
+    border:0;box-shadow:none;border-radius:3px}
   .fsbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   /* Pressed into the sheet: near black with brass lettering, a dark inner
@@ -661,7 +665,6 @@ __FONTS__
     border:1px solid var(--gold);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.55),
       0 1px 0 rgba(255,246,220,.22)}
-  .modes button:hover{filter:none;color:var(--text)}
   /* And raised off it: cream, sitting proud, with the light on its top edge
      and its shadow cast down and away from the lamp. */
   .modes button.on{background:var(--risen);color:var(--risenink);
@@ -669,7 +672,6 @@ __FONTS__
     box-shadow:inset 0 1px 0 rgba(255,255,255,.75),
       inset 0 -1px 0 rgba(74,58,32,.18),
       0 2px 3px rgba(40,28,12,.34)}
-  .modes button.on:hover{color:var(--onaccent)}
   /* Practice has no lives to spend, so the same column counts what it does
      have. Keeping the column rather than hiding it holds the header layout
      steady between modes. */
@@ -687,7 +689,6 @@ __FONTS__
   .iconbtn{margin:0;width:auto;flex:none;background:transparent;
     border:1px solid var(--line);color:var(--muted);padding:5px 7px;
     border-radius:7px;line-height:0;cursor:pointer}
-  .iconbtn:hover{filter:none;color:var(--text);border-color:var(--muted)}
   .iconbtn svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .btnrow{display:flex;gap:10px;margin-top:22px}
@@ -696,7 +697,6 @@ __FONTS__
   .btnrow button{margin-top:0;flex:1}
   button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);
     box-shadow:none}
-  button.ghost:hover{filter:none;background:var(--hover)}
   /* The only literal left in the file. Red is dark on both grounds, so the
      text on it is white in both. */
   button.danger{background:var(--red);color:#fff}
@@ -936,7 +936,6 @@ __FONTS__
     box-shadow:inset 0 1px 0 rgba(255,246,220,.20),
       inset 0 0 0 1px rgba(255,246,220,.10),
       0 2px 4px rgba(20,14,6,.40)}
-  button:hover{filter:brightness(1.08)}
   button:focus-visible{outline:2px solid var(--foundline);outline-offset:3px}
 
   @media (max-width:600px){
@@ -1054,3 +1053,36 @@ __FONTS__
     .caret{height:19px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---- everything that answers to a pointer -------------------------------
+     Hover is a pointer's idea. A touchscreen has no such state, but tapping
+     applies :hover and leaves it there until something else is tapped. On the
+     map that left a region lit after the finger came off; once a card became
+     paper with dark grounds on it, it also left the header icons invisible,
+     because the hover colour is the card's ink and the icon stands on near
+     black. Same bug, twice, which is why the rule is now stated once.
+
+     (hover: hover) asks whether the primary input can hover at all: a mouse
+     says yes, a hovering stylus says yes, a finger says no. Not (pointer:
+     fine), which asks about precision. Not any-hover, which says yes for a
+     tablet with a mouse paired to it while the finger is still what the game is
+     being played with.
+
+     At the end of the file rather than beside the rules they modify, which only
+     raises them above those rules — what a hover state wants anyway. Their
+     order among themselves is untouched, so the overrides that depend on it
+     still win. check.py holds every :hover in the stylesheet to being in here. */
+  @media (hover: hover) {
+    .state:hover{fill:var(--landhi)}
+    .state:hover{fill:var(--landhi)}
+    body.playing .pausebtn:hover{filter:none;color:var(--text)}
+    body.practice .cluebtn:hover{filter:none;background:var(--washfirm)}
+    body.reviewing .backbtn:hover{filter:none;background:var(--hover)}
+    .headbtn:hover{filter:none;color:var(--brasslit)}
+    .pop button:hover{filter:none;background:var(--paperhover)}
+    .modes button:hover{filter:none;color:var(--text)}
+    .modes button.on:hover{color:var(--onaccent)}
+    .iconbtn:hover{filter:none;color:var(--text);border-color:var(--muted)}
+    button.ghost:hover{filter:none;background:var(--hover)}
+    button:hover{filter:brightness(1.08)}
+  }

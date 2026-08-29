@@ -48,6 +48,7 @@ const GEO = flag('geo', 'fr');
 const SCENES = {
   menu:  { q: '', act: [] },
   board: { q: '', act: ['FAKE_BOARD'] },
+  pop:   { q: '', act: ['FAKE_BOARD', 'OPEN_MENU'] },
   map:   { q: '', act: ['START'] },
   found: { q: '', act: ['START', 'PLAY_A_FEW'] },
   drift: { q: '&scoring=drift', act: ['START', 'PLAY_A_FEW'] },
@@ -64,6 +65,9 @@ const SRC = {
     kvSet(key, JSON.stringify(rows.map(([e,c,t]) =>
       ({ f: TOTAL, v: TOTAL, e: e, c: c, t: t, d: Date.now() }))));
     showBoards(loadBoard(), null);`,
+  OPEN_MENU: `
+    el.dataBtn.click();
+    document.querySelector('#intro .themebtn').classList.add('on');`,
   START: `
     el.startBtn.click();
     // skip the three-second countdown rather than waiting it out

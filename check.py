@@ -1263,6 +1263,28 @@ def hover_audit(css, needle):
             last = i + 1
     return out
 
+def hover_guarded_selector(css, selector):
+    """Is this :hover rule inside a hover query?"""
+    clean = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
+    at = clean.find(selector.strip() + '{')
+    if at < 0:
+        at = clean.find(selector.strip())
+    if at < 0:
+        return True                      # only in a comment; nothing to guard
+    stack, last = [], 0
+    guards = re.compile(r'(?<![-\w])hover\s*:\s*hover')
+    for i, c in enumerate(clean[:at]):
+        if c == '{':
+            head = clean[last:i].strip()
+            stack.append('@media' in head and bool(guards.search(head)))
+            last = i + 1
+        elif c == '}':
+            if stack:
+                stack.pop()
+            last = i + 1
+    return any(stack)
+
+
 lit = hover_audit(css_src, 'var(--landhi)')
 loose = [sel for sel, guarded in lit if not guarded and '.aim' not in sel]
 if not lit:
@@ -1274,6 +1296,19 @@ elif loose:
 else:
     print(f'  the highlight fill is used {len(lit)} times, none of them '
           f'unguarded on a touchscreen')
+
+# The same rule, said about every hover rule rather than only the map's. A
+# button's stuck hover is the same bug: it left the header icons invisible,
+# because the hover colour is the card's ink and the icon stands on near black.
+all_hover = re.findall(r'\n\s*([^\n{}]*:hover[^\n{}]*)\{', css_src)
+outside = [h.strip() for h in all_hover
+           if not hover_guarded_selector(css_src, h)]
+if outside:
+    print(f'  FAIL {len(outside)} hover rules outside a hover query: '
+          f'{", ".join(outside[:3])}')
+    fails += 1
+else:
+    print(f'  all {len(all_hover)} hover rules are behind a hover query')
 
 print('type')
 # The script face is subset to letters and a few marks, because a copperplate's

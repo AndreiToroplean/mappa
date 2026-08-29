@@ -1229,8 +1229,53 @@ if any(h.index('themebtn') > h.index('fsbtn') for h in heads):
 # A light theme is a block of overrides, and the way it fails is silence: a
 # variable left out of it falls through to the dark value, which is unreadable
 # on paper and looks like a rendering bug rather than a missing line.
-print('themes')
 css_src = (ROOT / 'src/style.css').read_text()
+
+print('hover')
+# Tapping a shape on a touchscreen applies :hover to it and leaves it there
+# until something else is tapped, so a lifted finger left a region lit as though
+# it were still being pointed at. The fix is a media query, and this holds it in
+# place — written against the colour rather than against the selector, because
+# the way this comes back is somebody lighting the map on hover through some
+# other selector, which a check for `.state:hover` would not see.
+#
+# Two legitimate homes for the highlight fill: behind a query that asks whether
+# the input can hover, or on the magnifier's aimed shape, which is a deliberate
+# statement about what a release would pick and is drawn on every input.
+def hover_audit(css, needle):
+    """(selector, guarded) for every rule whose body mentions `needle`."""
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.S)     # braces do appear in comments
+    out, stack, last = [], [], 0
+    # The feature itself, not any-hover, which contains it as a substring and
+    # asks a different question: on a tablet with a mouse paired to it any-hover
+    # is yes while the finger is still what the map is being played with.
+    guards = re.compile(r'(?<![-\w])hover\s*:\s*hover')
+    for i, c in enumerate(css):
+        if c == '{':
+            head = css[last:i].strip()
+            stack.append((head, '@media' in head and bool(guards.search(head))))
+            last = i + 1
+        elif c == '}':
+            if stack:
+                head, _ = stack.pop()
+                if needle in css[last:i]:
+                    out.append((head, any(g for _, g in stack)))
+            last = i + 1
+    return out
+
+lit = hover_audit(css_src, 'var(--landhi)')
+loose = [sel for sel, guarded in lit if not guarded and '.aim' not in sel]
+if not lit:
+    print('  FAIL nothing uses the highlight fill at all')
+    fails += 1
+elif loose:
+    print(f'  FAIL lights the map with no hover query: {", ".join(loose)}')
+    fails += 1
+else:
+    print(f'  the highlight fill is used {len(lit)} times, none of them '
+          f'unguarded on a touchscreen')
+
+print('themes')
 
 
 def declared(block):

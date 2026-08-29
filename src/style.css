@@ -213,7 +213,25 @@
      same bug twice. */
   #map{width:100%;height:100%;max-height:100%;display:block}  .state{fill:var(--land);stroke:var(--edge);stroke-width:1;cursor:pointer;
     transition:fill .15s}
-  .state:hover{fill:var(--landhi)}
+  /* Hover is a pointer's idea, and a touchscreen has no such state — but
+     tapping a shape applies :hover to it anyway and leaves it there until
+     something else is tapped, so a finger lifted off a region left it lit as
+     though it were still being pointed at. The query asks whether the primary
+     input can hover at all, which is exactly the question: a mouse says yes, a
+     hovering stylus says yes, a finger says no.
+
+     Not (pointer: fine) as well. That asks about precision, which is a
+     different question and would drop a hover-capable coarse pointer for no
+     reason. And not any-hover: on a laptop with a touchscreen the mouse is
+     still the primary input, and hover styling there is right.
+
+     Only the map's own highlight is behind this. The magnifier's amber shape is
+     not the same thing — it is a deliberate statement about what a release
+     would pick, drawn on purpose and on every input. It is the other place
+     --landhi is used; see .lens .zone.aim. */
+  @media (hover: hover) {
+    .state:hover{fill:var(--landhi)}
+  }
   .state.found{fill:var(--found);stroke:var(--foundline);stroke-width:1;cursor:default;pointer-events:none}
   .state.miss{fill:var(--missfill);stroke:var(--missline);stroke-width:1;cursor:default}
   .state.reveal{fill:var(--revealfill);stroke:var(--revealline);stroke-width:1}

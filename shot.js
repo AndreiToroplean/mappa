@@ -52,6 +52,10 @@ const SCENES = {
   map:   { q: '', act: ['START'] },
   found: { q: '', act: ['START', 'PLAY_A_FEW'] },
   drift: { q: '&scoring=drift', act: ['START', 'PLAY_A_FEW'] },
+  // every state the map can draw at once: found, missed, revealed, scored, and
+  // the splash a miss throws up in the middle of the screen.
+  states:{ q: '', act: ['START', 'EVERY_STATE'] },
+  ramp:  { q: '&scoring=drift', act: ['START', 'RAMP'] },
   end:   { q: '&scoring=drift', act: ['START', 'PLAY_ALL'] },
 };
 
@@ -79,6 +83,23 @@ const SRC = {
     // and one wrong, so a miss is on screen too
     const other = REGION_NAMES.find(n => n !== current && status(n) === 'open');
     if (other) guess(other, anchorAt[other]);`,
+  EVERY_STATE: `
+    const open = () => REGION_NAMES.filter(n => status(n) === 'open');
+    for (let i = 0; i < 8; i++) guess(current);            // found
+    // a wrong tap reveals the answer in amber, flashes the shape it hit in red
+    // and throws the name into the middle — three of the states in one action
+    for (let i = 0; i < 3; i++) {
+      const other = open().find(n => n !== current);
+      if (other) guess(other, anchorAt[other]);
+    }`,
+  RAMP: `
+    // one guess at each distance, so the whole green-to-red ramp is on screen
+    const open = () => REGION_NAMES.filter(n => status(n) === 'open');
+    for (let i = 0; i < 14; i++) {
+      const pool = open().filter(n => n !== current);
+      if (!pool.length) break;
+      guess(pool[Math.floor(pool.length * (i / 14))], anchorAt[current]);
+    }`,
   PLAY_ALL: `
     let n = 0;
     while (running && n++ < REGION_NAMES.length + 4) {

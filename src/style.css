@@ -22,7 +22,7 @@ __FONTS__
      agree on a dark ground and nowhere else, which is why they are separate. */
   :root{
     /* surfaces */
-    --base:#13100B;      /* the page itself */
+    --base:#151007;      /* the page itself */
     --panel:#1E1810;     /* raised off it: header, footer, cards, the popover */
     --well:#0D0B07;      /* recessed into it: the select, the paste box */
     --line:#3A2F20;      /* hairline rules, and the outline of quiet buttons */
@@ -86,7 +86,7 @@ __FONTS__
     --foundglow:rgba(79,203,164,.55);
 
     /* a region wearing one of them: fill, then the stroke that carries it */
-    --missfill:#D18C84;   --missline:#93261F;
+    --missfill:#C4796E;   --missline:#7E1C16;
     --revealfill:#E8B44E; --revealline:#7E5210;
 
     /* a name written over one of those fills: the ink, and its knockout */
@@ -98,7 +98,7 @@ __FONTS__
     /* the distance ramp's three stops; scoreColour() reads them from here */
     --s0fill:#8FB79F;   --s0line:#1B5B40;
     --s50fill:#E4B054;  --s50line:#7E5210;
-    --s100fill:#D0968E; --s100line:#93261F;
+    --s100fill:#C4796E; --s100line:#7E1C16;
 
     /* a whole surface briefly going the colour of the news */
     --lossflash:#2E1310; --winflash:#12362C;
@@ -149,17 +149,17 @@ __FONTS__
        dark when the room does, it is lit by less. These are what a .card
        switches --text and --muted to, which is how one rule recolours
        everything inside a card instead of thirty rules doing it one at a time. */
-    --paper:#B49E79; --ink:#1E160E; --inkmuted:#4E3E2A;
+    --paper:#BA9F72; --ink:#211710; --inkmuted:#54402A;
     --paperline:rgba(74,58,32,.34); --paperfaint:rgba(74,58,32,.15);
     --paperhover:rgba(74,58,32,.07);
     /* Brass: rules, borders and marks on a card. One colour at two strengths. */
-    --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.42);
+    --gold:#95742C; --goldsoft:rgba(149,116,44,.46);
     /* The two kinds of button the mockup has: pressed into the sheet, in near
        black with brass lettering, and sitting proud of it in cream. */
-    --sunk:#241B12; --sunkink:#C6A96A; --brasslit:#F0D391;
-    --risen:#E8DBBC; --risenink:#2B2118;
+    --sunk:#271C10; --sunkink:#CFAF66; --brasslit:#F6D68C;
+    --risen:#EEDDB4; --risenink:#291D12;
     /* The one blue button, and the dark strip the prompt sits on over the map. */
-    --navy:#7A5A1E; --navyink:#FBEDC6;
+    --navy:#7F5A17; --navyink:#FDEFC3;
     --bar:#181309; --barink:#EFE4CC; --barmuted:#9E8A68;
     /* Red and green re-chosen for paper: the ones that carry on a dark ground
        are neon on a tan one. */
@@ -176,8 +176,10 @@ __FONTS__
     --castrgb:18,12,4;
     --cast:0 2px 5px rgba(18,12,4,.45);
     /* A lamp in a dark room: steep falloff, and no window to throw rays. */
+    /* Lamplight, so the falloff is warm going out rather than neutral: a room
+       lit by a flame does not go grey at the edges, it goes brown. */
     --falloff:radial-gradient(ellipse 140% 118% at var(--lightfall),
-      rgba(10,7,3,0) 0%, rgba(10,7,3,.05) 45%, rgba(10,7,3,.24) 100%);
+      rgba(60,32,8,0) 0%, rgba(30,16,5,.06) 45%, rgba(16,9,3,.26) 100%);
     --rays:none;
     /* The pool the moon throws across the water. */
     --moonpool:rgba(150,190,240,.13);
@@ -296,14 +298,22 @@ __FONTS__
        from the top left down to the right the way the sun sends them, and their
        edges are nearly hard — a glazing bar a foot from the paper has almost no
        penumbra. Unequal widths, because a window has bars, not a screen. */
+    /* Two bars, not five. A window a few feet from the desk throws bars about
+       the width of a hand, so at this size one crosses the sheet and a second
+       clips the far corner — five made it corduroy.
+
+       They also lose contrast on the way out: strongest at the top left where
+       the light comes in, weakest at the bottom right, which is the second
+       gradient's job. A bar is only as dark as the light it blocks, and by the
+       far corner most of what is there has bounced in off the room rather than
+       come straight through the glass. */
     --rays:
       linear-gradient(48deg,
-        rgba(96,74,42,0) 15%,   rgba(96,74,42,.16) 16.5%,
-        rgba(96,74,42,.16) 27%, rgba(96,74,42,0) 28.5%,
-        rgba(96,74,42,0) 44%,   rgba(96,74,42,.10) 45.5%,
-        rgba(96,74,42,.10) 51%, rgba(96,74,42,0) 52.5%,
-        rgba(96,74,42,0) 69%,   rgba(96,74,42,.13) 70.5%,
-        rgba(96,74,42,.13) 82%, rgba(96,74,42,0) 83.5%);
+        rgba(88,66,36,0) 8%,    rgba(88,66,36,.20) 10%,
+        rgba(88,66,36,.20) 34%, rgba(88,66,36,0) 36.5%,
+        rgba(88,66,36,0) 74%,   rgba(88,66,36,.13) 76.5%,
+        rgba(88,66,36,.13) 97%, rgba(88,66,36,0) 99%),
+      linear-gradient(128deg, rgba(255,252,240,.28), rgba(255,252,240,0) 62%);
     --moonpool:rgba(255,250,225,.16);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
@@ -860,6 +870,18 @@ __FONTS__
      one number the total does not tell you. */
   .cost{color:var(--amber);font-family:var(--figures);font-size:13px;
     font-variant-numeric:lining-nums tabular-nums}
+  /* On the map, not on a card, so it needs the halo the name above it has. */
+  .flash .cost{color:var(--answerink);font-size:19px;font-weight:600;
+    text-shadow:2.0px 0.0px 0 var(--answerhalo),
+      1.6px 1.2px 0 var(--answerhalo),
+      0.6px 1.9px 0 var(--answerhalo),
+      -0.6px 1.9px 0 var(--answerhalo),
+      -1.6px 1.2px 0 var(--answerhalo),
+      -2.0px 0.0px 0 var(--answerhalo),
+      -1.6px -1.2px 0 var(--answerhalo),
+      -0.6px -1.9px 0 var(--answerhalo),
+      0.6px -1.9px 0 var(--answerhalo),
+      1.6px -1.2px 0 var(--answerhalo)}
 
   /* Both menus' height comes from the window, not from what is in them. Almost
      everything on the card changes size: 'département' wraps where 'state' does
@@ -953,9 +975,34 @@ __FONTS__
     display:flex;align-items:center;justify-content:center;
     pointer-events:none;padding:0 24px}
   .flash[hidden]{display:none}
-  .flash span{font-size:46px;font-weight:700;letter-spacing:-0.02em;
-    line-height:1.08;color:var(--red);text-align:center;max-width:100%;
-    text-shadow:0 2px 16px var(--haze), 0 0 44px var(--haze);
+  /* The name of what was wrongly tapped, thrown into the middle of the map.
+     It used to be a bright red lifted off a dark ground by a wide dark glow.
+     The ground is paper now, in both themes, so a dark glow behind red reads as
+     a smudge and the red had nothing left to be bright against — it was the
+     least readable thing in the game.
+
+     It takes the same pair the wrong region's own label does, deep ink and a
+     pale halo, which also keeps one wrong answer looking like one thing whether
+     it is read on the shape or in the middle. The halo is a ring of offsets
+     because this is HTML rather than SVG and there is no paint-order here; a
+     blur radius would hand back the smudge. One real shadow under it, to sit it
+     above the map rather than in it. */
+  .flash span{font-size:46px;font-weight:700;letter-spacing:-0.01em;
+    line-height:1.08;color:var(--wrongink);text-align:center;max-width:100%;
+    text-shadow:
+      2.6px 0.0px 0 var(--wronghalo),
+      2.3px 1.3px 0 var(--wronghalo),
+      1.3px 2.3px 0 var(--wronghalo),
+      0.0px 2.6px 0 var(--wronghalo),
+      -1.3px 2.3px 0 var(--wronghalo),
+      -2.3px 1.3px 0 var(--wronghalo),
+      -2.6px 0.0px 0 var(--wronghalo),
+      -2.3px -1.3px 0 var(--wronghalo),
+      -1.3px -2.3px 0 var(--wronghalo),
+      -0.0px -2.6px 0 var(--wronghalo),
+      1.3px -2.3px 0 var(--wronghalo),
+      2.3px -1.3px 0 var(--wronghalo),
+      0 3px 10px rgba(20,12,4,.30);
     animation:missflash 1600ms ease-out forwards}
   @keyframes missflash{
     0%{transform:scale(.86);opacity:0}
@@ -1028,9 +1075,26 @@ __FONTS__
   .fanfare{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:23;display:flex;
     align-items:center;justify-content:center;pointer-events:none}
   .fanfare[hidden]{display:none}
+  /* Same problem, same answer, opposite colour: the score lands on the map at
+     the end of a run and the map is paper. --foundglow stays, but as a bloom
+     around a halo that is doing the reading, rather than as the only thing
+     holding the text off the ground. */
   .fanfare span{font-family:var(--figures);font-size:56px;font-weight:700;
-    color:var(--foundline);letter-spacing:-0.02em;text-align:center;
-    text-shadow:0 0 34px var(--foundglow), 0 6px 24px var(--haze);
+    color:var(--foundline);letter-spacing:-0.01em;text-align:center;
+    text-shadow:
+      2.6px 0.0px 0 var(--foundhalo),
+      2.3px 1.3px 0 var(--foundhalo),
+      1.3px 2.3px 0 var(--foundhalo),
+      0.0px 2.6px 0 var(--foundhalo),
+      -1.3px 2.3px 0 var(--foundhalo),
+      -2.3px 1.3px 0 var(--foundhalo),
+      -2.6px 0.0px 0 var(--foundhalo),
+      -2.3px -1.3px 0 var(--foundhalo),
+      -1.3px -2.3px 0 var(--foundhalo),
+      -0.0px -2.6px 0 var(--foundhalo),
+      1.3px -2.3px 0 var(--foundhalo),
+      2.3px -1.3px 0 var(--foundhalo),
+      0 0 30px var(--foundglow), 0 3px 10px rgba(20,12,4,.28);
     animation:fanfarein 1.9s cubic-bezier(.2,1.3,.4,1) forwards}
   @keyframes fanfarein{
     0%{transform:scale(.55);opacity:0}

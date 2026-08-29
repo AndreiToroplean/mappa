@@ -1420,6 +1420,57 @@ else:
 # ?map=fr&mode=practice&scoring=drift&theme=light — one parameter per
 # preference, written to storage before startup reads it, so a link and a tap
 # on the menu arrive by the same road.
+print('the map at night and by day')
+# Everything drawn on the map is now drawn on paper, in both themes. The three
+# meanings have to survive that: green for found, red for wrong, amber for what
+# the game revealed. A fill that drifted pale enough to read as bare land, or an
+# ink that drifted light enough to vanish into its own halo, is the failure —
+# and it is one nobody sees until they miss a region and cannot read what it
+# said. Checked as luminance distance rather than by eye.
+def lum(hexcolour):
+    r, g, b = (int(hexcolour[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    f = lambda c: c / 12.92 if c <= .04045 else ((c + .055) / 1.055) ** 2.4
+    return .2126 * f(r) + .7152 * f(g) + .0722 * f(b)
+
+
+def contrast(a, b):
+    la, lb = lum(a), lum(b)
+    return (max(la, lb) + .05) / (min(la, lb) + .05)
+
+
+PAIRS = [
+    ('a state the player found', '--foundink', '--foundhalo'),
+    ('the name of a wrong tap', '--wrongink', '--wronghalo'),
+    ('a region the game revealed', '--answerink', '--answerhalo'),
+    ('a scored region', '--scoredink', '--scoredhalo'),
+]
+FILLS = [('found', '--found'), ('missed', '--missfill'),
+         ('revealed', '--revealfill'),
+         ('nearest on the ramp', '--s0fill'), ('mid ramp', '--s50fill'),
+         ('furthest on the ramp', '--s100fill')]
+for theme, src in (('night', block(':root{')),
+                   ('day', block(':root[data-theme="light"]{'))):
+    vals = dict(re.findall(r'(--[a-z0-9]+)\s*:\s*(#[0-9A-Fa-f]{6})', src))
+    for label, ink, halo in PAIRS:
+        if ink not in vals or halo not in vals:
+            continue
+        c = contrast(vals[ink], vals[halo])
+        if c < 4.0:
+            print(f'  FAIL {theme}: {label} reads at {c:.1f}:1 against its own halo')
+            fails += 1
+    land = vals.get('--land')
+    for label, fill in FILLS:
+        if fill not in vals or not land:
+            continue
+        # A fill has to differ from bare land or the state is invisible; the
+        # threshold is low because hue does some of the work colour alone cannot
+        # measure, and green against tan is a real difference at equal lightness.
+        if abs(lum(vals[fill]) - lum(land)) < 0.035:
+            print(f'  FAIL {theme}: {label} is the same lightness as bare land')
+            fails += 1
+    print(f'  {theme}: {len(PAIRS)} inks legible on their halos, '
+          f'{len(FILLS)} fills distinct from bare land')
+
 print('the link')
 params = re.search(r'const LINK_PARAMS = \{(.*?)\};', start_js, re.S).group(1)
 params = dict(re.findall(r'(\w+):\s*(PREF_\w+)', params))

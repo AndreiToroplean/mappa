@@ -53,45 +53,54 @@ const LAMP = { x: 0.94, y: -0.10 };
    that tall next to the distance to the lamp. Raising it to a power puts most
    of the change at the far end, which is also what actually happens — a light
    this close to the surface drops its angle quickly. */
-const THROW_MAX = 44, THROW_MIN = 1.2, THROW_CURVE = 1.8;
+const THROW_MAX = 30, THROW_MIN = 1.2, THROW_CURVE = 1.8;
 
-/* A shadow is not a copy of the button moved sideways. It is attached to the
-   thing that casts it, sharp where the two meet and losing its edge as it goes
-   — the penumbra widens with distance because the source has a size, and only
-   at the contact point is none of it hidden.
+/* A shadow is not a copy of the button moved sideways. It is attached where the
+   two touch, sharp at that edge, and softens as it goes — the penumbra widens
+   with distance because the source has a size, and only at the contact point is
+   none of it hidden. One box-shadow cannot say that: one offset, one blur, so
+   it draws a detached, uniformly soft copy, which is what made every button
+   look like it was floating over the paper.
 
-   One box-shadow cannot do that: it has a single offset and a single blur, so
-   it draws a detached, uniformly soft copy, which is what made the buttons look
-   like they were floating rather than sitting on the paper. So the smear is
-   built out of several, stepped along the direction of the throw, each further
-   out, blurrier and fainter than the last. The near ones are nearly sharp and
-   nearly opaque and pin the shadow to the button; the far ones are wide and
-   almost gone. Overlapped, they read as one shadow that stretches.
+   So the throw is built from several shadows stepped along its direction. Each
+   row is: how far along, how much of the length to blur by, and how dark.
 
-   Each row is: how far along the throw, how much of that distance to blur by,
-   and how dark. Alpha falls faster than the blur grows, or the far end reads as
-   a second object rather than as the end of this one's shadow. */
+   The two skies want different *shapes* here, not two sizes of one shape.
+
+   A lamp in a dark room throws a shadow that stays dark for its whole length
+   and then stops. It is the only light there is, so anywhere the button blocks
+   it is nearly black right out to the end: what changes along the throw is how
+   soft the edge is, not how dark the middle is. So night holds its alpha almost
+   flat and cuts off, and keeps its blur tight. The first pass had the alpha
+   decaying fastest at the far end, which made a shadow that evaporated instead
+   of ending.
+
+   Sunlight is different because of everything that is not the sun. The sky and
+   the room bounce light back into the shadow, and more of it the further from
+   the object you get, so day starts just as dark where the two touch and lifts
+   as it goes, ending by fading rather than stopping. It is also much shorter
+   and far crisper — a small source at a great distance is what a hard edge
+   is. */
 const SMEAR = [
-  [0.00, 0.00, 0.30],
-  [0.12, 0.10, 0.26],
-  [0.30, 0.26, 0.20],
-  [0.54, 0.46, 0.14],
-  [0.78, 0.70, 0.09],
-  [1.00, 1.00, 0.05],
+  [0.00, 0.00, 0.46],
+  [0.20, 0.05, 0.44],
+  [0.45, 0.12, 0.40],
+  [0.70, 0.20, 0.36],
+  [0.88, 0.28, 0.30],
+  [1.00, 0.34, 0.24],
 ];
-/* Sunlight is a small source at a great distance, so its penumbra hardly opens
-   at all: the same smear, shorter and much crisper. */
 const SUN_SMEAR = [
-  [0.00, 0.00, 0.34],
-  [0.35, 0.06, 0.24],
-  [0.70, 0.18, 0.14],
-  [1.00, 0.34, 0.07],
+  [0.00, 0.00, 0.44],
+  [0.34, 0.03, 0.32],
+  [0.64, 0.07, 0.19],
+  [0.86, 0.11, 0.10],
+  [1.00, 0.15, 0.04],
 ];
 
 /* Sunlight: one direction for everything, and one length. 34 degrees below the
    horizontal, going down and to the right, which is a window high on the left
    wall. Short and hard — this is the whole of the day theme's shadow. */
-const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 7 };
+const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 4.5 };
 
 /* The smear as a box-shadow list. The colour is a triplet from the palette, so
    the ink stays a theme's business and only the alpha is decided here. */
@@ -153,4 +162,12 @@ function relightSoon() {
 addEventListener('resize', relightSoon);
 new MutationObserver(relightSoon).observe(document.body,
   { attributes: true, subtree: true, attributeFilter: ['hidden', 'class'] });
+/* The theme is the other thing that changes every shadow in the room, and it is
+   set on <html>, which is not inside document.body — so watching the body alone
+   missed it completely and the shadows kept the old sky until the page was
+   reloaded. A second observer rather than moving the first up to
+   documentElement with subtree, which would fire on every class change in the
+   game instead of on the four attributes that matter. */
+new MutationObserver(relightSoon).observe(document.documentElement,
+  { attributes: true, attributeFilter: ['data-theme'] });
 requestAnimationFrame(relight);

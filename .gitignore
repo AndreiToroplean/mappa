@@ -17,3 +17,6 @@ npm-debug.log*
 # stray editor/OS files, in case one ever lands
 .DS_Store
 *.swp
+
+# Screenshots from shot.js — scratch, regenerated on demand.
+shots/

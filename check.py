@@ -1536,7 +1536,8 @@ else:
 declared_names = declared(block(':root{'))
 # Set on an element by JS rather than declared in a palette: the score ramp's
 # two colours, and the two measurements placeTip() reads off the card.
-INLINE = {'--scorefill', '--scoreline', '--tipbottom', '--tipwide'}
+INLINE = {'--scorefill', '--scoreline', '--tipbottom', '--tipwide',
+          '--castx', '--casty', '--castblur', '--away'}
 used = set(re.findall(r'var\((--[a-z0-9-]+)', css_src))
 dangling = sorted(used - declared_names - INLINE)
 read_in_js = set()

@@ -60,37 +60,45 @@ __FONTS__
        not — a pale sea a step further from the land stops reading as ocean and
        starts reading as the page. Both were first chosen by eye at roughly
        1.1:1 and the land did not sit on the water so much as blend into it. */
-    --sea:#0B1826;
-    --land:#3E3426; --landhi:#564830;
-    --edge:#13100B;      /* between two regions */
-    --halo:#13100B;      /* knocked out behind a label drawn over the map */
+    /* Deep enough that lit crests read against it, and the only blue in the
+       game: blue means water here and nothing else. */
+    --sea:#132B45;
+    /* Land is paper. It used to be a dark tan on a near-black sea, which was
+       the dark theme's own logic and made the map the one part of the game you
+       had to squint at — a chart is printed on the same stock the menu is, and
+       is legible for the same reason. Everything drawn on it inverts to suit:
+       a state is a pale wash carried by a saturated stroke, the way ink behaves
+       on paper, which is the construction the day theme always used. */
+    --land:#AE9C7C; --landhi:#C4B294;
+    --edge:#4E3F28;      /* between two regions */
+    --halo:#B6A585;      /* knocked out behind a label drawn over the map */
 
     /* text */
     --text:#F2E9D6; --muted:#9F8E74;
-    --labelfade:.85;     /* a found region's name, quiet against its own fill */
+    --labelfade:1;       /* a found region's name, quiet against its own fill */
     --onaccent:#13100B;  /* on an amber ground */
 
     /* the three that mean something, and stay meaning it in both themes */
-    --found:#1D5348; --foundline:#4FCBA4; --foundmid:#37937C;
+    --found:#8FB79F; --foundline:#1B5B40; --foundmid:#6FA88E;
     --amber:#FFC24B; --red:#E5484D; --softred:#D4797C;
     --washsoft:rgba(255,194,75,.09);  /* amber as a background, not a mark */
     --washfirm:rgba(255,194,75,.12);
     --foundglow:rgba(79,203,164,.55);
 
     /* a region wearing one of them: fill, then the stroke that carries it */
-    --missfill:#E5484D;   --missline:#FF9296;
-    --revealfill:#FFC24B; --revealline:#FFDFA6;
+    --missfill:#D18C84;   --missline:#93261F;
+    --revealfill:#E8B44E; --revealline:#7E5210;
 
     /* a name written over one of those fills: the ink, and its knockout */
-    --foundink:#F1F6F3;  --foundhalo:rgba(8,18,15,.72);
-    --wrongink:#FFE4E5;  --wronghalo:#4A0D10;
-    --answerink:#3A2600; --answerhalo:#FFE3AE;
-    --scoredink:#F6EEDD; --scoredhalo:rgba(14,11,7,.78);
+    --foundink:#0F2E22;  --foundhalo:rgba(255,252,244,.78);
+    --wrongink:#6B1913;  --wronghalo:#F6DCD8;
+    --answerink:#4A3208; --answerhalo:#F7E5BF;
+    --scoredink:#2C2216; --scoredhalo:rgba(255,252,244,.75);
 
     /* the distance ramp's three stops; scoreColour() reads them from here */
-    --s0fill:#1D5348;   --s0line:#4FCBA4;
-    --s50fill:#7A5418;  --s50line:#FFC24B;
-    --s100fill:#7A262B; --s100line:#E5484D;
+    --s0fill:#8FB79F;   --s0line:#1B5B40;
+    --s50fill:#E4B054;  --s50line:#7E5210;
+    --s100fill:#D0968E; --s100line:#93261F;
 
     /* a whole surface briefly going the colour of the news */
     --lossflash:#2E1310; --winflash:#12362C;
@@ -151,16 +159,26 @@ __FONTS__
     --sunk:#241B12; --sunkink:#C6A96A; --brasslit:#F0D391;
     --risen:#E8DBBC; --risenink:#2B2118;
     /* The one blue button, and the dark strip the prompt sits on over the map. */
-    --navy:#1C3A5C; --navyink:#EBDCB6;
+    --navy:#7A5A1E; --navyink:#FBEDC6;
     --bar:#181309; --barink:#EFE4CC; --barmuted:#9E8A68;
     /* Red and green re-chosen for paper: the ones that carry on a dark ground
        are neon on a tan one. */
     --inkred:#8E2B22; --inkgreen:#2F6153;
+    /* What a cast shadow is made of. The offset and the blur are written per
+       element by 15-light.js, which is the only thing that knows where a
+       control is sitting relative to the lamp; the fallbacks here are a plain
+       shadow, so nothing looks broken if that module never runs. The colour
+       stays a theme's business rather than the light's. */
+    --castx:0px; --casty:2px; --castblur:5px; --away:.5;
+    --castink:rgba(18,12,4,.45);
+    /* The pool the moon throws across the water. */
+    --moonpool:rgba(150,190,240,.13);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
     --swell: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27700%27%20height=%27700%27%3E%3Cfilter%20id=%27w%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.0032%20.0075%27%20numOctaves=%274%27%20seed=%2711%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.75%27%20intercept=%27-.30%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width=%27700%27%20height=%27700%27%20filter=%27url%28%23w%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
-    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2758%27%20height=%2738%27%3E%3Cg%20fill=%27none%27%20stroke=%27%2523CFE4FF%27%20stroke-opacity=%27.14%27%20stroke-width=%271.1%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M5%209q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M33%2021q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M16%2032q4.5-3.6%209%200t9%200%27/%3E%3C/g%3E%3C/svg%3E);
-    --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%25239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
+    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2746%27%20height=%2730%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23D8E9FF%27%20stroke-opacity=%27.30%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M3%207q4-3.2%208%200%27/%3E%3Cpath%20d=%27M25%204q4-3.2%208%200%27/%3E%3Cpath%20d=%27M14%2016q4-3.2%208%200%27/%3E%3Cpath%20d=%27M34%2020q4-3.2%208%200%27/%3E%3Cpath%20d=%27M5%2025q4-3.2%208%200%27/%3E%3Cpath%20d=%27M24%2027q4-3.2%208%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27190%27%20height=%27130%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.16%27%20stroke-width=%271.6%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M8%2026q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M96%2014q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M40%2064q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M120%2078q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M0%20104q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M104%20116q13-9%2026%200t26%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%238A6D2E%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
 
   /* ---- the light theme -----------------------------------------------------
@@ -248,14 +266,20 @@ __FONTS__
     --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.40);
     --sunk:#3B2D1C; --sunkink:#DCC38A; --brasslit:#FFEBBE;
     --risen:#FBF3DE; --risenink:#33281A;
-    --navy:#2C5480; --navyink:#F6EACA;
+    --navy:#8A6520; --navyink:#FFF4D6;
     --bar:#2A2114; --barink:#F4EAD4; --barmuted:#AC9873;
     --inkred:#8E2B22; --inkgreen:#2F6153;
+    /* Sunlight through a window casts a harder, lighter shadow than a lamp in
+       a dark room does, because the whole sky fills in around it. */
+    --castx:0px; --casty:2px; --castblur:5px; --away:.5;
+    --castink:rgba(74,58,32,.28);
+    --moonpool:rgba(255,250,225,.16);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
     --swell: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27700%27%20height=%27700%27%3E%3Cfilter%20id=%27w%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.0032%20.0075%27%20numOctaves=%274%27%20seed=%2711%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.75%27%20intercept=%27-.30%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect%20width=%27700%27%20height=%27700%27%20filter=%27url%28%23w%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
-    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2758%27%20height=%2738%27%3E%3Cg%20fill=%27none%27%20stroke=%27%2523CFE4FF%27%20stroke-opacity=%27.14%27%20stroke-width=%271.1%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M5%209q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M33%2021q4.5-3.6%209%200t9%200%27/%3E%3Cpath%20d=%27M16%2032q4.5-3.6%209%200t9%200%27/%3E%3C/g%3E%3C/svg%3E);
-    --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2734%27%20height=%2714%27%3E%3Cg%20fill=%27%25238A7148%27%3E%3Cpath%20d=%27M17%201.6%2018.5%206%2023%207%2018.5%208%2017%2012.4%2015.5%208%2011%207%2015.5%206Z%27/%3E%3C/g%3E%3Cg%20stroke=%27%25238A7148%27%20stroke-width=%271%27%20opacity=%27.55%27%3E%3Cpath%20d=%27M0%207h9%27/%3E%3Cpath%20d=%27M25%207h9%27/%3E%3C/g%3E%3C/svg%3E);
+    --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2746%27%20height=%2730%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23D8E9FF%27%20stroke-opacity=%27.30%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M3%207q4-3.2%208%200%27/%3E%3Cpath%20d=%27M25%204q4-3.2%208%200%27/%3E%3Cpath%20d=%27M14%2016q4-3.2%208%200%27/%3E%3Cpath%20d=%27M34%2020q4-3.2%208%200%27/%3E%3Cpath%20d=%27M5%2025q4-3.2%208%200%27/%3E%3Cpath%20d=%27M24%2027q4-3.2%208%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27190%27%20height=%27130%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.16%27%20stroke-width=%271.6%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M8%2026q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M96%2014q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M40%2064q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M120%2078q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M0%20104q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M104%20116q13-9%2026%200t26%200%27/%3E%3C/g%3E%3C/svg%3E);
+    --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
   *{box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
@@ -307,12 +331,39 @@ __FONTS__
      the long roll, --waves the stylised marks on the surface. The glint is the
      same lamp as everywhere else, read from --lightfall, so the light does not
      change direction when you start a run. */
-  main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;min-height:0;
+  /* The sea at night, from above, with the moon low enough to graze it.
+     
+     Four layers, and the order is the whole trick. The swell is the long roll
+     of the water, a slow turbulence. Over it, two scales of crest: --crests is
+     the big ones and --waves the fine chop, both drawn as the *lit face* of a
+     crest rather than as a whole wave, because a light grazing the water picks
+     out the near side of each ridge and leaves the trough dark — so what you
+     see from above is a field of bright dashes, not a row of drawn waves.
+
+     Then the glint, which is what makes it moonlight rather than a texture: a
+     bright pool where the moon is, thrown across the water. It multiplies into
+     the crests rather than sitting over them, so the chop is brilliant inside
+     the pool and invisible outside it — which is exactly what the eye reads as
+     a light source on water, and it costs one blend mode. */
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;
+    min-height:0;position:relative;
     background-color:var(--sea);
-    background-image:
-      radial-gradient(ellipse 85% 60% at var(--lightfall),
-        rgba(196,224,255,.15), rgba(196,224,255,0) 62%),
-      var(--vignette), var(--waves), var(--swell)}
+    background-image:var(--vignette), var(--swell)}
+  /* The lit water, masked to the moon's pool. Its own layer because the mask
+     has to multiply the crests and nothing else. */
+  main::before{content:"";position:absolute;inset:0;top:0;right:0;bottom:0;left:0;
+    pointer-events:none;z-index:0;
+    background-image:var(--waves), var(--crests);
+    -webkit-mask-image:radial-gradient(ellipse 105% 78% at var(--lightfall),
+      rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 34%, rgba(0,0,0,0) 78%);
+    mask-image:radial-gradient(ellipse 105% 78% at var(--lightfall),
+      rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 34%, rgba(0,0,0,0) 78%)}
+  /* The moon's own wash on the water, under the crests it is lighting. */
+  main::after{content:"";position:absolute;inset:0;top:0;right:0;bottom:0;left:0;
+    pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 88% 62% at var(--lightfall),
+      var(--moonpool), rgba(0,0,0,0) 68%)}
+  #map{position:relative;z-index:1}
   /* The map, by id. As a bare `svg` rule this reached every icon on the page,
      each of which then had to override it — one missed override away from the
      same bug twice. */

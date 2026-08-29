@@ -53,15 +53,53 @@ const LAMP = { x: 0.94, y: -0.10 };
    that tall next to the distance to the lamp. Raising it to a power puts most
    of the change at the far end, which is also what actually happens — a light
    this close to the surface drops its angle quickly. */
-const THROW_MAX = 40, THROW_MIN = 1.2, THROW_CURVE = 1.8;
-/* Blur grows with the throw, because a real penumbra widens with distance from
-   the surface. Slower than the offset, or a long shadow turns into fog. */
-const HAZE = 0.42, HAZE_MIN = 2;
+const THROW_MAX = 44, THROW_MIN = 1.2, THROW_CURVE = 1.8;
+
+/* A shadow is not a copy of the button moved sideways. It is attached to the
+   thing that casts it, sharp where the two meet and losing its edge as it goes
+   — the penumbra widens with distance because the source has a size, and only
+   at the contact point is none of it hidden.
+
+   One box-shadow cannot do that: it has a single offset and a single blur, so
+   it draws a detached, uniformly soft copy, which is what made the buttons look
+   like they were floating rather than sitting on the paper. So the smear is
+   built out of several, stepped along the direction of the throw, each further
+   out, blurrier and fainter than the last. The near ones are nearly sharp and
+   nearly opaque and pin the shadow to the button; the far ones are wide and
+   almost gone. Overlapped, they read as one shadow that stretches.
+
+   Each row is: how far along the throw, how much of that distance to blur by,
+   and how dark. Alpha falls faster than the blur grows, or the far end reads as
+   a second object rather than as the end of this one's shadow. */
+const SMEAR = [
+  [0.00, 0.00, 0.30],
+  [0.12, 0.10, 0.26],
+  [0.30, 0.26, 0.20],
+  [0.54, 0.46, 0.14],
+  [0.78, 0.70, 0.09],
+  [1.00, 1.00, 0.05],
+];
+/* Sunlight is a small source at a great distance, so its penumbra hardly opens
+   at all: the same smear, shorter and much crisper. */
+const SUN_SMEAR = [
+  [0.00, 0.00, 0.34],
+  [0.35, 0.06, 0.24],
+  [0.70, 0.18, 0.14],
+  [1.00, 0.34, 0.07],
+];
 
 /* Sunlight: one direction for everything, and one length. 34 degrees below the
    horizontal, going down and to the right, which is a window high on the left
    wall. Short and hard — this is the whole of the day theme's shadow. */
-const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 3.5, haze: 5 };
+const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 7 };
+
+/* The smear as a box-shadow list. The colour is a triplet from the palette, so
+   the ink stays a theme's business and only the alpha is decided here. */
+function smear(dx, dy, len, steps) {
+  return steps.map(([at, haze, alpha]) =>
+    `${(dx * at).toFixed(1)}px ${(dy * at).toFixed(1)}px `
+    + `${(len * haze).toFixed(1)}px rgba(var(--castrgb), ${alpha})`).join(', ');
+}
 
 function relight() {
   const sun = document.documentElement.dataset.theme === 'light';
@@ -75,26 +113,25 @@ function relight() {
     const r = node.getBoundingClientRect();
     if (!r.width || !r.height) return;      // hidden; it will be measured when shown
 
-    let dx, dy, blur;
+    let dx, dy, len, steps;
     if (sun) {
-      dx = SUN.dx * SUN.len;
-      dy = SUN.dy * SUN.len;
-      blur = SUN.haze;
+      len = SUN.len;
+      dx = SUN.dx * len;
+      dy = SUN.dy * len;
+      steps = SUN_SMEAR;
     } else {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const vx = cx - lx, vy = cy - ly;
       const d = Math.hypot(vx, vy) || 1;
       const out = Math.min(1, d / reach);
-      const len = Math.max(THROW_MIN, THROW_MAX * Math.pow(out, THROW_CURVE));
+      len = Math.max(THROW_MIN, THROW_MAX * Math.pow(out, THROW_CURVE));
       dx = vx / d * len;
       dy = vy / d * len;
-      blur = HAZE_MIN + len * HAZE;
+      steps = SMEAR;
       // How far out of the light it is, for the ones that also darken with it.
       node.style.setProperty('--away', out.toFixed(3));
     }
-    node.style.setProperty('--castx', dx.toFixed(1) + 'px');
-    node.style.setProperty('--casty', dy.toFixed(1) + 'px');
-    node.style.setProperty('--castblur', blur.toFixed(1) + 'px');
+    node.style.setProperty('--cast', smear(dx, dy, len, steps));
   });
 }
 

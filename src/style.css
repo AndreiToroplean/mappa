@@ -149,7 +149,7 @@ __FONTS__
        dark when the room does, it is lit by less. These are what a .card
        switches --text and --muted to, which is how one rule recolours
        everything inside a card instead of thirty rules doing it one at a time. */
-    --paper:#B09A75; --ink:#241B12; --inkmuted:#5C4A33;
+    --paper:#B49E79; --ink:#1E160E; --inkmuted:#4E3E2A;
     --paperline:rgba(74,58,32,.34); --paperfaint:rgba(74,58,32,.15);
     --paperhover:rgba(74,58,32,.07);
     /* Brass: rules, borders and marks on a card. One colour at two strengths. */
@@ -163,17 +163,21 @@ __FONTS__
     --bar:#181309; --barink:#EFE4CC; --barmuted:#9E8A68;
     /* Red and green re-chosen for paper: the ones that carry on a dark ground
        are neon on a tan one. */
-    --inkred:#A8362A; --inkgreen:#2F6153;
+    --inkred:#C2503C; --inkgreen:#2C6B58;
     /* What a cast shadow is made of. The offset and the blur are written per
        element by 15-light.js, which is the only thing that knows where a
        control is sitting relative to the lamp; the fallbacks here are a plain
        shadow, so nothing looks broken if that module never runs. The colour
        stays a theme's business rather than the light's. */
-    --castx:0px; --casty:2px; --castblur:5px; --away:.5;
-    --castink:rgba(18,12,4,.45);
+    --away:.5;
+    /* The ink a shadow is made of, as a triplet, because 15-light.js composes
+       several alphas from it — see the smear there. The fallback is a plain
+       shadow, so nothing looks broken if that module never runs. */
+    --castrgb:18,12,4;
+    --cast:0 2px 5px rgba(18,12,4,.45);
     /* A lamp in a dark room: steep falloff, and no window to throw rays. */
     --falloff:radial-gradient(ellipse 140% 118% at var(--lightfall),
-      rgba(10,7,3,0) 0%, rgba(10,7,3,.07) 42%, rgba(10,7,3,.30) 100%);
+      rgba(10,7,3,0) 0%, rgba(10,7,3,.05) 45%, rgba(10,7,3,.24) 100%);
     --rays:none;
     /* The pool the moon throws across the water. */
     --moonpool:rgba(150,190,240,.13);
@@ -183,6 +187,7 @@ __FONTS__
     --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2783%27%20height=%2761%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23DCECFF%27%20stroke-opacity=%27.34%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M4%208q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M31%205q4-3.2%208%200%27/%3E%3Cpath%20d=%27M58%2011q3-2.4%206%200%27/%3E%3Cpath%20d=%27M17%2021q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M46%2025q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M70%2030q4-3.2%208%200%27/%3E%3Cpath%20d=%27M7%2034q4-3.2%208%200%27/%3E%3Cpath%20d=%27M33%2041q3-2.4%206%200%27/%3E%3Cpath%20d=%27M60%2045q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M21%2052q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M48%2056q4-3.2%208%200%27/%3E%3Cpath%20d=%27M74%2014q3-2.4%206%200%27/%3E%3C/g%3E%3C/svg%3E);
     --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27263%27%20height=%27179%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.19%27%20stroke-width=%271.7%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M11%2023q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M132%2012q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M62%2057q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M186%2071q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M6%2096q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M118%20108q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M210%20128q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M40%20141q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M150%20158q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M88%20168q11-8%2022%200t22%200%27/%3E%3C/g%3E%3C/svg%3E);
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%238A6D2E%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
+    --starpale: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%23F3E2B4%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
 
   /* ---- the light theme -----------------------------------------------------
@@ -264,7 +269,7 @@ __FONTS__
     /* Daylight, which arrives from the other side. Everything else here is the
        night values opened up: the same paper with more light on it. */
     --lightfall: 8% 0%;  --shade: 154deg;
-    --paper:#EFE6D0; --ink:#33281A; --inkmuted:#7A6647;
+    --paper:#F2EAD6; --ink:#2A2114; --inkmuted:#6A5738;
     --paperline:rgba(74,58,32,.30); --paperfaint:rgba(74,58,32,.13);
     --paperhover:rgba(74,58,32,.06);
     --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.40);
@@ -275,21 +280,30 @@ __FONTS__
     --inkred:#8E2B22; --inkgreen:#2F6153;
     /* Sunlight through a window casts a harder, lighter shadow than a lamp in
        a dark room does, because the whole sky fills in around it. */
-    --castx:0px; --casty:2px; --castblur:5px; --away:.5;
-    --castink:rgba(74,58,32,.28);
+    --away:.5;
+    --castrgb:74,58,32;
+    --cast:0 2px 5px rgba(74,58,32,.28);
     /* Daylight bounces, so the far corner of the room is only a little dimmer.
        The rays are four bands of unequal width, which is what stops them reading
        as a pattern: a window has glazing bars, not a screen. */
-    --falloff:radial-gradient(ellipse 130% 110% at var(--lightfall),
-      rgba(74,58,32,0) 0%, rgba(74,58,32,.05) 50%, rgba(74,58,32,.20) 100%);
+    --falloff:radial-gradient(ellipse 145% 125% at var(--lightfall),
+      rgba(255,252,238,.30) 0%, rgba(255,252,238,0) 46%,
+      rgba(74,58,32,.12) 100%);
+    /* The window, cast as shadow rather than as light. This was bright bands
+       laid over the scene, which reads as haze on the lens; what a window
+       actually does is leave most of the desk lit and drop the shadow of its
+       frame across it in a few hard-edged bars. So these are dark, they run
+       from the top left down to the right the way the sun sends them, and their
+       edges are nearly hard — a glazing bar a foot from the paper has almost no
+       penumbra. Unequal widths, because a window has bars, not a screen. */
     --rays:
-      linear-gradient(126deg,
-        rgba(255,251,232,0) 4%,  rgba(255,251,232,.52) 11%,
-        rgba(255,251,232,0) 20%, rgba(255,251,232,0) 26%,
-        rgba(255,251,232,.30) 32%, rgba(255,251,232,0) 38%,
-        rgba(255,251,232,0) 50%, rgba(255,251,232,.40) 58%,
-        rgba(255,251,232,0) 66%, rgba(255,251,232,0) 76%,
-        rgba(255,251,232,.20) 82%, rgba(255,251,232,0) 89%);
+      linear-gradient(48deg,
+        rgba(96,74,42,0) 15%,   rgba(96,74,42,.16) 16.5%,
+        rgba(96,74,42,.16) 27%, rgba(96,74,42,0) 28.5%,
+        rgba(96,74,42,0) 44%,   rgba(96,74,42,.10) 45.5%,
+        rgba(96,74,42,.10) 51%, rgba(96,74,42,0) 52.5%,
+        rgba(96,74,42,0) 69%,   rgba(96,74,42,.13) 70.5%,
+        rgba(96,74,42,.13) 82%, rgba(96,74,42,0) 83.5%);
     --moonpool:rgba(255,250,225,.16);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
@@ -297,6 +311,7 @@ __FONTS__
     --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2783%27%20height=%2761%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23DCECFF%27%20stroke-opacity=%27.34%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M4%208q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M31%205q4-3.2%208%200%27/%3E%3Cpath%20d=%27M58%2011q3-2.4%206%200%27/%3E%3Cpath%20d=%27M17%2021q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M46%2025q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M70%2030q4-3.2%208%200%27/%3E%3Cpath%20d=%27M7%2034q4-3.2%208%200%27/%3E%3Cpath%20d=%27M33%2041q3-2.4%206%200%27/%3E%3Cpath%20d=%27M60%2045q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M21%2052q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M48%2056q4-3.2%208%200%27/%3E%3Cpath%20d=%27M74%2014q3-2.4%206%200%27/%3E%3C/g%3E%3C/svg%3E);
     --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27263%27%20height=%27179%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.19%27%20stroke-width=%271.7%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M11%2023q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M132%2012q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M62%2057q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M186%2071q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M6%2096q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M118%20108q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M210%20128q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M40%20141q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M150%20158q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M88%20168q11-8%2022%200t22%200%27/%3E%3C/g%3E%3C/svg%3E);
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
+    --starpale: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%23FFF3D2%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
   *{box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
@@ -594,7 +609,7 @@ __FONTS__
        a long soft one, and a brass hairline inside the edge the way a plate is
        ruled in from its trim. */
     box-shadow:inset 0 0 0 1px rgba(255,244,214,.14),
-      var(--castx) var(--casty) var(--castblur) var(--castink), 0 26px 56px var(--shadow)}
+      var(--cast), 0 26px 56px var(--shadow)}
   .card h2{margin:0;font-size:26px;letter-spacing:-0.01em;font-family:var(--serif);
     font-weight:600}
   /* The name, set as a mark rather than as a word. Uppercased in CSS rather
@@ -647,8 +662,15 @@ __FONTS__
     text-overflow:ellipsis;white-space:nowrap}
   .row .errs{flex:none;min-width:62px;text-align:right;font-size:11px;
     color:var(--softred);letter-spacing:.01em}
+  /* On a card this is ink on paper, and the paper here is being dimmed by the
+     falloff — so it takes the full red rather than the softened one, which was
+     chosen to sit quietly on a ground that is no longer the ground. */
+  .card .row .errs{color:var(--inkred);opacity:.92}
   .row .errs.perfect{color:var(--foundline);font-weight:600}
   .row .errs.unknown{color:var(--muted)}
+  /* The board sits furthest from the light on both cards, so its quiet
+     columns get a step of contrast the rest of the sheet does not need. */
+  .board .row .errs{font-size:12.5px}
   .row .time{color:var(--text)}
   .row.full .tally{color:var(--foundline)}
   .row.full .tally::before{content:"◆ ";font-size:9px;vertical-align:2px}
@@ -664,7 +686,7 @@ __FONTS__
   .geoSel{width:100%;margin:0;padding:11px 12px;border-radius:6px;
     background:var(--sunk);color:var(--sunkink);border:1px solid var(--gold);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.22),
-      var(--castx) var(--casty) var(--castblur) var(--castink);
+      var(--cast);
     font-family:var(--serif);font-size:15px;-webkit-appearance:none;appearance:none;
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
       linear-gradient(135deg,var(--muted) 50%,transparent 50%);
@@ -717,7 +739,7 @@ __FONTS__
     border-radius:4px;background:var(--sunk);color:var(--sunkink);
     border:1px solid var(--gold);
     box-shadow:inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.2),
-      var(--castx) var(--casty) var(--castblur) var(--castink)}
+      var(--cast)}
   /* Every state of these is brass on near black. They took --text and --amber,
      which a card rebinds to ink and to a dark brass meant for reading *on
      paper* — so pressing one made its icon vanish into its own button. What a
@@ -744,7 +766,7 @@ __FONTS__
     min-width:170px;padding:5px;
     background-color:var(--risen);background-image:var(--parchment);
     border:1px solid var(--gold);border-radius:5px;
-    box-shadow:var(--castx) var(--casty) var(--castblur) var(--castink), 0 14px 30px var(--shadow)}
+    box-shadow:var(--cast), 0 14px 30px var(--shadow)}
   .pop[hidden]{display:none}
   .pop button{margin:0;width:100%;text-align:left;background:transparent;
     color:var(--ink);font-size:14px;font-weight:400;padding:9px 11px;
@@ -754,18 +776,32 @@ __FONTS__
   /* Pressed into the sheet: near black with brass lettering, a dark inner
      shadow along the lit edge and a paper-coloured one along the other, which
      is what makes a hole look like a hole under a lamp at a known angle. */
-  .modes button{margin:0;flex:1;padding:11px 6px;font-size:14px;font-weight:400;
-    border-radius:4px;background:var(--sunk);color:var(--sunkink);
-    font-family:var(--serif);position:relative;
+  /* Pressed into the sheet, and made of something: a sheen down the face, the
+     same fibre the paper has, and a brass edge with a second line ruled inside
+     it. Flat colour read as a rectangle rather than as an object. */
+  .modes button{margin:0;flex:1;padding:12px 6px;font-size:14px;font-weight:400;
+    border-radius:3px;color:var(--sunkink);
+    font-family:var(--serif);position:relative;letter-spacing:.01em;
+    background-color:var(--sunk);
+    background-image:
+      linear-gradient(178deg, rgba(255,240,205,.13), rgba(255,240,205,.02) 34%,
+        rgba(0,0,0,.16) 100%),
+      var(--parchment);
     border:1px solid var(--gold);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.55),
-      0 1px 0 rgba(255,246,220,.22), var(--castx) var(--casty) var(--castblur) var(--castink)}
+      0 1px 0 rgba(255,246,220,.22), inset 0 0 0 1px rgba(0,0,0,.28), inset 0 0 0 2px var(--goldsoft), var(--cast)}
   /* And raised off it: cream, sitting proud, with the light on its top edge
      and its shadow cast down and away from the lamp. */
-  .modes button.on{background:var(--risen);color:var(--risenink);
-    font-weight:500;
+  .modes button.on{color:var(--risenink);font-weight:500;
+    background-color:var(--risen);
+    background-image:
+      linear-gradient(178deg, rgba(255,255,255,.55), rgba(255,255,255,0) 46%,
+        rgba(74,58,32,.13) 100%),
+      var(--parchment);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.75),
-      inset 0 -1px 0 rgba(74,58,32,.18), var(--castx) var(--casty) var(--castblur) var(--castink)}
+      inset 0 -1px 0 rgba(74,58,32,.18),
+      inset 0 0 0 1px rgba(255,255,255,.45), inset 0 0 0 2px var(--goldsoft),
+      var(--cast)}
   /* Practice has no lives to spend, so the same column counts what it does
      have. Keeping the column rather than hiding it holds the header layout
      steady between modes. */
@@ -937,16 +973,8 @@ __FONTS__
      uses. */
   .card.menu .btnrow{margin-top:10px}
 
-  /* Ruled the way a plate is: a second line inside the first with a hair of
-     ground showing between them. One rule for every button that has a brass
-     edge, rather than a border-image or a second element per button. */
-  .modes button::after, .card > button::after, .geoSel + .rule,
-  .headbtn::after{content:"";position:absolute;inset:2px;top:2px;right:2px;
-    bottom:2px;left:2px;border:1px solid var(--goldsoft);border-radius:2px;
-    pointer-events:none}
   .card > button{position:relative}
   .headbtn{position:relative}
-  .headbtn::after{inset:3px;top:3px;right:3px;bottom:3px;left:3px}
 
   /* The two small stars either side of Start. Pseudo-elements on the button
      rather than markup, so nothing in the DOM has to know about them, and only
@@ -955,7 +983,7 @@ __FONTS__
   .card.menu > button::before, .card.menu > button::after{
     content:"";position:absolute;top:50%;width:13px;height:13px;
     transform:translateY(-50%);opacity:.7;
-    background:var(--star) center/13px 10px no-repeat}
+    background:var(--starpale) center/13px 10px no-repeat}
   .card.menu > button::before{left:18px}
   .card.menu > button::after{right:16px}
 
@@ -1034,12 +1062,18 @@ __FONTS__
   /* The card's own action. Indigo rather than brass: it is the only thing on
      the sheet that is not paper, ink or metal, and it should read as the one
      thing to press. */
-  button{margin-top:20px;width:100%;background:var(--navy);color:var(--navyink);
+  button{margin-top:20px;width:100%;color:var(--navyink);
+    background-color:var(--navy);
+    background-image:
+      linear-gradient(178deg, rgba(255,244,214,.20), rgba(255,244,214,.03) 40%,
+        rgba(0,0,0,.20) 100%),
+      var(--parchment);
     border:1px solid var(--gold);
     padding:13px;border-radius:4px;font-size:17px;font-weight:400;cursor:pointer;
     font-family:var(--serif);letter-spacing:.02em;
     box-shadow:inset 0 1px 0 rgba(255,246,220,.20),
-      inset 0 0 0 1px rgba(255,246,220,.10), var(--castx) var(--casty) var(--castblur) var(--castink)}
+      inset 0 0 0 1px rgba(255,246,220,.10), inset 0 0 0 2px rgba(0,0,0,.22),
+      inset 0 0 0 3px var(--goldsoft), var(--cast)}
   button:focus-visible{outline:2px solid var(--foundline);outline-offset:3px}
 
   @media (max-width:600px){

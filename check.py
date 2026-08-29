@@ -1288,7 +1288,9 @@ else:
 # each other; this one asks whether the stylesheet is asking for names that
 # exist at all.
 declared_names = declared(block(':root{'))
-INLINE = {'--scorefill', '--scoreline'}      # set per element by paintScore()
+# Set on an element by JS rather than declared in a palette: the score ramp's
+# two colours, and the two measurements placeTip() reads off the card.
+INLINE = {'--scorefill', '--scoreline', '--tipbottom', '--tipwide'}
 used = set(re.findall(r'var\((--[a-z0-9-]+)', css_src))
 dangling = sorted(used - declared_names - INLINE)
 read_in_js = set()
@@ -1304,6 +1306,21 @@ if dangling:
     fails += 1
 else:
     print(f'  every one of the {len(used | read_in_js)} names asked for is declared')
+
+# The other half of the same rule. A name exempted above is exempt because JS
+# writes it; if JS stops writing it, nothing fails — the declaration quietly
+# falls back and the bug is a layout that looks almost right. The tip's two are
+# exactly that shape: lose --tipbottom and it goes back to sitting on Start.
+set_in_js = set()
+for js in (ROOT / 'src/js').glob('*.js'):
+    set_in_js |= {m[1] for m in re.findall(
+        r"setProperty\(\s*([`'\"])(--[a-z0-9-]+)\1", js.read_text())}
+unwritten = sorted(INLINE - set_in_js)
+if unwritten:
+    print(f'  FAIL exempted as JS-set but never set: {", ".join(unwritten)}')
+    fails += 1
+else:
+    print(f'  all {len(INLINE)} names exempted as JS-set are set by JS')
 
 # Choices belong on the start card, where a run is configured. The end card
 # reports the result and deliberately does not repeat those controls.

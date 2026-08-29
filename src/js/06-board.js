@@ -424,16 +424,61 @@ const mapNote = () =>
    never again. The card is the one part of the game short of room, so the
    answer moved to the moment it is wanted: the tap that raises the question. */
 let tipTimer = null;
+
+/* px of clear ground between the tip and the button it must not cover, and px
+   the tip is held inside the card's edge on either side. */
+const TIP_GAP = 12;
+const TIP_INSET = 16;
+const TIP_REST = 26;      // where it sits when there is no button to clear
+
+/* The tip used to be parked TIP_REST off the bottom of the window, which on the
+   menu is exactly where Start is. It was tappable through — the tip is not in
+   hit testing — but a button you cannot see is a button you do not press, and
+   the tap that raises a tip is nearly always the tap before Start.
+
+   So it is measured against the card instead: it rests above the card's own
+   action, and is no wider than the card minus an inset, which is what makes it
+   read as part of that card rather than as a band across the window. Measured
+   when it is shown rather than written into the stylesheet, because how tall
+   the card is — and so where its button lands — depends on the geography, the
+   board and the window. */
+function placeTip() {
+  const card = document.querySelector('.overlay:not([hidden]) .card');
+  if (!card) return;
+  const box = card.getBoundingClientRect();
+  /* The card's own action: Start, Play Again, Resume. Direct children only, so
+     the icon buttons in the header and the quiet pair inside a .btnrow are not
+     mistaken for it. */
+  const btn = card.querySelector(':scope > button:not(.ghost)');
+  const top = btn ? btn.getBoundingClientRect().top : Infinity;
+  el.tip.style.setProperty('--tipwide',
+    Math.max(0, Math.round(box.width - TIP_INSET * 2)) + 'px');
+  /* Never lower than it used to sit: if the button has scrolled off the bottom
+     of the window there is nothing down there left to cover. */
+  el.tip.style.setProperty('--tipbottom',
+    Math.max(TIP_REST, Math.round(innerHeight - top + TIP_GAP)) + 'px');
+}
+
 function showTip(text) {
   if (!el.tip || !text) return;
   const span = el.tip.firstElementChild;
   clearTimeout(tipTimer);
   el.tip.hidden = true;
   span.textContent = text;
+  placeTip();
   // restart the animation rather than letting a second tap ride the first
   void el.tip.offsetWidth;
   el.tip.hidden = false;
-  tipTimer = setTimeout(() => { el.tip.hidden = true; }, 3800);
+  tipTimer = setTimeout(hideTip, 3800);
+}
+
+/* Gone now rather than at the end of its own timer. What it is explaining is a
+   choice about the run that is starting, so the moment the run starts it is
+   answering a question nobody is still asking — and it would otherwise ride
+   over the countdown. */
+function hideTip() {
+  clearTimeout(tipTimer);
+  if (el.tip) el.tip.hidden = true;
 }
 
 function refreshCopy() {
@@ -500,8 +545,9 @@ document.querySelectorAll('.scoreBtn').forEach(b =>
 document.querySelectorAll('.geoSel').forEach(s =>
   s.addEventListener('change', () => { setGeo(s.value); showTip(mapNote()); }));
 
-el.again.addEventListener('click', beginRun);
-el.startBtn.addEventListener('click', beginRun);
+const play = () => { hideTip(); beginRun(); };
+el.again.addEventListener('click', play);
+el.startBtn.addEventListener('click', play);
 /* Play again repeats the run you just had; this is the way out of it, for
    changing geography and coming back to a fresh Start rather than dropping
    straight into another countdown. It is the pause card's exit reused, which

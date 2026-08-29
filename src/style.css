@@ -659,11 +659,16 @@
 
      Above the overlay, because the thing it is explaining is on the overlay.
      Never in hit testing: it lands near the bottom of the screen, which on a
-     phone is exactly where the next tap is coming from. */
-  .tip{position:fixed;left:0;right:0;bottom:26px;z-index:35;
+     phone is exactly where the next tap is coming from.
+
+     Both measurements come from placeTip(), which reads the card: how high to
+     rest so the card's own button stays uncovered, and how wide it may be so it
+     reads as part of that card rather than a band across the window. The
+     fallbacks are where it used to sit unconditionally. */
+  .tip{position:fixed;left:0;right:0;bottom:var(--tipbottom, 26px);z-index:35;
     display:flex;justify-content:center;padding:0 18px;pointer-events:none}
   .tip[hidden]{display:none}
-  .tip span{max-width:min(420px, 100%);text-align:center;
+  .tip span{max-width:min(var(--tipwide, 420px), 100%);text-align:center;
     font-size:12.5px;line-height:1.45;color:var(--text);
     background-color:var(--panel);background-image:var(--grain);
     border:1px solid var(--line);border-radius:10px;padding:9px 14px;

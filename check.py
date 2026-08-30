@@ -1448,6 +1448,20 @@ if loose:
 else:
     print('  every outer shadow is cast by the light')
 
+# The window is described once and used twice: painted by the stylesheet and
+# evaluated by 15-light.js to ask how much sun reaches a button. Two copies kept
+# in step by hand is how a shadow ends up softened for standing in a bar that is
+# not where the eye can see one.
+if '__RAYS__' not in (ROOT / 'src/style.css').read_text():
+    print('  FAIL the stylesheet paints a window the light module cannot read')
+    fails += 1
+elif '__WINDOW__' not in light_src:
+    print('  FAIL 15-light.js does not read the window it is dimming shadows for')
+    fails += 1
+else:
+    print(f'  one window, painted by the stylesheet and read by the light: '
+          f'{len(textures.WINDOW["bars"])} bars')
+
 # box-shadow animates only between lists of equal length, so an uneven pair
 # would make the theme snap while every colour around it faded.
 lens = [len(re.findall(r'\[', m)) for m in

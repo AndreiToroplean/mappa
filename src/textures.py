@@ -217,3 +217,65 @@ if __name__ == '__main__':
     total += sum(len(uri(v)) for m in MARKS.values() for v in m.values())
     print(f'{len(SHARED)} shared textures, {len(MARKS["dark"])} marks per theme, '
           f'{total:,} bytes encoded')
+
+
+# ---- the window ----------------------------------------------------------
+# Where the sunlight is, described once and emitted twice: as the gradient the
+# stylesheet paints, and as a table 15-light.js reads to ask "how much direct
+# sun reaches this button".
+#
+# Both need the same answer or the scene contradicts itself — a shadow softened
+# because it is standing in a bar has to be standing in the bar the eye can see.
+# Keeping two copies in step by hand is exactly the kind of thing that goes
+# wrong quietly, so there are not two copies.
+#
+# The gradient runs along ANGLE, in CSS degrees. Each bar is (start, end) as a
+# fraction of that axis, plus how much of the direct light it takes away. The
+# rest of the axis is open sky.
+WINDOW = {
+    'angle': 48,
+    'ink': '84,62,32',
+    'bars': [(0.00, 0.070, .21), (0.416, 0.455, .15), (0.886, 1.00, .13)],
+    # A hard edge, half a percent of the axis wide: a frame a few feet from the
+    # paper has a penumbra of about a millimetre, and blurring it is the one
+    # thing that makes the whole effect read as haze rather than as sunlight.
+    'edge': 0.006,
+    # And the light gives out on the way across the room. Along its own
+    # direction of travel, so it equalises rather than stopping at a line, and
+    # never quite to nothing — a room in daylight has no black corner.
+    'fade': {'angle': 128, 'from': 0.0, 'to': 0.68, 'floor': 0.18},
+}
+
+
+def rays_css():
+    """The bars, as the gradient the stylesheet paints."""
+    w, stops = WINDOW, []
+    clear = f"rgba({WINDOW['ink']},0)"
+    at = lambda f: f'{f * 100:.4g}%'
+    for i, (a, b, dark) in enumerate(w['bars']):
+        ink = f"rgba({w['ink']},{dark})"
+        if a > 0:
+            stops += [f'{clear} {at(a)}', f'{ink} {at(a + w["edge"])}']
+        else:
+            stops += [f'{ink} 0%']
+        if b < 1:
+            stops += [f'{ink} {at(b)}', f'{clear} {at(b + w["edge"])}']
+        else:
+            stops += [f'{ink} 100%']
+    return f"linear-gradient({w['angle']}deg,\n      " + ',\n      '.join(stops) + ')'
+
+
+def raysfade_css():
+    f = WINDOW['fade']
+    return (f"linear-gradient({f['angle']}deg,"
+            f" rgba(0,0,0,1) {f['from'] * 100:.4g}%,"
+            f" rgba(0,0,0,.85) 22%, rgba(0,0,0,.35) 48%,"
+            f" rgba(0,0,0,0) {f['to'] * 100:.4g}%)")
+
+
+def window_js():
+    """The same window, as something 15-light.js can evaluate at a point."""
+    bars = ','.join(f'[{a},{b},{d}]' for a, b, d in WINDOW['bars'])
+    f = WINDOW['fade']
+    return (f"{{angle:{WINDOW['angle']},bars:[{bars}],edge:{WINDOW['edge']},"
+            f"fade:{{angle:{f['angle']},to:{f['to']},floor:{f['floor']}}}}}")

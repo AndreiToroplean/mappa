@@ -127,11 +127,68 @@ const SUN_SMEAR = [
 /* Sunlight: one direction for everything, and one length. 34 degrees below the
    horizontal, going down and to the right, which is a window high on the left
    wall. Short and hard — this is the whole of the day theme's shadow. */
-const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 4.5 };
+const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 9 };
+
+/* The window, from src/textures.py — the same table the stylesheet paints its
+   bars from, so a shadow softened for standing in a bar is standing in the bar
+   the eye can see. */
+const WINDOW = __WINDOW__;
+
+/* How much direct sun reaches a point, from 0 in the deepest bar to 1 in open
+   light. Projects the point onto the gradient's own axis and asks the same
+   question the gradient answers, then multiplies by how far the light has got
+   across the room.
+
+   This is the whole of the idea. Shadow laid over shadow is not twice the
+   shadow — a bar has already taken the direct light away, and a button standing
+   in one has no direct light left to block. Rather than painting the throws and
+   the bars onto a buffer and combining them with a max, which is what a
+   renderer would do, the throw is simply scaled by the light there is to
+   block. Same answer, no buffer, and it costs one dot product. */
+function sunAt(x, y, w, h) {
+  const t = (deg, px, py) => {
+    const a = (deg - 90) * Math.PI / 180;
+    const ux = Math.cos(a), uy = Math.sin(a);
+    const len = Math.abs(w * ux) + Math.abs(h * uy);
+    return 0.5 + ((px - w / 2) * ux + (py - h / 2) * uy) / (len || 1);
+  };
+  // the bars, with their edges as sharp as the gradient's
+  let open = 1;
+  const p = t(WINDOW.angle, x, y);
+  for (const [a, b, dark] of WINDOW.bars) {
+    const e = WINDOW.edge;
+    const inside = Math.min(smooth(p, a - e, a + e), 1 - smooth(p, b - e, b + e));
+    open -= dark * Math.max(0, inside) / 0.21;   // 0.21 is the deepest bar
+  }
+  // and the reach of the light across the room, which never quite gives out
+  const f = WINDOW.fade;
+  const reach = 1 - (1 - f.floor) * smooth(t(f.angle, x, y), 0, f.to);
+  return Math.max(0, Math.min(1, open)) * reach;
+}
+
+function smooth(v, a, b) {
+  const k = Math.max(0, Math.min(1, (v - a) / ((b - a) || 1e-6)));
+  return k * k * (3 - 2 * k);
+}
+
+/* What a button does to the light that is not the sun. The sky, the walls and
+   the paper itself bounce light into every gap, and less of it reaches the
+   ground right up against an object than reaches open paper a few inches away.
+   That is the dark seam under everything, it has no direction because the light
+   it is blocking has none, and it is there whether or not a button is standing
+   in sunlight — which is what you see in the bars, where there is nothing else
+   left to see. */
+const AMBIENT = [
+  [0.00, 0.00, 0.20],
+  [0.35, 0.55, 0.14],
+  [0.70, 1.10, 0.08],
+  [1.00, 1.80, 0.04],
+];
+const AMBIENT_LEN = 3.2;
 
 /* The smear as a box-shadow list. The colour is a triplet from the palette, so
    the ink stays a theme's business and only the alpha is decided here. */
-function smear(dx, dy, len, steps, lift) {
+function smear(dx, dy, len, steps, lift, scale) {
   /* A floating thing's shadow starts away from it and is soft everywhere, so
      the whole smear slides along the throw and picks up a floor under its blur.
      A resting one is unchanged: lift of zero leaves every term alone. */
@@ -139,8 +196,16 @@ function smear(dx, dy, len, steps, lift) {
     const along = lift + at * (1 - lift);
     const blur = len * (haze + lift * 0.8);
     return `${(dx * along).toFixed(1)}px ${(dy * along).toFixed(1)}px `
-      + `${blur.toFixed(1)}px rgba(var(--castrgb), ${alpha})`;
+      + `${blur.toFixed(1)}px rgba(var(--castrgb), ${(alpha * scale).toFixed(3)})`;
   }).join(', ');
+}
+
+/* The seam, which has no direction and so needs none of the throw's geometry. */
+function occlusion(rise) {
+  return AMBIENT.map(([at, haze, alpha]) =>
+    `0 ${(AMBIENT_LEN * rise * at).toFixed(1)}px `
+    + `${(AMBIENT_LEN * rise * haze + 0.6).toFixed(1)}px `
+    + `rgba(var(--castrgb), ${alpha})`).join(', ');
 }
 
 function relight() {
@@ -165,12 +230,18 @@ function relight() {
   });
 
   seen.forEach(([node, r, rise, lift]) => {
-    let dx, dy, len, steps;
+    let dx, dy, len, steps, direct;
     if (sun) {
       len = SUN.len * rise;
       dx = SUN.dx * len;
       dy = SUN.dy * len;
       steps = SUN_SMEAR;
+      /* Scaled by the sun there is at this spot. In open light the throw is
+         full strength; standing in the shadow of a glazing bar it all but
+         disappears, because the bar has already taken the light it would have
+         been blocking. The floor is not zero — a room in daylight has no black
+         corner, and something always gets through. */
+      direct = 0.08 + 0.92 * sunAt(r.left + r.width / 2, r.top + r.height / 2, w, h);
     } else {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const vx = cx - lx, vy = cy - ly;
@@ -180,10 +251,18 @@ function relight() {
       dx = vx / d * len;
       dy = vy / d * len;
       steps = SMEAR;
+      /* The same idea under a lamp, with the falloff standing in for the bars:
+         a shadow thrown across the dim end of the desk has less light to take
+         away, so there is less of it to see. */
+      direct = 1 - 0.45 * out;
       // How far out of the light it is, for the ones that also darken with it.
       node.style.setProperty('--away', out.toFixed(3));
     }
-    node.style.setProperty('--cast', smear(dx, dy, len, steps, lift));
+    /* Two shadows, always. The seam a thing makes by sitting on something is
+       there whatever the weather; the throw is what the direct light is doing,
+       and only that part answers to the sun. */
+    node.style.setProperty('--cast',
+      occlusion(rise) + ', ' + smear(dx, dy, len, steps, lift, direct));
   });
 }
 

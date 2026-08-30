@@ -51,6 +51,8 @@ def version():
 html = (SRC / 'index.html').read_text()
 for token in ('__CSS__', '__JS__', '__VERSION__'):
     assert token in html, f'missing placeholder {token}'
+assert '__WINDOW__' in js, 'missing placeholder __WINDOW__ in src/js'
+js = js.replace('__WINDOW__', textures.window_js())
 for g in GEOS:
     assert f'__{g.upper()}__' in js, f'missing placeholder __{g.upper()}__'
     assert f'__CLUES_{g.upper()}__' in js, f'missing placeholder __CLUES_{g.upper()}__'
@@ -94,12 +96,22 @@ def faces():
 
 html = html.replace('__VERSION__', ver)
 css = (SRC / 'style.css').read_text()
-for token in ('__FONTS__', '__TEXTURES__', '__MARKS_DARK__', '__MARKS_LIGHT__'):
+for token in ('__FONTS__', '__TEXTURES__', '__MARKS_DARK__', '__MARKS_LIGHT__',
+              '__RAYS__', '__RAYSFADE__'):
     assert token in css, f'missing placeholder {token} in style.css'
 css = css.replace('__FONTS__', faces())
 css = css.replace('__TEXTURES__', textures.shared())
 css = css.replace('__MARKS_DARK__', textures.marks('dark'))
 css = css.replace('__MARKS_LIGHT__', textures.marks('light'))
+# The window, painted by the stylesheet and evaluated by 15-light.js. One table
+# in src/textures.py feeds both, because a shadow softened for standing in a bar
+# has to be standing in the bar the eye can see.
+css = css.replace('__RAYS__', textures.rays_css())
+css = css.replace('__RAYSFADE__', textures.raysfade_css())
+# The window is described once and emitted twice: as the gradient painted here,
+# and as the table 15-light.js evaluates at a point. See src/textures.py.
+css = css.replace('__RAYS__', textures.rays_css())
+css = css.replace('__RAYSFADE__', textures.raysfade_css())
 html = html.replace('__CSS__', css).replace('__JS__', js)
 clues = {g: (ROOT / 'data' / f'clues-{g}.json').read_text() for g in GEOS}
 for g in GEOS:

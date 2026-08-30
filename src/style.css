@@ -199,7 +199,6 @@ __FONTS__
        displaced bodily and soft the whole way through — a popover has opened
        above the card, it is not glued to it. */
     --rise:1; --lift:0;
-    --cut:7px;      /* how much is taken off a corner */
     --cast:0 2px 5px rgba(18,12,4,.45);
     /* A lamp in a dark room: steep falloff, and no window to throw rays. */
     /* Lamplight, so the falloff is warm going out rather than neutral: a room
@@ -238,7 +237,6 @@ __FONTS__
      would make them, because 10px letterspaced mono in sunlight is the hardest
      thing on the screen and it is also the thing that names every column. */
   :root[data-theme="light"]{
-    --cut:7px;      /* how much is taken off a corner */
     --base:#EEE4CE;
     --panel:#FBF5E7;
     --well:#FFFDF6;
@@ -818,38 +816,19 @@ __FONTS__
 
      The button keeps its inset bevel, which is light on its own surface rather
      than a shadow on anything else, and belongs to the button. */
-  /* ---- the shape of a button ---------------------------------------------
-     Corners cut rather than rounded. border-radius can only bulge outward —
-     there is no inward radius in CSS, and faking one costs a mask per corner —
-     but a polygon states a chamfer exactly, and eight points is still a
-     rectangle with the corners taken off. It reads as a cut plate, which is
-     what the reference has, and it is one declaration.
-
-     The cost is that clip-path clips everything the element paints, box-shadow
-     included. That is why every button's throw lives on the layer behind it
-     rather than on the button: the layer is not clipped, and it is inset by the
-     chamfer so its own square corners stay hidden underneath. */
-  .chamfer, .modes button, .card button, .headbtn, .geoSel{
-    clip-path:polygon(
-      var(--cut) 0, calc(100% - var(--cut)) 0,
-      100% var(--cut), 100% calc(100% - var(--cut)),
-      calc(100% - var(--cut)) 100%, var(--cut) 100%,
-      0 calc(100% - var(--cut)), 0 var(--cut));
-    border-radius:0}
-  .headbtn, .clearBtn{--cut:5px}
-
   .modes, .btnrow, .headbtns, .bhead{isolation:isolate}
   .modes button, .btnrow button, .headbtns button, .bhead .clearBtn{
     position:relative}
-  /* The layer the throw is drawn on. It cannot be chamfered itself — clip-path
-     would clip the very shadow it exists to cast — so instead it is pulled in
-     from the plate's edge and its own corners are rounded past the cut. That
-     puts its silhouette entirely inside the chamfer, so no square corner shows
-     past a diagonal one, and at these blur radii the difference between a
-     rounded shadow and a cut one is not a thing anybody can see. */
+  /* The layer every button's throw is drawn on, rather than the button itself.
+     A box-shadow paints with the element that casts it and elements paint in
+     document order, so in a row the second button's shadow fell across the
+     first — and two buttons side by side on one sheet are at the same height,
+     neither standing on the other. At a negative z-index inside a container
+     that isolates, the throw paints after the container's background and before
+     any of its children, so every shadow in a row lands on the parchment. */
   .card button::before{content:"";position:absolute;
-    inset:3px;top:3px;right:3px;bottom:3px;left:3px;z-index:-1;
-    border-radius:9px;box-shadow:var(--cast)}
+    inset:0;top:0;right:0;bottom:0;left:0;z-index:-1;
+    border-radius:inherit;box-shadow:var(--cast)}
 
   .modes{display:flex;gap:8px;margin:0}
 

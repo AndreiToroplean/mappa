@@ -1229,7 +1229,17 @@ if any(h.index('themebtn') > h.index('fsbtn') for h in heads):
 # A light theme is a block of overrides, and the way it fails is silence: a
 # variable left out of it falls through to the dark value, which is unreadable
 # on paper and looks like a rendering bug rather than a missing line.
+# The stylesheet as the browser sees it, not as it is written: the type and the
+# procedural textures are dropped in by the build, and a check that read the
+# source with the placeholders still in it would be checking a file nobody runs.
 css_src = (ROOT / 'src/style.css').read_text()
+sys.path.insert(0, str(ROOT / 'src'))
+import textures                                            # noqa: E402
+css_src = (css_src
+           .replace('__TEXTURES__', textures.shared())
+           .replace('__MARKS_DARK__', textures.marks('dark'))
+           .replace('__MARKS_LIGHT__', textures.marks('light'))
+           .replace('__FONTS__', ''))
 
 print('hover')
 # Tapping a shape on a touchscreen applies :hover to it and leaves it there
@@ -1445,8 +1455,14 @@ def block(selector):
     return css_src[i:css_src.index('\n  }', i)]
 
 
-TYPEFACES = {'--mono', '--sans'}
-dark = declared(block(':root{')) - TYPEFACES
+# Not everything in :root is a theme. A typeface is the same in any light, and
+# so is a texture — paper is paper whether a lamp or a window is on it. Those
+# are declared once and inherited by both, which is one place to change instead
+# of two and, more to the point, one place to forget instead of two. Everything
+# else is a colour or a light and has to be answered by both palettes.
+SHARED = ({'--display', '--serif', '--figures', '--script'}
+          | {f'--{n}' for n in textures.SHARED})
+dark = declared(block(':root{')) - SHARED
 light = declared(block(':root[data-theme="light"]{'))
 missing = sorted(dark - light)
 extra = sorted(light - dark)
@@ -1458,6 +1474,16 @@ if extra:
     fails += 1
 if not missing and not extra:
     print(f'  both themes set the same {len(dark)} values')
+
+# And the other half of that: a shared value has to actually be shared. Copying
+# one into a palette is how it stops being one declaration and starts being two
+# that agree today.
+doubled = sorted(SHARED & light)
+if doubled:
+    print(f'  FAIL declared per theme but meant to be shared: {", ".join(doubled)}')
+    fails += 1
+else:
+    print(f'  {len(SHARED)} values are the same in any light and said once')
 
 # The ramp is read out of the palette by name; a stop renamed on one side only
 # would paint every scored region grey and report a crash to say so.

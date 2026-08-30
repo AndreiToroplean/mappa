@@ -7,6 +7,8 @@ the CSS, the JS modules and the region data are inlined here, in order.
 """
 import base64, json, os, pathlib, subprocess
 
+import textures
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'src'
 
@@ -92,8 +94,12 @@ def faces():
 
 html = html.replace('__VERSION__', ver)
 css = (SRC / 'style.css').read_text()
-assert '__FONTS__' in css, 'missing placeholder __FONTS__ in style.css'
+for token in ('__FONTS__', '__TEXTURES__', '__MARKS_DARK__', '__MARKS_LIGHT__'):
+    assert token in css, f'missing placeholder {token} in style.css'
 css = css.replace('__FONTS__', faces())
+css = css.replace('__TEXTURES__', textures.shared())
+css = css.replace('__MARKS_DARK__', textures.marks('dark'))
+css = css.replace('__MARKS_LIGHT__', textures.marks('light'))
 html = html.replace('__CSS__', css).replace('__JS__', js)
 clues = {g: (ROOT / 'data' / f'clues-{g}.json').read_text() for g in GEOS}
 for g in GEOS:

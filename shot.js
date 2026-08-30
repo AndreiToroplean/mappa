@@ -50,6 +50,7 @@ const SCENES = {
   board: { q: '', act: ['FAKE_BOARD'] },
   pop:   { q: '', act: ['FAKE_BOARD', 'OPEN_MENU'] },
   map:   { q: '', act: ['START'] },
+  cover: { q: '', act: ['COVER'] },
   found: { q: '', act: ['START', 'PLAY_A_FEW'] },
   drift: { q: '&scoring=drift', act: ['START', 'PLAY_A_FEW'] },
   // every state the map can draw at once: found, missed, revealed, scored, and
@@ -72,6 +73,8 @@ const SRC = {
   OPEN_MENU: `
     el.dataBtn.click();
     document.querySelector('#intro .themebtn').classList.add('on');`,
+  COVER: `
+    el.startBtn.click();`,
   START: `
     el.startBtn.click();
     // skip the three-second countdown rather than waiting it out

@@ -128,17 +128,34 @@ function resetRun() {
    and calling that "All fifty" would be a lie the scoreboard then repeats. */
 const tally = () => (found === TOTAL ? GEO.all : `${found} of ${TOTAL}`);
 
+/* Three, two, one, and then the cover sheet is drawn off the chart.
+
+   The run starts when the sheet starts moving rather than when it has finished
+   moving. The clock and the first prompt belong to the moment the map becomes
+   readable, and holding them back for the length of an animation would be the
+   game taking six tenths of a second off the player for the sake of a flourish.
+   The sheet is not in hit testing, so nothing can be tapped through it early. */
+const UNCOVER_MS = 620;
+
 function countdown(done) {
   const box = el.countdown, num = el.countNum;
   let n = 3;
+  box.classList.remove('lifting');
   box.hidden = false;
   const show = () => {
     num.textContent = n;
     num.style.animation = 'none';
     void num.offsetWidth;
     num.style.animation = '';
-    if (n-- > 1) setTimeout(show, 700);
-    else setTimeout(() => { box.hidden = true; done(); }, 700);
+    if (n-- > 1) return setTimeout(show, 700);
+    setTimeout(() => {
+      box.classList.add('lifting');
+      done();
+      setTimeout(() => {
+        box.hidden = true;
+        box.classList.remove('lifting');
+      }, UNCOVER_MS);
+    }, 700);
   };
   show();
 }

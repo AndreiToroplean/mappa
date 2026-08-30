@@ -29,7 +29,7 @@ __FONTS__
     --hairline:rgba(242,233,216,.06);  /* fainter still: between board rows */
     --hover:rgba(242,233,216,.07);     /* a ghost button under the pointer */
     --scrim:rgba(14,11,7,.93);         /* what an overlay puts the page behind */
-    --veil:rgba(14,11,7,.58);          /* the countdown, which lets the map through */
+    --veil:rgba(58,42,20,.30);         /* the shading on the countdown's cover sheet */
     /* No longer spent: every shadow in the game is cast by 15-light.js now.
        Kept because a palette is a vocabulary and this is still the answer to
        'what colour is a shadow here', which --castrgb is built from. */
@@ -199,13 +199,14 @@ __FONTS__
        displaced bodily and soft the whole way through — a popover has opened
        above the card, it is not glued to it. */
     --rise:1; --lift:0;
+    --cut:7px;      /* how much is taken off a corner */
     --cast:0 2px 5px rgba(18,12,4,.45);
     /* A lamp in a dark room: steep falloff, and no window to throw rays. */
     /* Lamplight, so the falloff is warm going out rather than neutral: a room
        lit by a flame does not go grey at the edges, it goes brown. */
     --falloff:radial-gradient(ellipse 140% 118% at var(--lightfall),
       rgba(60,32,8,0) 0%, rgba(30,16,5,.06) 45%, rgba(16,9,3,.26) 100%);
-    --rays:none;
+    --rays:none; --raysfade:none;
     /* The pool the moon throws across the water. */
     --moonpool:rgba(150,190,240,.13);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
@@ -214,6 +215,7 @@ __FONTS__
     --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2783%27%20height=%2761%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23DCECFF%27%20stroke-opacity=%27.34%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M4%208q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M31%205q4-3.2%208%200%27/%3E%3Cpath%20d=%27M58%2011q3-2.4%206%200%27/%3E%3Cpath%20d=%27M17%2021q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M46%2025q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M70%2030q4-3.2%208%200%27/%3E%3Cpath%20d=%27M7%2034q4-3.2%208%200%27/%3E%3Cpath%20d=%27M33%2041q3-2.4%206%200%27/%3E%3Cpath%20d=%27M60%2045q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M21%2052q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M48%2056q4-3.2%208%200%27/%3E%3Cpath%20d=%27M74%2014q3-2.4%206%200%27/%3E%3C/g%3E%3C/svg%3E);
     --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27263%27%20height=%27179%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.19%27%20stroke-width=%271.7%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M11%2023q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M132%2012q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M62%2057q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M186%2071q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M6%2096q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M118%20108q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M210%20128q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M40%20141q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M150%20158q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M88%20168q11-8%2022%200t22%200%27/%3E%3C/g%3E%3C/svg%3E);
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%238A6D2E%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
+    --rose: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2040%2040%27%20width=%2740%27%20height=%2740%27%3E%3Cg%20fill=%27%23FBEDC6%27%3E%3Cpath%20d=%27M20%201%2022.2%2017.8%2020%2020%2017.8%2017.8Z%27/%3E%3Cpath%20d=%27M20%2039%2017.8%2022.2%2020%2020%2022.2%2022.2Z%27/%3E%3Cpath%20d=%27M1%2020%2017.8%2017.8%2020%2020%2017.8%2022.2Z%27/%3E%3Cpath%20d=%27M39%2020%2022.2%2022.2%2020%2020%2022.2%2017.8Z%27/%3E%3C/g%3E%3Cg%20fill=%27rgba%28251%2C237%2C198%2C.5%29%27%3E%3Cpath%20d=%27M31.6%208.4%2023%2017%2020%2020%2022.1%2014.9Z%27/%3E%3Cpath%20d=%27M8.4%2031.6%2017%2023%2020%2020%2017.9%2025.1Z%27/%3E%3Cpath%20d=%27M31.6%2031.6%2023%2023%2020%2020%2025.1%2022.1Z%27/%3E%3Cpath%20d=%27M8.4%208.4%2017%2017%2020%2020%2014.9%2017.9Z%27/%3E%3C/g%3E%3Ccircle%20cx=%2720%27%20cy=%2720%27%20r=%273.2%27%20fill=%27none%27%20stroke=%27%23FBEDC6%27%20stroke-width=%271.3%27/%3E%3C/svg%3E);
     --starpale: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%23F3E2B4%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
 
@@ -236,6 +238,7 @@ __FONTS__
      would make them, because 10px letterspaced mono in sunlight is the hardest
      thing on the screen and it is also the thing that names every column. */
   :root[data-theme="light"]{
+    --cut:7px;      /* how much is taken off a corner */
     --base:#EEE4CE;
     --panel:#FBF5E7;
     --well:#FFFDF6;
@@ -243,7 +246,7 @@ __FONTS__
     --hairline:rgba(58,46,28,.11);
     --hover:rgba(58,46,28,.07);
     --scrim:rgba(222,209,183,.94);
-    --veil:rgba(222,209,183,.62);
+    --veil:rgba(74,58,32,.20);         /* the shading on the cover sheet */
     --shadow:rgba(92,72,42,.18);
     --shadowdeep:rgba(92,72,42,.30);
     --haze:rgba(250,244,231,.92);
@@ -315,9 +318,12 @@ __FONTS__
     /* Daylight bounces, so the far corner of the room is only a little dimmer.
        The rays are four bands of unequal width, which is what stops them reading
        as a pattern: a window has glazing bars, not a screen. */
-    --falloff:radial-gradient(ellipse 145% 125% at var(--lightfall),
-      rgba(255,252,238,.08) 0%, rgba(255,252,238,0) 40%,
-      rgba(74,58,32,.16) 100%);
+    --falloff:
+      radial-gradient(ellipse 62% 48% at var(--lightfall),
+        rgba(255,250,226,.20) 0%, rgba(255,250,226,0) 72%),
+      radial-gradient(ellipse 145% 125% at var(--lightfall),
+        rgba(255,252,238,.10) 0%, rgba(255,252,238,0) 42%,
+        rgba(74,58,32,.16) 100%);
     /* The window, cast as shadow rather than as light. This was bright bands
        laid over the scene, which reads as haze on the lens; what a window
        actually does is leave most of the desk lit and drop the shadow of its
@@ -344,13 +350,29 @@ __FONTS__
        gradient gets. A window frame a few feet from the paper has a penumbra of
        a millimetre or two, and blurring it was the single thing that made this
        read as haze rather than as sunlight. */
+    /* Two windows, seen as the light they let through rather than as bars: a
+       shadowed corner, a broad lit band, the thin shadow of the frame between
+       the two lights, a second band, and the far corner in shadow. Every edge
+       is a pair of stops half a percent apart, which is as hard as a gradient
+       gets — a frame a few feet from the paper has a penumbra of a millimetre,
+       and blurring it is the one thing that makes this read as haze.
+
+       The stops are not evenly spread. The first shadow is wider than the last
+       and the gap sits before the middle, so the pattern is heavier towards the
+       top of the screen than the bottom, the way it falls in the reference. */
     --rays:
       linear-gradient(48deg,
-        rgba(84,62,32,.20) 0%,    rgba(84,62,32,.20) 5%,
-        rgba(84,62,32,0) 5.6%,    rgba(84,62,32,0) 47%,
-        rgba(84,62,32,.15) 47.6%, rgba(84,62,32,.15) 52%,
-        rgba(84,62,32,0) 52.6%,   rgba(84,62,32,0) 94%,
-        rgba(84,62,32,.20) 94.6%, rgba(84,62,32,.20) 100%);
+        rgba(84,62,32,.21) 0%,    rgba(84,62,32,.21) 7%,
+        rgba(84,62,32,0) 7.6%,    rgba(84,62,32,0) 41%,
+        rgba(84,62,32,.15) 41.6%, rgba(84,62,32,.15) 45.5%,
+        rgba(84,62,32,0) 46.1%,   rgba(84,62,32,0) 88%,
+        rgba(84,62,32,.13) 88.6%, rgba(84,62,32,.13) 100%);
+    /* And gone by about two thirds of the way down. Light through a window high
+       on the wall reaches the near part of the desk and gives out; running the
+       fade along the direction it travels lets it equalise rather than stop. */
+    --raysfade:linear-gradient(128deg,
+      rgba(0,0,0,1) 0%, rgba(0,0,0,.85) 22%,
+      rgba(0,0,0,.35) 48%, rgba(0,0,0,0) 68%);
     --moonpool:rgba(255,250,225,.16);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
@@ -358,6 +380,7 @@ __FONTS__
     --waves: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2783%27%20height=%2761%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23DCECFF%27%20stroke-opacity=%27.34%27%20stroke-width=%271.05%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M4%208q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M31%205q4-3.2%208%200%27/%3E%3Cpath%20d=%27M58%2011q3-2.4%206%200%27/%3E%3Cpath%20d=%27M17%2021q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M46%2025q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M70%2030q4-3.2%208%200%27/%3E%3Cpath%20d=%27M7%2034q4-3.2%208%200%27/%3E%3Cpath%20d=%27M33%2041q3-2.4%206%200%27/%3E%3Cpath%20d=%27M60%2045q4.5-3.6%209%200%27/%3E%3Cpath%20d=%27M21%2052q3.5-2.8%207%200%27/%3E%3Cpath%20d=%27M48%2056q4-3.2%208%200%27/%3E%3Cpath%20d=%27M74%2014q3-2.4%206%200%27/%3E%3C/g%3E%3C/svg%3E);
     --crests: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27263%27%20height=%27179%27%3E%3Cg%20fill=%27none%27%20stroke=%27%23CFE4FF%27%20stroke-opacity=%27.19%27%20stroke-width=%271.7%27%20stroke-linecap=%27round%27%3E%3Cpath%20d=%27M11%2023q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M132%2012q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M62%2057q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M186%2071q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M6%2096q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M118%20108q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M210%20128q11-8%2022%200t22%200%27/%3E%3Cpath%20d=%27M40%20141q13-9%2026%200t26%200%27/%3E%3Cpath%20d=%27M150%20158q12-8.5%2024%200t24%200%27/%3E%3Cpath%20d=%27M88%20168q11-8%2022%200t22%200%27/%3E%3C/g%3E%3C/svg%3E);
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
+    --rose: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2040%2040%27%20width=%2740%27%20height=%2740%27%3E%3Cg%20fill=%27%23FFF4D6%27%3E%3Cpath%20d=%27M20%201%2022.2%2017.8%2020%2020%2017.8%2017.8Z%27/%3E%3Cpath%20d=%27M20%2039%2017.8%2022.2%2020%2020%2022.2%2022.2Z%27/%3E%3Cpath%20d=%27M1%2020%2017.8%2017.8%2020%2020%2017.8%2022.2Z%27/%3E%3Cpath%20d=%27M39%2020%2022.2%2022.2%2020%2020%2022.2%2017.8Z%27/%3E%3C/g%3E%3Cg%20fill=%27rgba%28255%2C244%2C214%2C.5%29%27%3E%3Cpath%20d=%27M31.6%208.4%2023%2017%2020%2020%2022.1%2014.9Z%27/%3E%3Cpath%20d=%27M8.4%2031.6%2017%2023%2020%2020%2017.9%2025.1Z%27/%3E%3Cpath%20d=%27M31.6%2031.6%2023%2023%2020%2020%2025.1%2022.1Z%27/%3E%3Cpath%20d=%27M8.4%208.4%2017%2017%2020%2020%2014.9%2017.9Z%27/%3E%3C/g%3E%3Ccircle%20cx=%2720%27%20cy=%2720%27%20r=%273.2%27%20fill=%27none%27%20stroke=%27%23FFF4D6%27%20stroke-width=%271.3%27/%3E%3C/svg%3E);
     --starpale: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%23FFF3D2%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
   /* Nothing here fades between themes, on purpose. Switching is an instruction,
@@ -403,6 +426,21 @@ __FONTS__
      Above the map and below the cards, so the map is in the same room the menu
      is. It was not, and that was most of why the two halves of the game did not
      look like one place. */
+  /* The window, on a layer of its own so it can fade where the falloff does
+     not. In the reference the bars are hard at the top of the sheet and simply
+     gone by about two thirds of the way down — light coming through a window
+     high on the wall reaches the near part of the desk and gives out. Masked
+     along the direction the light travels, so it equalises the way it would in
+     the room rather than stopping at an edge.
+
+     The mask runs at 128deg and the bars at 48deg: eighty degrees apart, so the
+     fade crosses the bars rather than running along one of them, which is what
+     keeps the top of the sheet more affected than the bottom. */
+  body::before{content:"";position:fixed;inset:0;top:0;right:0;bottom:0;left:0;
+    pointer-events:none;z-index:12;
+    background-image:var(--rays);
+    -webkit-mask-image:var(--raysfade);
+    mask-image:var(--raysfade)}
   body::after{content:"";position:fixed;inset:0;top:0;right:0;bottom:0;left:0;
     /* Above the overlays, not below them. At z-index 8 it sat under every card
        — so the menu was in a different room from the map behind it, which is
@@ -410,7 +448,7 @@ __FONTS__
        band and the countdown, which have to stay readable whatever the room is
        doing. */
     pointer-events:none;z-index:12;
-    background-image:var(--rays), var(--falloff)}
+    background-image:var(--falloff)}
   body{display:flex;flex-direction:column;background-image:var(--grain)}
 
   header{
@@ -780,13 +818,38 @@ __FONTS__
 
      The button keeps its inset bevel, which is light on its own surface rather
      than a shadow on anything else, and belongs to the button. */
+  /* ---- the shape of a button ---------------------------------------------
+     Corners cut rather than rounded. border-radius can only bulge outward —
+     there is no inward radius in CSS, and faking one costs a mask per corner —
+     but a polygon states a chamfer exactly, and eight points is still a
+     rectangle with the corners taken off. It reads as a cut plate, which is
+     what the reference has, and it is one declaration.
+
+     The cost is that clip-path clips everything the element paints, box-shadow
+     included. That is why every button's throw lives on the layer behind it
+     rather than on the button: the layer is not clipped, and it is inset by the
+     chamfer so its own square corners stay hidden underneath. */
+  .chamfer, .modes button, .card button, .headbtn, .geoSel{
+    clip-path:polygon(
+      var(--cut) 0, calc(100% - var(--cut)) 0,
+      100% var(--cut), 100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%, var(--cut) 100%,
+      0 calc(100% - var(--cut)), 0 var(--cut));
+    border-radius:0}
+  .headbtn, .clearBtn{--cut:5px}
+
   .modes, .btnrow, .headbtns, .bhead{isolation:isolate}
   .modes button, .btnrow button, .headbtns button, .bhead .clearBtn{
     position:relative}
-  .modes button::before, .btnrow button::before, .headbtns button::before,
-  .bhead .clearBtn::before, .card > button.ghost::before{content:"";position:absolute;
-    inset:0;top:0;right:0;bottom:0;left:0;z-index:-1;
-    border-radius:inherit;box-shadow:var(--cast)}
+  /* The layer the throw is drawn on. It cannot be chamfered itself — clip-path
+     would clip the very shadow it exists to cast — so instead it is pulled in
+     from the plate's edge and its own corners are rounded past the cut. That
+     puts its silhouette entirely inside the chamfer, so no square corner shows
+     past a diagonal one, and at these blur radii the difference between a
+     rounded shadow and a cut one is not a thing anybody can see. */
+  .card button::before{content:"";position:absolute;
+    inset:3px;top:3px;right:3px;bottom:3px;left:3px;z-index:-1;
+    border-radius:9px;box-shadow:var(--cast)}
 
   .modes{display:flex;gap:8px;margin:0}
 
@@ -883,14 +946,6 @@ __FONTS__
        the fibre, and leaves a flat rectangle that still looks deliberate
        enough to miss. */
     background:
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        6px 6px/3.5px 3.5px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        calc(100% - 6px) 6px/3.5px 3.5px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        6px calc(100% - 6px)/3.5px 3.5px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        calc(100% - 6px) calc(100% - 6px)/3.5px 3.5px no-repeat,
       linear-gradient(178deg, rgba(255,240,205,.13),
         rgba(255,240,205,.02) 34%, rgba(0,0,0,.16) 100%) 0 0/100% 100% no-repeat,
       var(--parchment) 0 0/420px 420px repeat,
@@ -903,14 +958,6 @@ __FONTS__
      and its shadow cast down and away from the lamp. */
   .modes button.on{--pin:var(--gold);color:var(--risenink);font-weight:500;
     background:
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        6px 6px/3.5px 3.5px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        calc(100% - 6px) 6px/3.5px 3.5px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        6px calc(100% - 6px)/3.5px 3.5px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        calc(100% - 6px) calc(100% - 6px)/3.5px 3.5px no-repeat,
       linear-gradient(178deg, rgba(255,255,255,.55),
         rgba(255,255,255,0) 46%, rgba(74,58,32,.13) 100%) 0 0/100% 100% no-repeat,
       var(--parchment) 0 0/420px 420px repeat,
@@ -1145,12 +1192,19 @@ __FONTS__
      rather than markup, so nothing in the DOM has to know about them, and only
      on the card's main action — the quiet pair below it are not occasions. */
   .card.menu > button{position:relative}
-  .card.menu > button::before, .card.menu > button::after{
-    content:"";position:absolute;top:50%;width:13px;height:13px;
-    transform:translateY(-50%);opacity:.7;
-    background:var(--starpale) center/13px 10px no-repeat}
-  .card.menu > button::before{left:18px}
-  .card.menu > button::after{right:16px}
+  /* A compass rose either side of Start, rather than the four-point stars that
+     were standing in for one, and larger — it is the mark the game is named
+     after.
+
+     Both of them on ::after, as two background layers, because ::before is the
+     shadow layer for every button now. As two pseudo-elements they collided
+     with that: one element cannot be both a star and a throw, and what came out
+     was a star with a lump of shadow stuck to it. */
+  .card.menu > button::after{content:"";position:absolute;
+    inset:0;top:0;right:0;bottom:0;left:0;pointer-events:none;opacity:.82;
+    background:
+      var(--rose) 17px center/22px 22px no-repeat,
+      var(--rose) calc(100% - 17px) center/22px 22px no-repeat}
 
   /* What a choice means, said once and then gone. The alternative was a line of
      copy under every row, which cost four lines of card height permanently to
@@ -1235,11 +1289,43 @@ __FONTS__
   .target.won{color:var(--foundline)}
   .val.won{color:var(--foundline)}
 
-  .countdown{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;
-    pointer-events:none;z-index:20;background:var(--veil)}
+  /* The chart is under its cover sheet until the run starts.
+
+     This used to be a flat grey veil over the map — a UI scrim, the one thing
+     on screen that belonged to no room and had no light on it. It is a sheet of
+     the same paper as everything else now, laid over the chart and lit by the
+     same lamp, and at zero it is drawn off towards the light rather than faded
+     out. Which is also the honest reading of a countdown: the map is not dim,
+     it is covered, and covering it is what stops anyone studying the board
+     before the clock runs.
+
+     The paper is opaque, so nothing shows through and there is nothing to
+     squint at. --veil is what its shading is made of. */
+  .countdown{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:none;z-index:20;overflow:hidden}
+  .countdown::before{content:"";position:absolute;inset:-2px;top:-2px;right:-2px;
+    bottom:-2px;left:-2px;
+    background-color:var(--paper);
+    background-image:
+      radial-gradient(ellipse 120% 95% at var(--lightfall),
+        rgba(255,246,220,.26), rgba(255,246,220,0) 58%),
+      linear-gradient(var(--shade), rgba(255,248,225,.10) 0%,
+        rgba(255,248,225,0) 30%, var(--veil) 100%),
+      var(--foxing), var(--parchment);
+    box-shadow:inset 0 0 0 1px var(--goldsoft)}
+  /* Drawn off the way a sheet is pulled: towards the light, and out of frame. */
+  .countdown.lifting::before{animation:uncover 620ms cubic-bezier(.5,0,.2,1) forwards}
+  @keyframes uncover{
+    to{transform:translate(38vw, -104vh) rotate(-7deg)}}
+  .countdown.lifting span{animation:tickout 260ms ease-in forwards}
+  @keyframes tickout{to{opacity:0;transform:scale(1.35)}}
   .countdown[hidden]{display:none}
-  .countdown span{font-family:var(--figures);font-size:104px;font-weight:700;color:var(--amber);
-    font-variant-numeric:tabular-nums;animation:tickin .68s ease-out}
+  /* Ink on the cover sheet, not amber. Amber is what the game uses when it has
+     given the player something, and it is also barely there on parchment. */
+  .countdown span{position:relative;font-family:var(--figures);font-size:112px;
+    font-weight:600;color:var(--ink);
+    font-variant-numeric:lining-nums tabular-nums;animation:tickin .68s ease-out}
   @keyframes tickin{0%{transform:scale(1.5);opacity:0}30%{transform:scale(1);opacity:1}
     100%{transform:scale(.94);opacity:.55}}
   /* The card's own action. Indigo rather than brass: it is the only thing on
@@ -1247,14 +1333,6 @@ __FONTS__
      thing to press. */
   button{--pin:var(--navyink);margin-top:20px;width:100%;color:var(--navyink);
     background:
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        8px 8px/4px 4px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        calc(100% - 8px) 8px/4px 4px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        8px calc(100% - 8px)/4px 4px no-repeat,
-      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
-        calc(100% - 8px) calc(100% - 8px)/4px 4px no-repeat,
       linear-gradient(178deg, rgba(255,244,214,.20),
         rgba(255,244,214,.03) 40%, rgba(0,0,0,.20) 100%) 0 0/100% 100% no-repeat,
       var(--parchment) 0 0/420px 420px repeat,

@@ -612,24 +612,54 @@ __MARKS_LIGHT__
   body.paused #map{visibility:hidden}
   /* Top right of the header: the corner a thumb reaches without regripping. */
   .pausebtn{display:none}
+  /* The two controls that live on the board rather than on a card. They stand
+     on the header and the footer, which are dark, so they take the sunk ground
+     the header icons take — and they take a ground at all for the reason
+     everything else does: they cast, and a thing that casts and is see-through
+     shows its own throw straight through itself. */
   body.playing .pausebtn{display:flex;align-items:center;justify-content:center;
     width:38px;height:38px;flex:none;margin:0 0 0 14px;order:9;padding:0;
-    font-size:12px;letter-spacing:.1em;border-radius:2px;background:transparent;
-    color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+    font-size:12px;letter-spacing:.1em;border-radius:2px;
+    background-color:var(--sunk);
+    background-image:
+      linear-gradient(178deg, rgba(255,240,205,.13),
+        rgba(255,240,205,.02) 34%, rgba(0,0,0,.16) 100%),
+      var(--parchment);
+    background-size:100% 100%, 420px 420px;
+    background-repeat:no-repeat, repeat;
+    color:var(--sunkink);border:1px solid var(--gold);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
   .cluebtn{display:none}
   body.practice .cluebtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
-    padding:7px 13px;font-size:12px;border-radius:2px;background:transparent;
-    color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);font-weight:600}
-  body.practice .cluebtn:disabled{color:var(--muted);
-    box-shadow:inset 0 0 0 1px var(--line);background:transparent}
+    padding:7px 13px;font-size:12px;border-radius:2px;
+    background-color:var(--sunk);
+    background-image:
+      linear-gradient(178deg, rgba(255,240,205,.13),
+        rgba(255,240,205,.02) 34%, rgba(0,0,0,.16) 100%),
+      var(--parchment);
+    background-size:100% 100%, 420px 420px;
+    background-repeat:no-repeat, repeat;
+    color:var(--amber);border:1px solid var(--amber);font-weight:600;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.45)}
+  body.practice .cluebtn:disabled{color:var(--muted);border-color:var(--line)}
   /* Back to the card, from the corner the clue button had during the run. One
      button in that corner at a time: a clue belongs to a run and review happens
      after one, so the rule below simply takes the slot over. Neutral rather
      than amber — this one navigates, it does not help. */
   .backbtn{display:none}
+  /* The third of the board's own controls, and the same rule again: it takes
+     the corner the clue button had during the run, so it takes its ground. */
   body.reviewing .backbtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
-    padding:7px 13px;font-size:12px;border-radius:2px;background:transparent;
-    color:var(--text);box-shadow:inset 0 0 0 1px var(--line);font-weight:600}
+    padding:7px 13px;font-size:12px;border-radius:2px;
+    background-color:var(--sunk);
+    background-image:
+      linear-gradient(178deg, rgba(255,240,205,.13),
+        rgba(255,240,205,.02) 34%, rgba(0,0,0,.16) 100%),
+      var(--parchment);
+    background-size:100% 100%, 420px 420px;
+    background-repeat:no-repeat, repeat;
+    color:var(--sunkink);border:1px solid var(--gold);font-weight:600;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.45)}
   body.reviewing .cluebtn{display:none}
   path.nudge{stroke:var(--amber);stroke-linecap:round;stroke-linejoin:round;
     fill:none;opacity:.95}
@@ -923,6 +953,7 @@ __MARKS_LIGHT__
   .pop button{margin:0;width:100%;text-align:left;background:transparent;
     color:var(--ink);font-size:14px;font-weight:400;padding:9px 11px;
     border:0;box-shadow:none;border-radius:2px}
+  .pop button::before{display:none}
   .fsbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   /* Pressed into the sheet: near black with brass lettering, a dark inner
@@ -978,9 +1009,19 @@ __MARKS_LIGHT__
   .bhead{display:flex;align-items:center;justify-content:space-between;
     gap:10px;margin:0 0 10px}
   .bhead h3{margin:0}
-  .iconbtn{margin:0;width:auto;flex:none;background:transparent;
-    border:1px solid var(--line);color:var(--muted);padding:5px 7px;
-    border-radius:2px;line-height:0;cursor:pointer}
+  /* Opaque, for the same reason every other raised thing is: it casts, and a
+     thing that casts and is see-through shows its neighbours' throws. */
+  .iconbtn{margin:0;width:auto;flex:none;
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(178deg, rgba(255,248,225,.16),
+        rgba(255,248,225,.03) 40%, rgba(58,42,20,.10) 100%),
+      var(--parchment);
+    background-size:100% 100%, 420px 420px;
+    background-repeat:no-repeat, repeat;
+    border:1px solid var(--gold);color:var(--inkmuted);padding:5px 7px;
+    border-radius:2px;line-height:0;cursor:pointer;
+    box-shadow:inset 0 1px 0 rgba(255,246,220,.16)}
   .iconbtn svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .btnrow{display:flex;gap:10px;margin-top:22px}
@@ -999,8 +1040,30 @@ __MARKS_LIGHT__
      default and only the exceptions below have to think about it. */
   button, .geoSel{--rise:1; --lift:0}
   button.ghost, .clearBtn, .headbtn{--rise:.5}
-  button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);
-    box-shadow:inset 0 1px 0 rgba(255,246,220,.10)}
+  /* A plate cut from the same sheet as the card, rather than a hole in it.
+
+     These were transparent, and a transparent thing standing over a shadow
+     layer shows whatever is under it — which is how Play Again's throw ended up
+     printed across Review Map and Main Menu. It was never a question of paint
+     order: the shadows were correctly behind these buttons, and you could see
+     them straight through.
+
+     So nothing that stands off the paper is see-through. That is the rule, and
+     it is the only one that makes this impossible rather than merely fixed:
+     while a lit control has no ground of its own, every shadow near it is one
+     tap away from showing through. Same paper as the card, so a quiet button
+     still reads as quiet — what separates it is its edge and its own shadow,
+     not a change of colour. */
+  button.ghost{color:var(--text);border:1px solid var(--gold);
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(178deg, rgba(255,248,225,.16),
+        rgba(255,248,225,.03) 40%, rgba(58,42,20,.10) 100%),
+      var(--parchment);
+    background-size:100% 100%, 420px 420px;
+    background-repeat:no-repeat, repeat;
+    box-shadow:inset 0 1px 0 rgba(255,246,220,.16),
+      inset 0 0 0 1px rgba(58,42,20,.10), inset 0 0 0 2px var(--goldsoft)}
   /* The only literal left in the file. Red is dark on both grounds, so the
      text on it is white in both. */
   button.danger{background:var(--red);color:#fff}

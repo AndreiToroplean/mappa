@@ -1405,6 +1405,38 @@ else:
     print(f'  resting heights: {", ".join(sorted(resting))}; '
           f'floating: {", ".join(sorted(floating)) or "none"}')
 
+# Nothing that casts a shadow may be see-through. This is not a nicety: every
+# throw is drawn on a layer behind the thing that casts it, so a transparent
+# control standing over that layer shows whatever is beneath it — which is how
+# Play Again's shadow ended up printed across the two buttons under it. The
+# shadows were correctly behind those buttons the whole time; you could see them
+# straight through. Paint order cannot fix that, and no amount of care about
+# stacking contexts would have.
+#
+# So the rule is that a lit control has a ground of its own, and it is checked
+# here rather than remembered: three separate rules had `background:transparent`
+# and each was found by a different bug report.
+clear = []
+for head, body in re.findall(r'([^{}]*)\{([^{}]*)\}',
+                             re.sub(r'/\*.*?\*/', '', css_src, flags=re.S)):
+    if not re.search(r'background(-color)?\s*:\s*transparent', body):
+        continue
+    for part in (p.strip() for p in head.split(',')):
+        # a menu item is a line printed on a sheet, not a plate standing on one,
+        # and it is excused because it casts nothing — see .pop button::before
+        if '.pop' in part:
+            continue
+        if any(sel.split()[-1] in part for sel in sels if sel.split()[-1] != 'button'):
+            clear.append(part)
+        elif re.search(r'(^|\s)button(\b|$)', part) and '.pop' not in part:
+            clear.append(part)
+if clear:
+    print(f'  FAIL {len(clear)} lit controls are see-through, so a neighbour\'s '
+          f'shadow shows through them: {", ".join(clear[:3])}')
+    fails += 1
+else:
+    print('  nothing that casts a shadow is see-through')
+
 # Nothing may cast a shadow the light did not decide on. An undirected one is
 # the only thing on screen that does not know where the lamp is, and next to a
 # directed one it looks like a mistake.

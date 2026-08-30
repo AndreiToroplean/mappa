@@ -111,7 +111,9 @@ const SRC = {
     while (running && n++ < REGION_NAMES.length + 4) {
       const other = REGION_NAMES.find(m => m !== current && status(m) === 'open');
       guess(n % 4 ? current : (other || current), anchorAt[other || current]);
-    }`,
+    }
+    // the end card arrives on a timer after the last answer
+    await new Promise(r => setTimeout(r, 2600));`,
 };
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -165,7 +167,7 @@ async function main() {
     for (const step of act) {
       if (!SRC[step]) throw new Error('no such step: ' + step);
       const r = await send('Runtime.evaluate',
-        { expression: `(() => { ${SRC[step]} })()`, awaitPromise: true });
+        { expression: `(async () => { ${SRC[step]} })()`, awaitPromise: true });
       // A step that threw would otherwise leave a screenshot of the wrong scene
       // and nothing to say so, which is how a styling bug gets invented.
       if (r.exceptionDetails) {

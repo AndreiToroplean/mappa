@@ -24,6 +24,22 @@ a fine outcome too.
 
 ---
 
+## Nothing structural stops a control being lit but see-through
+
+Fixed for now, and worth watching. Every throw is drawn on a layer behind the
+thing that casts it, so a control with no ground of its own shows whatever is
+beneath it — which is how one button's shadow ended up printed across two
+others. Six separate rules had `background:transparent`, and each was found by
+a different bug report before `check.py` was taught to look for all of them at
+once.
+
+The check makes it a build failure rather than a discovery, which is most of
+the value. What would make it impossible rather than caught is a lit control
+having a ground by construction — one rule that gives every one of them a
+surface, with the variants overriding the colour rather than each stating a
+whole background from scratch. Six near-identical background stacks is the
+smell; it is a small refactor and only waiting for a quiet moment.
+
 ## A card rebinds its descendants' colours
 
 `.card` sets `--text`, `--muted`, `--line` and `--amber` to ink-on-paper values,

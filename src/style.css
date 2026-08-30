@@ -30,6 +30,9 @@ __FONTS__
     --hover:rgba(242,233,216,.07);     /* a ghost button under the pointer */
     --scrim:rgba(14,11,7,.93);         /* what an overlay puts the page behind */
     --veil:rgba(14,11,7,.58);          /* the countdown, which lets the map through */
+    /* No longer spent: every shadow in the game is cast by 15-light.js now.
+       Kept because a palette is a vocabulary and this is still the answer to
+       'what colour is a shadow here', which --castrgb is built from. */
     --shadow:rgba(0,0,0,.5);
     --shadowdeep:rgba(0,0,0,.6);
     --haze:rgba(14,11,7,.92);          /* lifts text off the map behind it */
@@ -79,26 +82,26 @@ __FONTS__
     --onaccent:#13100B;  /* on an amber ground */
 
     /* the three that mean something, and stay meaning it in both themes */
-    --found:#8FB79F; --foundline:#1B5B40; --foundmid:#6FA88E;
+    --found:#7ABE99; --foundline:#12583A; --foundmid:#5FAF87;
     --amber:#FFC24B; --red:#E5484D; --softred:#D4797C;
     --washsoft:rgba(255,194,75,.09);  /* amber as a background, not a mark */
     --washfirm:rgba(255,194,75,.12);
     --foundglow:rgba(79,203,164,.55);
 
     /* a region wearing one of them: fill, then the stroke that carries it */
-    --missfill:#C4796E;   --missline:#7E1C16;
-    --revealfill:#E8B44E; --revealline:#7E5210;
+    --missfill:#CE6E5C;   --missline:#7A1810;
+    --revealfill:#F0B133; --revealline:#764A08;
 
     /* a name written over one of those fills: the ink, and its knockout */
     --foundink:#0F2E22;  --foundhalo:rgba(255,252,244,.78);
-    --wrongink:#6B1913;  --wronghalo:#F6DCD8;
+    --wrongink:#9E2410;  --wronghalo:#FBE6E0;
     --answerink:#4A3208; --answerhalo:#F7E5BF;
     --scoredink:#2C2216; --scoredhalo:rgba(255,252,244,.75);
 
     /* the distance ramp's three stops; scoreColour() reads them from here */
-    --s0fill:#8FB79F;   --s0line:#1B5B40;
-    --s50fill:#E4B054;  --s50line:#7E5210;
-    --s100fill:#C4796E; --s100line:#7E1C16;
+    --s0fill:#7ABE99;   --s0line:#12583A;
+    --s50fill:#EDAE38;  --s50line:#764A08;
+    --s100fill:#CE6E5C; --s100line:#7A1810;
 
     /* a whole surface briefly going the colour of the news */
     --lossflash:#2E1310; --winflash:#12362C;
@@ -163,7 +166,7 @@ __FONTS__
     --bar:#181309; --barink:#EFE4CC; --barmuted:#9E8A68;
     /* Red and green re-chosen for paper: the ones that carry on a dark ground
        are neon on a tan one. */
-    --inkred:#C2503C; --inkgreen:#2C6B58;
+    --inkred:#8C2416; --inkgreen:#245A48;
     /* What a cast shadow is made of. The offset and the blur are written per
        element by 15-light.js, which is the only thing that knows where a
        control is sitting relative to the lamp; the fallbacks here are a plain
@@ -174,6 +177,22 @@ __FONTS__
        several alphas from it — see the smear there. The fallback is a plain
        shadow, so nothing looks broken if that module never runs. */
     --castrgb:18,12,4;
+    /* How high a thing stands off what it is sitting on, and whether it is
+       sitting on it at all. 15-light.js reads both and turns them into a throw;
+       they are declared here because how tall a control is, is a decision about
+       the design and not about the lighting.
+
+       Two heights, deliberately. Whatever a card is really asking you to press
+       stands at full height; the quieter buttons beside it at half — half the
+       height, half the shadow, which is what makes the difference read as
+       importance rather than as decoration.
+
+       --lift is a different idea from --rise. Zero rests on the paper, so the
+       shadow is pinned to the object and sharp where they touch. Anything above
+       zero floats over the paper with nothing touching, so the shadow is
+       displaced bodily and soft the whole way through — a popover has opened
+       above the card, it is not glued to it. */
+    --rise:1; --lift:0;
     --cast:0 2px 5px rgba(18,12,4,.45);
     /* A lamp in a dark room: steep falloff, and no window to throw rays. */
     /* Lamplight, so the falloff is warm going out rather than neutral: a room
@@ -232,7 +251,7 @@ __FONTS__
     --labelfade:1;
     --onaccent:#FCF7EA;
 
-    --found:#A8CDB6; --foundline:#14523A; --foundmid:#86C0A2;
+    --found:#8FCFAB; --foundline:#0E5236; --foundmid:#6FC195;
     --amber:#9C600C; --red:#B3322C; --softred:#A8443E;
     --washsoft:rgba(156,96,12,.12);
     --washfirm:rgba(156,96,12,.17);
@@ -242,7 +261,7 @@ __FONTS__
     --revealfill:#F2C25A; --revealline:#8A5A10;
 
     --foundink:#123326;  --foundhalo:rgba(255,252,244,.82);
-    --wrongink:#7A1F1B;  --wronghalo:#FDECEA;
+    --wrongink:#A32A14;  --wronghalo:#FFEFEA;
     --answerink:#4A3208; --answerhalo:#FBEBC8;
     --scoredink:#33281A; --scoredhalo:rgba(255,252,244,.82);
 
@@ -284,6 +303,7 @@ __FONTS__
        a dark room does, because the whole sky fills in around it. */
     --away:.5;
     --castrgb:74,58,32;
+    --rise:1; --lift:0;
     --cast:0 2px 5px rgba(74,58,32,.28);
     /* Daylight bounces, so the far corner of the room is only a little dimmer.
        The rays are four bands of unequal width, which is what stops them reading
@@ -323,6 +343,31 @@ __FONTS__
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
     --starpale: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%23FFF3D2%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
+  /* ---- changing the light -------------------------------------------------
+     Switching themes used to happen in two visible steps: the colours took
+     effect immediately and the shadows a frame later, because they were being
+     measured on a timer. They are measured synchronously now (see
+     15-light.js), so both land in the same paint — and this fades that paint in
+     rather than cutting to it.
+
+     Named properties rather than `all`, which would sweep up the map's own
+     fills and put a quarter-second lag on every correct answer. Only the room
+     and the furniture in it are listed: nothing here is on the path between a
+     tap and its feedback.
+
+     box-shadow can only tween between two lists of equal length, which is why
+     both smears in 15-light.js have six stops. */
+  body, body::after, .card, .pop, .tip span, button, .geoSel, .headbtn,
+  main, main::before, main::after{
+    transition:background-color .32s ease, color .32s ease,
+      border-color .32s ease, box-shadow .32s ease, background-image .32s ease}
+  /* Someone who has asked for less movement gets the switch instantly, which is
+     the honest reading of the request: the fade is decoration, not information. */
+  @media (prefers-reduced-motion: reduce){
+    body, body::after, .card, .pop, .tip span, button, .geoSel, .headbtn,
+    main, main::before, main::after{transition:none}
+  }
+
   *{box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
     -webkit-touch-callout:none;                /* long-press context menu */
@@ -599,6 +644,7 @@ __FONTS__
      and mottle, the foxing, the falloff across the sheet, and the lamp. The
      lamp is last so it lies over everything, which is what a lamp does. */
   .card{position:relative;
+    --rise:1.7;
     --text:var(--ink); --muted:var(--inkmuted);
     --line:var(--paperline); --hairline:var(--paperfaint);
     --hover:var(--paperhover); --amber:var(--gold);
@@ -619,7 +665,7 @@ __FONTS__
        a long soft one, and a brass hairline inside the edge the way a plate is
        ruled in from its trim. */
     box-shadow:inset 0 0 0 1px rgba(255,244,214,.14),
-      var(--cast), 0 26px 56px var(--shadow)}
+      var(--cast)}
   .card h2{margin:0;font-size:26px;letter-spacing:-0.01em;font-family:var(--serif);
     font-weight:600}
   /* The name, set as a mark rather than as a word. Uppercased in CSS rather
@@ -772,11 +818,12 @@ __FONTS__
      every item on it was near-black text on a near-black ground and the menu
      appeared to be empty. Paper on paper is both correct and the version that
      cannot go invisible. */
-  .pop{position:absolute;top:calc(100% + 8px);right:0;z-index:5;
+  .pop{--lift:.55; --rise:1.5;
+    position:absolute;top:calc(100% + 8px);right:0;z-index:5;
     min-width:170px;padding:5px;
     background-color:var(--risen);background-image:var(--parchment);
     border:1px solid var(--gold);border-radius:5px;
-    box-shadow:var(--cast), 0 14px 30px var(--shadow)}
+    box-shadow:var(--cast)}
   .pop[hidden]{display:none}
   .pop button{margin:0;width:100%;text-align:left;background:transparent;
     color:var(--ink);font-size:14px;font-weight:400;padding:9px 11px;
@@ -835,8 +882,14 @@ __FONTS__
   /* same gap between the rows as within them */
   #paused .btnrow{margin-top:10px}
   .btnrow button{margin-top:0;flex:1}
+  /* The quiet ones: the pair in a .btnrow and the board's clear button are
+     alternatives and afterthoughts rather than the thing you came to press, so
+     they stand at half height and cast half as far. They also had no cast
+     shadow at all, which is why the pause card had one under Resume and
+     nothing under the two buttons beside it. */
+  button.ghost, .clearBtn{--rise:.5}
   button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);
-    box-shadow:none}
+    box-shadow:inset 0 1px 0 rgba(255,246,220,.10), var(--cast)}
   /* The only literal left in the file. Red is dark on both grounds, so the
      text on it is white in both. */
   button.danger{background:var(--red);color:#fff}
@@ -915,11 +968,11 @@ __FONTS__
   .lens[hidden]{display:none}
   .lens .disc{position:relative;width:184px;height:184px;border-radius:50%;
     overflow:hidden;background-color:var(--sea);
-    border:2px solid var(--line);box-shadow:0 12px 32px var(--shadowdeep)}
+    border:2px solid var(--line);--lift:.7; --rise:2.4;box-shadow:var(--cast)}
   .lens .disc svg{width:100%;height:100%;display:block}
   .lens .cross{position:absolute;left:50%;top:50%;width:20px;height:20px;
     margin:-10px 0 0 -10px;border-radius:50%;
-    border:1.5px solid var(--amber);box-shadow:0 0 0 1px var(--haze)}
+    border:1.5px solid var(--amber);outline:1px solid var(--haze)}
   .lens .cross::before,.lens .cross::after{content:"";position:absolute;
     left:50%;width:1px;margin-left:-.5px;height:6px;background:var(--amber)}
   .lens .cross::before{top:-8px}
@@ -1051,11 +1104,12 @@ __FONTS__
   .tip{position:fixed;left:0;right:0;bottom:var(--tipbottom, 26px);z-index:35;
     display:flex;justify-content:center;padding:0 18px;pointer-events:none}
   .tip[hidden]{display:none}
-  .tip span{max-width:min(var(--tipwide, 420px), 100%);text-align:center;
+  .tip span{--lift:.6; --rise:1.6;
+    max-width:min(var(--tipwide, 420px), 100%);text-align:center;
     font-size:12.5px;line-height:1.45;color:var(--text);
     background-color:var(--panel);background-image:var(--grain);
     border:1px solid var(--line);border-radius:10px;padding:9px 14px;
-    box-shadow:0 10px 26px var(--shadowdeep);
+    box-shadow:var(--cast);
     animation:tipin 3800ms ease-out forwards}
   @keyframes tipin{
     0%{opacity:0;transform:translateY(7px)}

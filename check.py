@@ -1346,6 +1346,76 @@ else:
     kb = sum((ROOT / 'data' / 'fonts' / f'{f}.woff2').stat().st_size for f in faces) / 1024
     print(f'  {len(faces)} faces, {kb:.0f}KB, {len(lic)} licences beside them')
 
+print('the light')
+# Which things stand off the surface is a list in 15-light.js, and a list is an
+# easy thing to leave a hole in: the quiet pair inside a .btnrow was missing
+# from it, so the pause card had a shadow under Resume and nothing under the two
+# buttons beside it. Every button in the markup has to be caught by one of these
+# selectors — checked by matching the selectors against the markup rather than
+# by opening the game, so it fails at build time.
+light_src = (ROOT / 'src/js/15-light.js').read_text()
+lit = re.search(r'const LIT = \[(.*?)\]', light_src, re.S).group(1)
+sels = re.findall(r"'([^']+)'", lit)
+# The classes and ids each selector would catch, which is enough for the shapes
+# this markup actually uses: a tag, a class, or a descendant of a class.
+buttons = re.findall(r'<button\b([^>]*)>', html_src)
+uncaught = []
+for attrs in buttons:
+    cls = set(re.findall(r'class="([^"]*)"', attrs))
+    cls = set(' '.join(cls).split())
+    hit = any(
+        (sel == '.card button') or
+        (sel.startswith('.') and sel[1:] in cls) or
+        (' ' in sel and sel.split()[-1].lstrip('.') in cls)
+        for sel in sels)
+    if not hit:
+        uncaught.append(attrs.strip()[:48])
+if uncaught:
+    print(f'  FAIL {len(uncaught)} buttons cast no shadow: {uncaught[0]}')
+    fails += 1
+else:
+    print(f'  all {len(buttons)} buttons are caught by one of {len(sels)} lit selectors')
+
+# Heights have to stay countable to mean anything. Things resting on a surface
+# get a small fixed set — a quiet button, a loud one, and the card they sit on —
+# because that is a rank the eye can read. Things that float are not on the same
+# scale at all and are counted apart: a magnifier held over the map and a note
+# laid on a card are answering "how far above", not "how important".
+resting, floating = set(), set()
+for rule in re.findall(r'\{([^{}]*)\}', re.sub(r'/\*.*?\*/', '', css_src, flags=re.S)):
+    got = re.search(r'--rise:\s*([\d.]+)', rule)
+    if not got:
+        continue
+    (floating if re.search(r'--lift:\s*(?!0\b)[\d.]', rule) else resting).add(got.group(1))
+if len(resting) > 3:
+    print(f'  FAIL {len(resting)} resting heights ({", ".join(sorted(resting))}) — '
+          f'more stops than read as a rank')
+    fails += 1
+else:
+    print(f'  resting heights: {", ".join(sorted(resting))}; '
+          f'floating: {", ".join(sorted(floating)) or "none"}')
+
+# Nothing may cast a shadow the light did not decide on. An undirected one is
+# the only thing on screen that does not know where the lamp is, and next to a
+# directed one it looks like a mistake.
+loose = [m for m in re.findall(r'box-shadow:([^;}]*)', css_src)
+         if 'var(--cast)' not in m and 'inset' not in m and 'none' not in m]
+if loose:
+    print(f'  FAIL {len(loose)} shadows the light did not cast: {loose[0].strip()[:44]}')
+    fails += 1
+else:
+    print('  every outer shadow is cast by the light')
+
+# box-shadow animates only between lists of equal length, so an uneven pair
+# would make the theme snap while every colour around it faded.
+lens = [len(re.findall(r'\[', m)) for m in
+        re.findall(r'const (?:SUN_)?SMEAR = \[(.*?)\];', light_src, re.S)]
+if len(set(lens)) != 1:
+    print(f'  FAIL the two smears have {lens} stops — box-shadow will not tween')
+    fails += 1
+else:
+    print(f'  both smears have {lens[0]} stops, so the themes cross-fade')
+
 print('themes')
 
 

@@ -31,9 +31,14 @@
 /* Which things stand off the surface. A list rather than a class in the markup,
    because whether something casts a shadow is a fact about the design and not
    about what the element is for — and because the markup should not have to be
-   edited to relight the room. */
+   edited to relight the room.
+
+   The quiet pair inside a .btnrow and the board's clear button were missing
+   from this, so the pause card had a shadow under Resume and nothing under the
+   two buttons beside it. A list is easy to leave a hole in; check.py now counts
+   what it catches against every button in the markup. */
 const LIT = [
-  '.card', '.pop', '.modes button', '.card > button', '.headbtn',
+  '.card', '.pop', '.tip span', '.card button', '.headbtn',
   '.geoSel', '.iconbtn', '.cluebtn', '.backbtn', '.pausebtn', '.lens .disc',
 ].join(',');
 
@@ -47,6 +52,23 @@ const LAMP = { x: 0.94, y: -0.10 };
    the range it is allowed to land in. The cap is what keeps a long shadow from
    becoming a smear the length of the card: past a point the eye stops reading
    it as depth. */
+/* How high a thing stands off what it is sitting on, and whether it is sitting
+   on it at all. Both are read off the element, so the stylesheet decides which
+   things are tall and this decides what that means.
+
+   --rise scales the length and the blur together, because both come from the
+   same fact: a taller object intercepts the light further from the surface, so
+   its shadow reaches further and its penumbra has more room to open. The
+   design uses two heights — a full one for whatever a card is really asking
+   you to press, and a half for the quieter buttons beside it.
+
+   --lift is different in kind. A button rests on the paper, so its shadow is
+   pinned to it and starts sharp at the contact edge. A popover is *over* the
+   paper with nothing touching, so its shadow is displaced bodily and has no
+   sharp edge anywhere — it is all penumbra. --lift is how far along the throw
+   the shadow begins, so 0 is resting and anything above it is floating. */
+const RISE_DEFAULT = 1, LIFT_DEFAULT = 0;
+
 /* How long the longest shadow in the room is, and how fast one grows on the way
    out to it. The curve is the part that matters: linear in distance made the
    corner icons and the Start button look nearly alike, because a card is not
@@ -89,11 +111,16 @@ const SMEAR = [
   [0.88, 0.28, 0.30],
   [1.00, 0.34, 0.24],
 ];
+/* Six stops, matching SMEAR, and that is a requirement rather than a
+   coincidence: box-shadow only animates between two lists of the same length,
+   so an uneven pair would make the theme snap while everything around it
+   faded. check.py holds the two to the same length. */
 const SUN_SMEAR = [
   [0.00, 0.00, 0.44],
-  [0.34, 0.03, 0.32],
-  [0.64, 0.07, 0.19],
-  [0.86, 0.11, 0.10],
+  [0.28, 0.02, 0.35],
+  [0.52, 0.05, 0.25],
+  [0.72, 0.08, 0.16],
+  [0.88, 0.11, 0.09],
   [1.00, 0.15, 0.04],
 ];
 
@@ -104,10 +131,16 @@ const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 4.5 };
 
 /* The smear as a box-shadow list. The colour is a triplet from the palette, so
    the ink stays a theme's business and only the alpha is decided here. */
-function smear(dx, dy, len, steps) {
-  return steps.map(([at, haze, alpha]) =>
-    `${(dx * at).toFixed(1)}px ${(dy * at).toFixed(1)}px `
-    + `${(len * haze).toFixed(1)}px rgba(var(--castrgb), ${alpha})`).join(', ');
+function smear(dx, dy, len, steps, lift) {
+  /* A floating thing's shadow starts away from it and is soft everywhere, so
+     the whole smear slides along the throw and picks up a floor under its blur.
+     A resting one is unchanged: lift of zero leaves every term alone. */
+  return steps.map(([at, haze, alpha]) => {
+    const along = lift + at * (1 - lift);
+    const blur = len * (haze + lift * 0.8);
+    return `${(dx * along).toFixed(1)}px ${(dy * along).toFixed(1)}px `
+      + `${blur.toFixed(1)}px rgba(var(--castrgb), ${alpha})`;
+  }).join(', ');
 }
 
 function relight() {
@@ -118,13 +151,23 @@ function relight() {
   // the longest shadow in the room is the same length whatever the screen is.
   const reach = Math.hypot(lx - 0, ly - h) || 1;
 
+  /* Measure everything first, then write everything. Reading a rect straight
+     after writing a style makes the browser redo layout to answer, once per
+     element — which is most of why the shadows used to arrive a frame late. */
+  const seen = [];
   document.querySelectorAll(LIT).forEach(node => {
     const r = node.getBoundingClientRect();
-    if (!r.width || !r.height) return;      // hidden; it will be measured when shown
+    if (!r.width || !r.height) return;      // hidden; it is measured when shown
+    const cs = getComputedStyle(node);
+    seen.push([node, r,
+      parseFloat(cs.getPropertyValue('--rise')) || RISE_DEFAULT,
+      parseFloat(cs.getPropertyValue('--lift')) || LIFT_DEFAULT]);
+  });
 
+  seen.forEach(([node, r, rise, lift]) => {
     let dx, dy, len, steps;
     if (sun) {
-      len = SUN.len;
+      len = SUN.len * rise;
       dx = SUN.dx * len;
       dy = SUN.dy * len;
       steps = SUN_SMEAR;
@@ -133,26 +176,38 @@ function relight() {
       const vx = cx - lx, vy = cy - ly;
       const d = Math.hypot(vx, vy) || 1;
       const out = Math.min(1, d / reach);
-      len = Math.max(THROW_MIN, THROW_MAX * Math.pow(out, THROW_CURVE));
+      len = Math.max(THROW_MIN, THROW_MAX * rise * Math.pow(out, THROW_CURVE));
       dx = vx / d * len;
       dy = vy / d * len;
       steps = SMEAR;
       // How far out of the light it is, for the ones that also darken with it.
       node.style.setProperty('--away', out.toFixed(3));
     }
-    node.style.setProperty('--cast', smear(dx, dy, len, steps));
+    node.style.setProperty('--cast', smear(dx, dy, len, steps, lift));
   });
 }
 
 /* When to measure. A shadow depends on where a thing is, so anything that moves
-   something has to be followed by a measurement.
+   something has to be followed by a measurement — and, crucially, by one that
+   lands in the same frame as the move.
 
-   The observer is the part worth explaining: overlays appear and disappear by
-   the hidden attribute, and there is no event for that. Watching one attribute
-   across the document is cheaper than it sounds — it fires when a card opens,
-   which is a handful of times a run — and it means a card put on screen by any
-   route at all is lit, including routes written later that nobody remembered to
-   call this from. */
+   A MutationObserver's callback runs as a microtask, before the browser paints.
+   Measuring there, synchronously, means the new shadows go down in the same
+   paint as whatever changed. The old code queued the work on a timer instead,
+   so the card appeared, the browser painted it, and the shadows arrived one
+   frame later — which is what made opening the menu, and switching themes, look
+   like two separate events.
+
+   That only works if the observers stay narrow. Watching `class` across the
+   whole subtree meant every region changing state during a run woke this up,
+   which is why it had to be debounced in the first place. So: `hidden` through
+   the subtree, because that is how an overlay opens; `class` on the body alone,
+   because that is where the run's own state lives; and the theme on <html>,
+   which is not inside the body at all. Nothing on the map fires any of them.
+
+   Resize is the exception and stays debounced. It arrives in bursts of dozens
+   during a drag, none of which anyone sees, and the last one is the only one
+   that matters. */
 let lightTimer = null;
 function relightSoon() {
   clearTimeout(lightTimer);
@@ -160,14 +215,14 @@ function relightSoon() {
 }
 
 addEventListener('resize', relightSoon);
-new MutationObserver(relightSoon).observe(document.body,
-  { attributes: true, subtree: true, attributeFilter: ['hidden', 'class'] });
-/* The theme is the other thing that changes every shadow in the room, and it is
-   set on <html>, which is not inside document.body — so watching the body alone
-   missed it completely and the shadows kept the old sky until the page was
-   reloaded. A second observer rather than moving the first up to
-   documentElement with subtree, which would fire on every class change in the
-   game instead of on the four attributes that matter. */
-new MutationObserver(relightSoon).observe(document.documentElement,
+new MutationObserver(relight).observe(document.body,
+  { attributes: true, subtree: true, attributeFilter: ['hidden'] });
+new MutationObserver(relight).observe(document.body,
+  { attributes: true, attributeFilter: ['class'] });
+new MutationObserver(relight).observe(document.documentElement,
   { attributes: true, attributeFilter: ['data-theme'] });
-requestAnimationFrame(relight);
+
+/* Fonts change how wide a button is, and a button that changed width after the
+   shadows were measured keeps a shadow cut for the old one. */
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(relight);
+relight();

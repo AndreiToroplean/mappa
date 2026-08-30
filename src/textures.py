@@ -220,13 +220,17 @@ if __name__ == '__main__':
 
 
 # ---- the window ----------------------------------------------------------
-# Where the sunlight is, described once and emitted three ways: the light the
-# panes let through, the shadow the frame casts, and a table 15-light.js reads
-# to ask how much sun reaches a given button.
+# Where the sunlight is: the light the panes let through and the shadow the
+# frame casts, described once and emitted as the two gradients the stylesheet
+# paints.
 #
-# They have to agree or the scene contradicts itself — a shadow softened for
-# standing in a bar has to be standing in a bar the eye can see. Keeping copies
-# in step by hand is exactly what goes wrong quietly, so there are no copies.
+# It was briefly emitted a third way, as a table the light module read so it
+# could dim a button's shadow by how much sun there was at that button to
+# block. That is the right physics and the wrong place for it: a shadow belongs
+# to a whole surface, and asking the question per element gives an answer that
+# is wrong for anything wider than a bar — which is most buttons and all of the
+# cards. Doing it properly wants one lighting layer for the scene, and that is a
+# larger thing than this game needs.
 WINDOW = {
     'angle': 48,
     'ink': '84,62,32',
@@ -308,14 +312,3 @@ def raysfade_css():
     return (f"linear-gradient({WINDOW['sun']}deg,"
             f" rgba(0,0,0,1) 0%, rgba(0,0,0,.6) {f['to'] * 45:.4g}%,"
             f" rgba(0,0,0,{f['floor']}) {f['to'] * 100:.4g}%)")
-
-
-def window_js():
-    """The same window, as something 15-light.js can evaluate at a point."""
-    f = WINDOW['fade']
-    # Only where each bar is. What it does to the light is not a variable:
-    # a frame is opaque and stops all of it.
-    spans = ','.join(f'[{a},{b}]' for a, b, _ in WINDOW['bars'])
-    return (f"{{angle:{WINDOW['angle']},bars:[{spans}],edge:{WINDOW['edge']},"
-            f"sun:{WINDOW['sun']},"
-            f"fade:{{to:{f['to']},floor:{f['floor']}}}}}")

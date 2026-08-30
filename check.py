@@ -1448,34 +1448,15 @@ if loose:
 else:
     print('  every outer shadow is cast by the light')
 
-# The window is described once and used twice: painted by the stylesheet and
-# evaluated by 15-light.js to ask how much sun reaches a button. Two copies kept
-# in step by hand is how a shadow ends up softened for standing in a bar that is
-# not where the eye can see one.
+# The window is described once, in src/textures.py, and the stylesheet paints
+# what it says. Two copies of a gradient this fiddly kept in step by hand is
+# the sort of thing that drifts quietly.
 if '__RAYS__' not in (ROOT / 'src/style.css').read_text():
-    print('  FAIL the stylesheet paints a window the light module cannot read')
-    fails += 1
-elif '__WINDOW__' not in light_src:
-    print('  FAIL 15-light.js does not read the window it is dimming shadows for')
+    print('  FAIL the stylesheet does not take its window from the one that '
+          'describes it')
     fails += 1
 else:
-    print(f'  one window, painted by the stylesheet and read by the light: '
-          f'{len(textures.WINDOW["bars"])} bars')
-
-# How dark a bar paints and how much light it blocks are different quantities,
-# and the light module must not be handed the first as if it were the second.
-# It was: a bar painting at .17 against a deepest of .20 was credited with
-# stopping 85% of a light it stops all of, so a button standing in it kept a
-# sixth of a shadow that should not have existed at all.
-if re.search(r'bars:\[\[[\d.]+,[\d.]+,', textures.window_js()):
-    print('  FAIL the light module is given each bar\'s paint alpha, which it '
-          'has no business reading as an occlusion')
-    fails += 1
-elif re.search(r'WINDOW\.deepest', re.sub(r'/\*.*?\*/', '', light_src, flags=re.S)):
-    print('  FAIL 15-light.js still scales occlusion by how dark a bar paints')
-    fails += 1
-else:
-    print('  a bar blocks all of the direct light, whatever it paints like')
+    print(f'  one window, {len(textures.WINDOW["bars"])} bars, described once')
 
 # box-shadow animates only between lists of equal length, so an uneven pair
 # would make the theme snap while every colour around it faded.

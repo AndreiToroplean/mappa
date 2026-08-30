@@ -129,102 +129,9 @@ const SUN_SMEAR = [
    wall. Short and hard — this is the whole of the day theme's shadow. */
 const SUN = { dx: Math.cos(0.593), dy: Math.sin(0.593), len: 9 };
 
-/* The window, from src/textures.py — the same table the stylesheet paints its
-   bars from, so a shadow softened for standing in a bar is standing in the bar
-   the eye can see. */
-const WINDOW = __WINDOW__;
-
-/* How much direct sun reaches a point, from 0 in the deepest bar to 1 in open
-   light. Projects the point onto the gradient's own axis and asks the same
-   question the gradient answers, then multiplies by how far the light has got
-   across the room.
-
-   This is the whole of the idea. Shadow laid over shadow is not twice the
-   shadow — a bar has already taken the direct light away, and a button standing
-   in one has no direct light left to block. Rather than painting the throws and
-   the bars onto a buffer and combining them with a max, which is what a
-   renderer would do, the throw is simply scaled by the light there is to
-   block. Same answer, no buffer, and it costs one dot product. */
-/* Where a point sits along a gradient's own axis, 0 to 1, using the convention
-   CSS uses: zero degrees points up and the angle turns clockwise. */
-function along(deg, x, y, w, h) {
-  const a = (deg - 90) * Math.PI / 180;
-  const ux = Math.cos(a), uy = Math.sin(a);
-  const axis = Math.abs(w * ux) + Math.abs(h * uy);
-  return 0.5 + ((x - w / 2) * ux + (y - h / 2) * uy) / (axis || 1);
-}
-
-function sunAt(x, y, w, h) {
-  /* Two questions, multiplied. Is the frame in the way here, and how far into
-     the room has the light got by the time it arrives?
-
-     The first has to be able to answer zero, and for one bar it could not. How
-     dark a bar *paints* and how much light it *blocks* are different
-     quantities, and this was reading the second out of the first: a bar painted
-     at .17 against a deepest of .20 was credited with stopping 85% of the
-     light, so a button standing in it kept a sixth of its shadow. A frame is
-     opaque. Every bar stops all of the direct light, and one painting lighter
-     than another only means the light it interrupted was weaker there — which
-     is the fade's business, below, and is already counted once.
-
-     The second is linear, not radial. The sun is far enough away that its rays
-     are parallel: there is no point on the screen for them to spread from and
-     no distance to measure to. What dims them is depth into the room, which
-     runs the one way for every ray, along the same direction the shadows are
-     thrown. Falling off from a point is the lamp's business, and the lamp does
-     it in the other branch of relight(), because a lamp really is a point. */
-  let open = 1;
-  const p = along(WINDOW.angle, x, y, w, h);
-  for (const [from, to] of WINDOW.bars) {
-    const e = WINDOW.edge;
-    open -= Math.max(0, Math.min(smooth(p, from - e, from + e),
-                                 1 - smooth(p, to - e, to + e)));
-  }
-  const depth = along(WINDOW.sun, x, y, w, h);
-  const reach = 1 - (1 - WINDOW.fade.floor) * smooth(depth, 0, WINDOW.fade.to);
-  return Math.max(0, Math.min(1, open)) * reach;
-}
-
-/* How much sun falls on a whole button, not on the one point at its middle.
-
-   A glazing bar is narrower than a button is wide, so asking only about the
-   centre gives an answer that is right for a sliver and wrong for the rest: a
-   button lying across a bar had its centre in the pane, so it threw a full
-   shadow while half of it was visibly in shade. Five samples over the footprint
-   average out to a shadow that fades as the bar crosses it, which is what the
-   eye expects and what is actually happening. */
-function sunOver(r, w, h) {
-  const xs = [r.left + r.width * 0.15, r.left + r.width / 2,
-              r.left + r.width * 0.85];
-  const ys = [r.top + r.height * 0.25, r.top + r.height * 0.75];
-  let total = 0;
-  for (const x of xs) for (const y of ys) total += sunAt(x, y, w, h);
-  return total / (xs.length * ys.length);
-}
-
-function smooth(v, a, b) {
-  const k = Math.max(0, Math.min(1, (v - a) / ((b - a) || 1e-6)));
-  return k * k * (3 - 2 * k);
-}
-
-/* What a button does to the light that is not the sun. The sky, the walls and
-   the paper itself bounce light into every gap, and less of it reaches the
-   ground right up against an object than reaches open paper a few inches away.
-   That is the dark seam under everything, it has no direction because the light
-   it is blocking has none, and it is there whether or not a button is standing
-   in sunlight — which is what you see in the bars, where there is nothing else
-   left to see. */
-const AMBIENT = [
-  [0.00, 0.00, 0.20],
-  [0.35, 0.55, 0.14],
-  [0.70, 1.10, 0.08],
-  [1.00, 1.80, 0.04],
-];
-const AMBIENT_LEN = 3.2;
-
 /* The smear as a box-shadow list. The colour is a triplet from the palette, so
    the ink stays a theme's business and only the alpha is decided here. */
-function smear(dx, dy, len, steps, lift, scale) {
+function smear(dx, dy, len, steps, lift) {
   /* A floating thing's shadow starts away from it and is soft everywhere, so
      the whole smear slides along the throw and picks up a floor under its blur.
      A resting one is unchanged: lift of zero leaves every term alone. */
@@ -232,16 +139,8 @@ function smear(dx, dy, len, steps, lift, scale) {
     const along = lift + at * (1 - lift);
     const blur = len * (haze + lift * 0.8);
     return `${(dx * along).toFixed(1)}px ${(dy * along).toFixed(1)}px `
-      + `${blur.toFixed(1)}px rgba(var(--castrgb), ${(alpha * scale).toFixed(3)})`;
+      + `${blur.toFixed(1)}px rgba(var(--castrgb), ${alpha})`;
   }).join(', ');
-}
-
-/* The seam, which has no direction and so needs none of the throw's geometry. */
-function occlusion(rise) {
-  return AMBIENT.map(([at, haze, alpha]) =>
-    `0 ${(AMBIENT_LEN * rise * at).toFixed(1)}px `
-    + `${(AMBIENT_LEN * rise * haze + 0.6).toFixed(1)}px `
-    + `rgba(var(--castrgb), ${alpha})`).join(', ');
 }
 
 function relight() {
@@ -266,18 +165,12 @@ function relight() {
   });
 
   seen.forEach(([node, r, rise, lift]) => {
-    let dx, dy, len, steps, direct;
+    let dx, dy, len, steps;
     if (sun) {
       len = SUN.len * rise;
       dx = SUN.dx * len;
       dy = SUN.dy * len;
       steps = SUN_SMEAR;
-      /* Scaled by the sun there is here to block, and by nothing else. In open
-         light the throw is full strength; in the shadow of a glazing bar there
-         is no direct light left to interrupt, so there is no throw — not a
-         faint one. What a button does in shade is the seam underneath it, and
-         that is drawn separately and is not scaled by anything. */
-      direct = sunOver(r, w, h);
     } else {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const vx = cx - lx, vy = cy - ly;
@@ -287,20 +180,10 @@ function relight() {
       dx = vx / d * len;
       dy = vy / d * len;
       steps = SMEAR;
-      /* The same idea under a lamp, with the falloff standing in for the bars:
-         a shadow thrown across the dim end of the desk has less light to take
-         away, so there is less of it to see. */
-      /* The same second question under a lamp, and the falloff is the answer:
-         a shadow at the dim end of the desk has less light to take away. */
-      direct = 1 - 0.62 * out;
       // How far out of the light it is, for the ones that also darken with it.
       node.style.setProperty('--away', out.toFixed(3));
     }
-    /* Two shadows, always. The seam a thing makes by sitting on something is
-       there whatever the weather; the throw is what the direct light is doing,
-       and only that part answers to the sun. */
-    node.style.setProperty('--cast',
-      occlusion(rise) + ', ' + smear(dx, dy, len, steps, lift, direct));
+    node.style.setProperty('--cast', smear(dx, dy, len, steps, lift));
   });
 }
 
@@ -354,8 +237,8 @@ new MutationObserver(relight).observe(document.documentElement,
 function reveal() {
   /* The class goes on whatever happens. Everything is hidden until it does, so
      a fault anywhere in the measuring would leave the game invisible rather
-     than merely unlit — which is exactly what one stale argument in here did.
-     Unlit and playable beats correct and blank. */
+     than merely unlit — which one stale argument in here once did. Unlit and
+     playable beats correct and blank. */
   try {
     relight();
   } catch (e) {

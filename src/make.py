@@ -51,8 +51,6 @@ def version():
 html = (SRC / 'index.html').read_text()
 for token in ('__CSS__', '__JS__', '__VERSION__'):
     assert token in html, f'missing placeholder {token}'
-assert '__WINDOW__' in js, 'missing placeholder __WINDOW__ in src/js'
-js = js.replace('__WINDOW__', textures.window_js())
 for g in GEOS:
     assert f'__{g.upper()}__' in js, f'missing placeholder __{g.upper()}__'
     assert f'__CLUES_{g.upper()}__' in js, f'missing placeholder __CLUES_{g.upper()}__'

@@ -51,6 +51,7 @@ const SCENES = {
   pop:   { q: '', act: ['FAKE_BOARD', 'OPEN_MENU'] },
   maps:  { q: '', act: ['FAKE_BOARD', 'OPEN_MAPS'] },
   map:   { q: '', act: ['START'] },
+  clue:  { q: '&mode=practice', act: ['START', 'SPEND_CLUES'] },
   cover: { q: '', act: ['COVER'] },
   found: { q: '', act: ['START', 'PLAY_A_FEW'] },
   drift: { q: '&scoring=drift', act: ['START', 'PLAY_A_FEW'] },
@@ -78,6 +79,10 @@ const SRC = {
     document.querySelector('#intro .themebtn').classList.add('on');`,
   COVER: `
     el.startBtn.click();`,
+  SPEND_CLUES: `
+    // practice gives a fixed purse of clues; spend the lot so the button's
+    // spent state is on screen next to its live one
+    for (let i = 0; i < 40 && !el.clue.disabled; i++) el.clue.click();`,
   START: `
     el.startBtn.click();
     // skip the three-second countdown rather than waiting it out

@@ -24,6 +24,29 @@ a fine outcome too.
 
 ---
 
+## Shadows have no lighting layer, and cannot get one cheaply
+
+Two shadows falling on the same spot add up, so a throw landing inside the
+window's own shadow darkens ground that was already dark. The right fix is what
+a renderer does: build one layer holding all the light and all the shadow,
+combine within it so darkness unions rather than sums, and multiply it onto the
+scene once.
+
+An attempt to get the same effect without the layer — evaluating the window
+function at each element's position and scaling its throw by the sun there —
+was reverted. It is the right physics asked in the wrong place: a shadow belongs
+to a surface, and one question per element gives an answer that is wrong for
+anything wider than a glazing bar, which is most buttons and every card.
+Sampling several points per element papers over it and does not fix it.
+
+Doing it properly means a fixed layer above the scene with `mix-blend-mode:
+multiply`, holding the window pattern, and one absolutely-positioned proxy per
+lit control blending `darken` against it — which means 15-light.js writes
+elements rather than properties. That is a real piece of work and it is not
+obviously worth it: the doubling is only visible where a throw crosses a bar,
+which on most screens is a handful of pixels. Written down so the next person
+does not rediscover the cheap version and its ceiling.
+
 ## Nothing structural stops a control being lit but see-through
 
 Fixed for now, and worth watching. Every throw is drawn on a layer behind the

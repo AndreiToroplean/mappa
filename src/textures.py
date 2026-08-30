@@ -232,11 +232,19 @@ WINDOW = {
     'ink': '84,62,32',
     'lit': '255,250,232',
     # Two panes and the frame between them, at the scale a window a few feet
-    # from a desk actually throws: a sliver of the frame across the top left
-    # corner, a pane over most of the sheet, the glazing bar about two thirds of
-    # the way down, and the second pane behind it. A bar is (start, end) along
-    # the axis and how much of the direct light it takes away.
-    'bars': [(0.00, 0.055, .20), (0.695, 0.760, .17)],
+    # from a desk throws: a pane over the top two thirds of the sheet, the
+    # glazing bar across it, the second pane behind that, and a sliver of the
+    # frame's far edge in the bottom left corner.
+    #
+    # A bar is (start, end, how dark it paints). How much light it *blocks* is
+    # not in that number and must not be read out of it: a frame is opaque, so
+    # every bar stops all of the direct light, and one painting lighter than
+    # another only means the light it was interrupting was weaker there. Taking
+    # the paint alpha for an occlusion fraction is what left a button standing
+    # in the second bar still throwing a shadow — the bar paints at .17 against
+    # a deepest of .20, so it was credited with blocking 85% of a light it was
+    # in fact blocking all of.
+    'bars': [(0.240, 0.305, .17), (0.945, 1.000, .20)],
     # Half a percent of the axis: as hard as a gradient gets. A frame a few feet
     # from the paper has a penumbra of a millimetre, and blurring it is the one
     # thing that makes this read as haze rather than as sunlight.
@@ -304,8 +312,10 @@ def raysfade_css():
 
 def window_js():
     """The same window, as something 15-light.js can evaluate at a point."""
-    bars = ','.join(f'[{a},{b},{d}]' for a, b, d in WINDOW['bars'])
     f = WINDOW['fade']
-    return (f"{{angle:{WINDOW['angle']},bars:[{bars}],edge:{WINDOW['edge']},"
-            f"deepest:{max(d for _, _, d in WINDOW['bars'])},sun:{WINDOW['sun']},"
+    # Only where each bar is. What it does to the light is not a variable:
+    # a frame is opaque and stops all of it.
+    spans = ','.join(f'[{a},{b}]' for a, b, _ in WINDOW['bars'])
+    return (f"{{angle:{WINDOW['angle']},bars:[{spans}],edge:{WINDOW['edge']},"
+            f"sun:{WINDOW['sun']},"
             f"fade:{{to:{f['to']},floor:{f['floor']}}}}}")

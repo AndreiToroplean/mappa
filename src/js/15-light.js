@@ -158,28 +158,48 @@ function sunAt(x, y, w, h) {
   /* Two questions, multiplied. Is the frame in the way here, and how far into
      the room has the light got by the time it arrives?
 
-     The second is linear, not radial. The sun is far enough away that its rays
-     are parallel — there is no point on the screen for them to spread from, and
-     nothing to measure a distance to. What dims them is depth into the room,
-     which runs the one way for every ray, along the same direction the shadows
-     are thrown. Falling off from a point is the lamp's business, and the lamp
-     does it in the other branch of relight(), because a lamp really is a point.
+     The first has to be able to answer zero, and for one bar it could not. How
+     dark a bar *paints* and how much light it *blocks* are different
+     quantities, and this was reading the second out of the first: a bar painted
+     at .17 against a deepest of .20 was credited with stopping 85% of the
+     light, so a button standing in it kept a sixth of its shadow. A frame is
+     opaque. Every bar stops all of the direct light, and one painting lighter
+     than another only means the light it interrupted was weaker there — which
+     is the fade's business, below, and is already counted once.
 
-     Either way the idea is the same: a shadow is only as dark as the light it
-     takes away, so a button at the far end of the desk throws a fainter one
-     than the same button under the window — not because it is any less of an
-     obstacle, but because there is less to obstruct. */
+     The second is linear, not radial. The sun is far enough away that its rays
+     are parallel: there is no point on the screen for them to spread from and
+     no distance to measure to. What dims them is depth into the room, which
+     runs the one way for every ray, along the same direction the shadows are
+     thrown. Falling off from a point is the lamp's business, and the lamp does
+     it in the other branch of relight(), because a lamp really is a point. */
   let open = 1;
   const p = along(WINDOW.angle, x, y, w, h);
-  for (const [from, to, dark] of WINDOW.bars) {
+  for (const [from, to] of WINDOW.bars) {
     const e = WINDOW.edge;
-    const inside = Math.min(smooth(p, from - e, from + e),
-                            1 - smooth(p, to - e, to + e));
-    open -= (dark / WINDOW.deepest) * Math.max(0, inside);
+    open -= Math.max(0, Math.min(smooth(p, from - e, from + e),
+                                 1 - smooth(p, to - e, to + e)));
   }
   const depth = along(WINDOW.sun, x, y, w, h);
   const reach = 1 - (1 - WINDOW.fade.floor) * smooth(depth, 0, WINDOW.fade.to);
   return Math.max(0, Math.min(1, open)) * reach;
+}
+
+/* How much sun falls on a whole button, not on the one point at its middle.
+
+   A glazing bar is narrower than a button is wide, so asking only about the
+   centre gives an answer that is right for a sliver and wrong for the rest: a
+   button lying across a bar had its centre in the pane, so it threw a full
+   shadow while half of it was visibly in shade. Five samples over the footprint
+   average out to a shadow that fades as the bar crosses it, which is what the
+   eye expects and what is actually happening. */
+function sunOver(r, w, h) {
+  const xs = [r.left + r.width * 0.15, r.left + r.width / 2,
+              r.left + r.width * 0.85];
+  const ys = [r.top + r.height * 0.25, r.top + r.height * 0.75];
+  let total = 0;
+  for (const x of xs) for (const y of ys) total += sunAt(x, y, w, h);
+  return total / (xs.length * ys.length);
 }
 
 function smooth(v, a, b) {
@@ -252,13 +272,12 @@ function relight() {
       dx = SUN.dx * len;
       dy = SUN.dy * len;
       steps = SUN_SMEAR;
-      /* Scaled by the sun there is at this spot. In open light the throw is
-         full strength; standing in the shadow of a glazing bar it all but
-         disappears, because the bar has already taken the light it would have
-         been blocking. The floor is not zero — a room in daylight has no black
-         corner, and something always gets through. */
-      direct = 0.06 + 0.94 * sunAt(r.left + r.width / 2, r.top + r.height / 2,
-                                   w, h);
+      /* Scaled by the sun there is here to block, and by nothing else. In open
+         light the throw is full strength; in the shadow of a glazing bar there
+         is no direct light left to interrupt, so there is no throw — not a
+         faint one. What a button does in shade is the seam underneath it, and
+         that is drawn separately and is not scaled by anything. */
+      direct = sunOver(r, w, h);
     } else {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const vx = cx - lx, vy = cy - ly;

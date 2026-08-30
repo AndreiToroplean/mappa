@@ -1462,6 +1462,21 @@ else:
     print(f'  one window, painted by the stylesheet and read by the light: '
           f'{len(textures.WINDOW["bars"])} bars')
 
+# How dark a bar paints and how much light it blocks are different quantities,
+# and the light module must not be handed the first as if it were the second.
+# It was: a bar painting at .17 against a deepest of .20 was credited with
+# stopping 85% of a light it stops all of, so a button standing in it kept a
+# sixth of a shadow that should not have existed at all.
+if re.search(r'bars:\[\[[\d.]+,[\d.]+,', textures.window_js()):
+    print('  FAIL the light module is given each bar\'s paint alpha, which it '
+          'has no business reading as an occlusion')
+    fails += 1
+elif re.search(r'WINDOW\.deepest', re.sub(r'/\*.*?\*/', '', light_src, flags=re.S)):
+    print('  FAIL 15-light.js still scales occlusion by how dark a bar paints')
+    fails += 1
+else:
+    print('  a bar blocks all of the direct light, whatever it paints like')
+
 # box-shadow animates only between lists of equal length, so an uneven pair
 # would make the theme snap while every colour around it faded.
 lens = [len(re.findall(r'\[', m)) for m in

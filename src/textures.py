@@ -240,10 +240,15 @@ WINDOW = {
     # thing the eye keeps going back to, and the window is meant to be the room
     # the game is sitting in rather than something happening on top of it.
     #
-    # So: a sliver of the frame in the far corner, light over the top two thirds
-    # and a little more, then the frame's other edge taking the last quarter.
+    # So: a sliver of the frame in the far corner, light over nearly all of the
+    # sheet, and the frame's other edge taking a band at the near end. That band
+    # is half the width it was — a quarter of the screen is enough of it to be a
+    # region of its own rather than an edge — and still about twice the far
+    # sliver, which is the difference in how close the frame is to the paper at
+    # each end. Their weights are unchanged: this is about how much of the
+    # screen the shadow covers, not how dark it is where it falls.
     # A bar is (start, end, how dark it paints).
-    'bars': [(0.000, 0.280, .18), (0.945, 1.000, .20)],
+    'bars': [(0.000, 0.140, .18), (0.945, 1.000, .20)],
     # Half a percent of the axis: as hard as a gradient gets. A frame a few feet
     # from the paper has a penumbra of a millimetre, and blurring it is the one
     # thing that makes this read as haze rather than as sunlight.

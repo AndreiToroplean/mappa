@@ -129,3 +129,31 @@ has been consumed, so a tap anywhere resolves to the answer.
 Never started: region mode (drill one area), reverse mode (pick a name from four
 options), per-region timing, a lives-remaining tiebreak, name entry so a board
 works for more than one player.
+
+## The light
+
+`src/js/15-light.js` is the only thing that decides where a shadow goes. It
+measures every lit control and writes `--cast`, a list of stacked shadows
+stepped along the throw; the stylesheet spends that without knowing how it was
+arrived at. Two knobs live in CSS because they are design decisions rather than
+lighting ones: `--rise` is how tall a thing stands (full for a card's own
+action, half for the quiet ones) and `--lift` is whether it rests on the paper
+at all or floats above it.
+
+Custom properties inherit, which bites here: a card declaring `--rise` hands it
+to every button inside it. Anything that stands on its own has to say so.
+
+## Textures
+
+`src/textures.py` generates the paper, foxing, swell, crests and brass marks;
+`src/make.py` drops them into `style.css` at `__TEXTURES__`, `__MARKS_DARK__`
+and `__MARKS_LIGHT__`. Do not write a data URI into the stylesheet by hand — the
+encoder there refuses the two ways it has silently gone wrong before (a `%23`
+double-encoding to `%2523`, and an unquoted XML attribute killing the file).
+
+## Looking at it
+
+`node shot.js <scene>` screenshots the real thing in Chrome; `node shot.js all`
+does every scene. `--light`, `--geo=`, `--w=`, `--h=` are the flags. This is the
+only tool that can see fonts, filters, shadows or blend modes — `render.py`
+answers where the layout put things and knows none of the stylesheet.

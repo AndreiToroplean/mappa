@@ -99,8 +99,11 @@ __FONTS__
     --scoredink:#2C2216; --scoredhalo:rgba(255,252,244,.75);
 
     /* the distance ramp's three stops; scoreColour() reads them from here */
+    /* Green through orange to red. Deliberately not through amber: amber is
+       what the game uses when it has given the player something, and a distance
+       is not a hint. */
     --s0fill:#7ABE99;   --s0line:#12583A;
-    --s50fill:#EDAE38;  --s50line:#764A08;
+    --s50fill:#D4762A;  --s50line:#6B2F08;
     --s100fill:#CE6E5C; --s100line:#7A1810;
 
     /* a whole surface briefly going the colour of the news */
@@ -160,6 +163,9 @@ __FONTS__
     /* The two kinds of button the mockup has: pressed into the sheet, in near
        black with brass lettering, and sitting proud of it in cream. */
     --sunk:#271C10; --sunkink:#CFAF66; --brasslit:#F6D68C;
+    /* The brass of the four marks pinning a button into its case; each
+       button overrides it with the brass of its own ground. */
+    --pin:var(--goldsoft);
     --risen:#EEDDB4; --risenink:#291D12;
     /* The one blue button, and the dark strip the prompt sits on over the map. */
     --navy:#7F5A17; --navyink:#FDEFC3;
@@ -270,7 +276,7 @@ __FONTS__
        colour the way the dark theme's stops are. It has to out-saturate the
        land instead, or a half-right answer reads as an unanswered one. */
     --s0fill:#9FC4AE;   --s0line:#175A40;
-    --s50fill:#EFBB55;  --s50line:#8A5A10;
+    --s50fill:#E89440;  --s50line:#84400E;
     --s100fill:#E0A098; --s100line:#9E2B26;
 
     --lossflash:#F3D8D4; --winflash:#D7E9DE;
@@ -295,6 +301,7 @@ __FONTS__
     --paperhover:rgba(74,58,32,.06);
     --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.40);
     --sunk:#3B2D1C; --sunkink:#DCC38A; --brasslit:#FFEBBE;
+    --pin:var(--goldsoft);
     --risen:#FBF3DE; --risenink:#33281A;
     --navy:#8A6520; --navyink:#FFF4D6;
     --bar:#2A2114; --barink:#F4EAD4; --barmuted:#AC9873;
@@ -327,11 +334,23 @@ __FONTS__
        gradient's job. A bar is only as dark as the light it blocks, and by the
        far corner most of what is there has bounced in off the room rather than
        come straight through the glass. */
+    /* Two windows, seen as the light they let through rather than as bars. The
+       run of stops across the axis is: a shadowed corner, a broad lit band, the
+       thin shadow of the frame between the two lights, a second broad band, and
+       the far corner in shadow again. So most of the desk is in daylight, which
+       is what a room with two windows in it looks like.
+
+       Every edge is a pair of stops half a percent apart, which is as hard as a
+       gradient gets. A window frame a few feet from the paper has a penumbra of
+       a millimetre or two, and blurring it was the single thing that made this
+       read as haze rather than as sunlight. */
     --rays:
       linear-gradient(48deg,
-        rgba(88,66,36,0) 2%,    rgba(88,66,36,.17) 5%,
-        rgba(88,66,36,.17) 46%, rgba(88,66,36,0) 50%,
-        rgba(88,66,36,0) 96%,   rgba(88,66,36,.11) 99%);
+        rgba(84,62,32,.20) 0%,    rgba(84,62,32,.20) 5%,
+        rgba(84,62,32,0) 5.6%,    rgba(84,62,32,0) 47%,
+        rgba(84,62,32,.15) 47.6%, rgba(84,62,32,.15) 52%,
+        rgba(84,62,32,0) 52.6%,   rgba(84,62,32,0) 94%,
+        rgba(84,62,32,.20) 94.6%, rgba(84,62,32,.20) 100%);
     --moonpool:rgba(255,250,225,.16);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
@@ -341,37 +360,24 @@ __FONTS__
     --star: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%239A7E42%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
     --starpale: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2718%27%20height=%2714%27%3E%3Cpath%20fill=%27%23FFF3D2%27%20d=%27M9%200.6%2010.6%205.4%2015.4%207%2010.6%208.6%209%2013.4%207.4%208.6%202.6%207%207.4%205.4Z%27/%3E%3C/svg%3E);
   }
-  /* ---- changing the light -------------------------------------------------
-     Switching themes used to happen in two visible steps: the colours took
-     effect immediately and the shadows a frame later, because they were being
-     measured on a timer. They are measured synchronously now (see
-     15-light.js), so both land in the same paint — and this fades that paint in
-     rather than cutting to it.
+  /* Nothing here fades between themes, on purpose. Switching is an instruction,
+     not an event to be narrated: every other answer in this game arrives
+     immediately and the light should behave the same way. Shadows are measured
+     synchronously (see 15-light.js), so the colours and the shadows land in the
+     same paint either way.
 
-     Named properties rather than `all`, which would sweep up the map's own
-     fills and put a quarter-second lag on every correct answer. Only the room
-     and the furniture in it are listed: nothing here is on the path between a
-     tap and its feedback.
+     ---- and nothing is painted until the room is lit ------------------------
+     The lighting still arrived in two steps on a cold load, and the type was
+     why. The faces are inlined, but a data URI is still decoded asynchronously,
+     so the first paint measured buttons set in the fallback face; then the real
+     faces landed, every button changed width, and every shadow had to be cut
+     again. A second, visibly different frame.
 
-     box-shadow can only tween between two lists of equal length, which is why
-     both smears in 15-light.js have six stops. */
-  /* Only once the room has been measured. On the very first paint every one of
-     these is arriving for the first time, and a transition there is not a theme
-     changing — it is the game fading itself in from nothing, which looks like a
-     slow load. 15-light.js adds `lit` to <html> after the first measurement, so
-     the fade only ever covers a change. */
-  html.lit body, html.lit body::after, html.lit .card, html.lit .pop,
-  html.lit .tip span, html.lit button, html.lit .geoSel, html.lit .headbtn,
-  html.lit main, html.lit main::before, html.lit main::after{
-    transition:background-color .32s ease, color .32s ease,
-      border-color .32s ease, box-shadow .32s ease, background-image .32s ease}
-  /* Someone who has asked for less movement gets the switch instantly, which is
-     the honest reading of the request: the fade is decoration, not information. */
-  @media (prefers-reduced-motion: reduce){
-    html.lit body, html.lit body::after, html.lit .card, html.lit .pop,
-    html.lit .tip span, html.lit button, html.lit .geoSel, html.lit .headbtn,
-    html.lit main, html.lit main::before, html.lit main::after{transition:none}
-  }
+     So the game lays out but does not paint until both things have happened:
+     the type is ready and the room has been measured. visibility rather than
+     opacity or display, because layout still runs under it — which is the whole
+     point, since 15-light.js has to measure something in order to light it. */
+  html:not(.lit) body{visibility:hidden}
 
   *{box-sizing:border-box;
     -webkit-tap-highlight-color:transparent;   /* Android's grey tap rectangle */
@@ -863,26 +869,52 @@ __FONTS__
   /* Pressed into the sheet, and made of something: a sheen down the face, the
      same fibre the paper has, and a brass edge with a second line ruled inside
      it. Flat colour read as a rectangle rather than as an object. */
-  .modes button{margin:0;flex:1;padding:12px 6px;font-size:14px;font-weight:400;
+  .modes button{--pin:var(--sunkink);margin:0;flex:1;padding:12px 6px;font-size:14px;font-weight:400;
     border-radius:2px;color:var(--sunkink);
     font-family:var(--serif);position:relative;letter-spacing:.01em;
-    background-color:var(--sunk);
-    background-image:
-      linear-gradient(178deg, rgba(255,240,205,.13), rgba(255,240,205,.02) 34%,
-        rgba(0,0,0,.16) 100%),
-      var(--parchment);
+    /* Four brass marks, one to a corner, set inside the ruled edge — the way a
+       plate is pinned into an instrument case. Painted as background layers
+       because both of a button's pseudo-elements are already spoken for: one
+       carries the cast shadow and one carries Start's flourishes.
+
+       As `background`, not `background-image`. A layer's position and size are
+       not part of background-image, and putting them there makes the whole
+       declaration invalid — which drops every layer, including the sheen and
+       the fibre, and leaves a flat rectangle that still looks deliberate
+       enough to miss. */
+    background:
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        6px 6px/3.5px 3.5px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        calc(100% - 6px) 6px/3.5px 3.5px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        6px calc(100% - 6px)/3.5px 3.5px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        calc(100% - 6px) calc(100% - 6px)/3.5px 3.5px no-repeat,
+      linear-gradient(178deg, rgba(255,240,205,.13),
+        rgba(255,240,205,.02) 34%, rgba(0,0,0,.16) 100%) 0 0/100% 100% no-repeat,
+      var(--parchment) 0 0/420px 420px repeat,
+      var(--sunk);
     border:1px solid var(--gold);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.55),
       0 1px 0 rgba(255,246,220,.22), inset 0 0 0 1px rgba(0,0,0,.28),
       inset 0 0 0 2px var(--goldsoft)}
   /* And raised off it: cream, sitting proud, with the light on its top edge
      and its shadow cast down and away from the lamp. */
-  .modes button.on{color:var(--risenink);font-weight:500;
-    background-color:var(--risen);
-    background-image:
-      linear-gradient(178deg, rgba(255,255,255,.55), rgba(255,255,255,0) 46%,
-        rgba(74,58,32,.13) 100%),
-      var(--parchment);
+  .modes button.on{--pin:var(--gold);color:var(--risenink);font-weight:500;
+    background:
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        6px 6px/3.5px 3.5px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        calc(100% - 6px) 6px/3.5px 3.5px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        6px calc(100% - 6px)/3.5px 3.5px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        calc(100% - 6px) calc(100% - 6px)/3.5px 3.5px no-repeat,
+      linear-gradient(178deg, rgba(255,255,255,.55),
+        rgba(255,255,255,0) 46%, rgba(74,58,32,.13) 100%) 0 0/100% 100% no-repeat,
+      var(--parchment) 0 0/420px 420px repeat,
+      var(--risen);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.75),
       inset 0 -1px 0 rgba(74,58,32,.18),
       inset 0 0 0 1px rgba(255,255,255,.45), inset 0 0 0 2px var(--goldsoft)}
@@ -1213,12 +1245,20 @@ __FONTS__
   /* The card's own action. Indigo rather than brass: it is the only thing on
      the sheet that is not paper, ink or metal, and it should read as the one
      thing to press. */
-  button{margin-top:20px;width:100%;color:var(--navyink);
-    background-color:var(--navy);
-    background-image:
-      linear-gradient(178deg, rgba(255,244,214,.20), rgba(255,244,214,.03) 40%,
-        rgba(0,0,0,.20) 100%),
-      var(--parchment);
+  button{--pin:var(--navyink);margin-top:20px;width:100%;color:var(--navyink);
+    background:
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        8px 8px/4px 4px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        calc(100% - 8px) 8px/4px 4px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        8px calc(100% - 8px)/4px 4px no-repeat,
+      radial-gradient(var(--pin) 0 42%, rgba(0,0,0,0) 56%)
+        calc(100% - 8px) calc(100% - 8px)/4px 4px no-repeat,
+      linear-gradient(178deg, rgba(255,244,214,.20),
+        rgba(255,244,214,.03) 40%, rgba(0,0,0,.20) 100%) 0 0/100% 100% no-repeat,
+      var(--parchment) 0 0/420px 420px repeat,
+      var(--navy);
     border:1px solid var(--gold);
     padding:13px;border-radius:2px;font-size:17px;font-weight:400;cursor:pointer;
     font-family:var(--serif);letter-spacing:.02em;

@@ -1417,39 +1417,21 @@ else:
     print(f'  both smears have {lens[0]} stops, so the themes cross-fade')
 
 
-# A transition on the very first paint is not a theme changing, it is the game
-# assembling itself in front of the player. The stylesheet gates every one of
-# them on a class that 15-light.js adds after the first measurement, so losing
-# that gate is a regression nobody would see in a screenshot.
-# Only the theme fade, not every transition in the game: the pips, the map and
-# the tip all animate for their own reasons and always have. The fade is the one
-# that moves a surface colour and a shadow together, which is its signature.
-fades = [(head, body) for head, body in
+# Nothing fades between themes. A fade there has to be stopped from firing on
+# the first paint, which needs a class, which needs a frame to add it in — and
+# the first version of that check passed while the fade was ungated, which is
+# how the machinery earns its keep twice over. This holds the simpler answer in
+# place: a theme change moves a surface colour and a shadow together, and no
+# rule may transition both.
+fades = [head for head, body in
          re.findall(r'([^{}]*)\{([^{}]*transition:[^{}]*)\}',
                     re.sub(r'/\*.*?\*/', '', css_src, flags=re.S))
          if 'box-shadow' in body and 'background-color' in body]
-# Every selector in the list, not merely one of them: a head is a comma list,
-# and one entry losing its gate is one surface that fades in on first paint
-# while the rest do not — which looks worse than all of them doing it.
-gated, loose_t = [], []
-for head, _ in fades:
-    parts = [p.strip() for p in head.split(',') if p.strip()]
-    (gated if all('html.lit' in p for p in parts) else loose_t).append(head)
-if not gated:
-    print('  FAIL nothing gates the theme fade on the room being measured')
-    fails += 1
-elif loose_t:
-    # An ungated one is the whole bug back again, and the other rules being
-    # gated says nothing about it — which is exactly how the first version of
-    # this check passed while the fade was ungated.
-    print(f'  FAIL {len(loose_t)} transitions fire on the first paint: '
-          f'{", ".join(t.strip()[:30] for t in loose_t[:2])}')
-    fails += 1
-elif "classList.add('lit')" not in light_src:
-    print('  FAIL 15-light.js never marks the room as measured')
+if fades:
+    print(f'  FAIL {len(fades)} rules fade the theme: {fades[0].strip()[:40]}')
     fails += 1
 else:
-    print(f'  all {len(gated)} theme fades wait for the room to be measured')
+    print('  the theme changes in one step, with nothing to narrate it')
 
 print('themes')
 

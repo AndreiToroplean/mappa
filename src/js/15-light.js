@@ -222,18 +222,26 @@ new MutationObserver(relight).observe(document.body,
 new MutationObserver(relight).observe(document.documentElement,
   { attributes: true, attributeFilter: ['data-theme'] });
 
-/* Fonts change how wide a button is, and a button that changed width after the
-   shadows were measured keeps a shadow cut for the old one. */
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(relight);
-relight();
+/* Light the room once, when there is something real to measure, and only then
+   let it be painted.
 
-/* The room is measured; the stylesheet may start animating changes to it. Until
-   this class is here every one of those properties is arriving for the first
-   time, and fading them in is not a theme changing — it is the game assembling
-   itself in front of the player, which reads as a slow load.
+   The type is the reason this waits. The faces are inlined but still decoded
+   asynchronously, so measuring before they are ready measures buttons set in
+   the fallback face — and every one of them changes width when the real faces
+   arrive, which is a second relight and a visibly different second frame.
 
-   After a frame rather than immediately. A transition does not fire on the
-   first style an element is given, so adding the class here would usually be
-   harmless — but the boot script picks the theme before this runs, and waiting
-   one frame means there is no ordering left to reason about. */
-requestAnimationFrame(() => document.documentElement.classList.add('lit'));
+   The timeout is not a nicety. Everything is gated behind this class, so a
+   fonts promise that never settles would leave the game invisible for good;
+   after a fifth of a second it is better to show it in the fallback face and
+   relight when the real one turns up. */
+function reveal() {
+  relight();
+  document.documentElement.classList.add('lit');
+}
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(reveal);
+  setTimeout(reveal, 200);
+} else {
+  reveal();
+}

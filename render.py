@@ -141,8 +141,8 @@ def paint_map(dr, geo, box, scale, frame=False):
 
 def render(geo, vw, vh, scale=2):
     """Map only: the view used when the question is about the map itself."""
-    header = 112 if vw <= 600 else 90
-    footer = 70 if vw <= 600 else 62
+    header = 104 if vw <= 600 else 82
+    footer = 64 if vw <= 600 else 56
     pad = 10
     box = (pad, header + pad, vw - pad * 2, vh - header - footer - pad * 2)
     img = Image.new('RGB', (vw * scale, vh * scale), INK)
@@ -210,7 +210,7 @@ def app(geo, vw, vh, scale=2, practice=True):
         if practice:
             pill(vw - 82, vh - 50, 72, 36, 'Clue')
     else:
-        header, footer = 112, 70
+        header, footer = 104, 64
         dr.rectangle([0, 0, vw * scale, header * scale], fill=PANEL)
         dr.rectangle([0, (vh - footer) * scale, vw * scale, vh * scale], fill=PANEL)
         txt(14, 12, 'FIND THIS DÉPARTEMENT', f_eyebrow, MUTED)

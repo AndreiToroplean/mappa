@@ -1502,7 +1502,7 @@ def block(selector):
 # are declared once and inherited by both, which is one place to change instead
 # of two and, more to the point, one place to forget instead of two. Everything
 # else is a colour or a light and has to be answered by both palettes.
-SHARED = ({'--display', '--serif', '--figures', '--script'}
+SHARED = ({'--display', '--serif', '--figures', '--script', '--rail'}
           | {f'--{n}' for n in textures.SHARED})
 dark = declared(block(':root{')) - SHARED
 light = declared(block(':root[data-theme="light"]{'))

@@ -506,7 +506,7 @@ __MARKS_LIGHT__
      the pool and invisible outside it — which is exactly what the eye reads as
      a light source on water, and it costs one blend mode. */
   main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;
-    min-height:0;position:relative;
+    min-height:0;position:relative;overflow:hidden;
     background-color:var(--sea);
     background-image:var(--vignette), var(--swell)}
   /* The lit water, masked to the moon's pool. Its own layer because the mask
@@ -787,21 +787,40 @@ __MARKS_LIGHT__
     padding-left:8px;margin-left:-8px}
   .row.you .rank,.row.you .time{color:var(--amber)}
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 20px}
-  .geoSel{width:100%;margin:0;padding:11px 12px;border-radius:2px;
-    background:var(--sunk);color:var(--sunkink);border:1px solid var(--gold);
+  /* The map is picked from the game's own menu now, not a <select>, so this is
+     a plain button that happens to look like the field it replaced. It gets to
+     keep its focus ring, which the select could not: Chrome counts a click on a
+     <select> as focus-visible, so choosing a geography with a mouse left a
+     green ring on a control that had just done its job. */
+  /* Above the picks that come after it. Isolating so the shadow layer behind
+     the button sits under the button rather than under the card also traps the
+     menu's own z-index inside this box, so the box itself has to be lifted —
+     otherwise the list opens underneath Mode and Scoring, which are simply
+     later in the document. */
+  .geoPick{position:relative;z-index:6}
+  .geoSel{width:100%;margin:0;padding:11px 34px 11px 12px;border-radius:2px;
+    text-align:left;position:relative;
+    background-color:var(--sunk);color:var(--sunkink);border:1px solid var(--gold);
+    background-image:
+      linear-gradient(45deg,transparent 50%,var(--sunkink) 50%),
+      linear-gradient(135deg,var(--sunkink) 50%,transparent 50%),
+      linear-gradient(178deg, rgba(255,240,205,.13),
+        rgba(255,240,205,.02) 34%, rgba(0,0,0,.16) 100%),
+      var(--parchment);
+    background-position:calc(100% - 17px) calc(50% - 1px),
+      calc(100% - 12px) calc(50% - 1px), 0 0, 0 0;
+    background-size:5px 5px, 5px 5px, 100% 100%, 420px 420px;
+    background-repeat:no-repeat, no-repeat, no-repeat, repeat;
     box-shadow:inset 0 2px 5px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.22),
-      var(--cast);
-    font-family:var(--serif);font-size:15px;-webkit-appearance:none;appearance:none;
-    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
-      linear-gradient(135deg,var(--muted) 50%,transparent 50%);
-    background-position:calc(100% - 17px) 19px, calc(100% - 12px) 19px;
-    background-size:5px 5px, 5px 5px;background-repeat:no-repeat}
-  /* No focus ring on the select. Chrome counts a click on a <select> as
-     focus-visible, so choosing a geography with a mouse left a green ring around
-     the control afterwards — reading as an error or a pending state on a
-     dropdown that had just done its job. The buttons keep theirs, where a click
-     is not treated the same way. */
-  .geoSel:focus-visible{outline:none}
+      inset 0 0 0 1px rgba(0,0,0,.28), inset 0 0 0 2px var(--goldsoft);
+    font-family:var(--serif);font-size:15px}
+  .geoSel::before{content:"";position:absolute;inset:0;top:0;right:0;bottom:0;
+    left:0;z-index:-1;box-shadow:var(--cast)}
+  /* Wide enough for the longest label rather than the button, so the list does
+     not reflow the card, and hung off the left because the card's right edge is
+     where its own header menu lives. */
+  .geoMenu{left:0;right:auto;min-width:100%;top:calc(100% + 7px)}
+  .geoMenu button.on{background:var(--paperhover);font-weight:600}
   /* ---- where a shadow is allowed to land --------------------------------
      A box-shadow paints with the element that casts it, and elements paint in
      document order — so in a row of buttons the second one's shadow fell across
@@ -817,7 +836,7 @@ __MARKS_LIGHT__
 
      The button keeps its inset bevel, which is light on its own surface rather
      than a shadow on anything else, and belongs to the button. */
-  .modes, .btnrow, .headbtns, .bhead{isolation:isolate}
+  .modes, .btnrow, .headbtns, .bhead, .geoPick{isolation:isolate}
   .modes button, .btnrow button, .headbtns button, .bhead .clearBtn{
     position:relative}
   /* The layer every button's throw is drawn on, rather than the button itself.
@@ -1281,9 +1300,17 @@ __MARKS_LIGHT__
 
      The paper is opaque, so nothing shows through and there is nothing to
      squint at. --veil is what its shading is made of. */
-  .countdown{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;
+  /* Inside main, so it covers the chart and only the chart. It used to be
+     fixed over the whole window, which took the header with it — and the header
+     is the one part of the board that has something to say during a countdown:
+     the mode you are about to play, the lives you have, the clock about to
+     start. Covering it hid the game's own furniture along with the map.
+
+     overflow:hidden on main is what lets the sheet be drawn off behind the
+     header rather than sliding across it. */
+  .countdown{position:absolute;inset:0;top:0;right:0;bottom:0;left:0;
     display:flex;align-items:center;justify-content:center;
-    pointer-events:none;z-index:20;overflow:hidden}
+    pointer-events:none;z-index:6;overflow:hidden}
   .countdown::before{content:"";position:absolute;inset:-2px;top:-2px;right:-2px;
     bottom:-2px;left:-2px;
     background-color:var(--paper);
@@ -1296,8 +1323,13 @@ __MARKS_LIGHT__
     box-shadow:inset 0 0 0 1px var(--goldsoft)}
   /* Drawn off the way a sheet is pulled: towards the light, and out of frame. */
   .countdown.lifting::before{animation:uncover 620ms cubic-bezier(.5,0,.2,1) forwards}
+  /* Drawn up and out of the frame, the way a sheet is pulled off a chart
+     towards whoever is standing over it. Straight up rather than off a corner,
+     because main clips it and the header is directly above: it retracts behind
+     the board's own furniture instead of sliding over the map's edge. A little
+     rotation so it reads as paper being pulled rather than a panel sliding. */
   @keyframes uncover{
-    to{transform:translate(38vw, -104vh) rotate(-7deg)}}
+    to{transform:translate(6%, -112%) rotate(-3.5deg)}}
   .countdown.lifting span{animation:tickout 260ms ease-in forwards}
   @keyframes tickout{to{opacity:0;transform:scale(1.35)}}
   .countdown[hidden]{display:none}
@@ -1307,7 +1339,7 @@ __MARKS_LIGHT__
     font-weight:600;color:var(--ink);
     font-variant-numeric:lining-nums tabular-nums;animation:tickin .68s ease-out}
   @keyframes tickin{0%{transform:scale(1.5);opacity:0}30%{transform:scale(1);opacity:1}
-    100%{transform:scale(.94);opacity:.55}}
+    100%{transform:scale(.94);opacity:.88}}
   /* The card's own action. Indigo rather than brass: it is the only thing on
      the sheet that is not paper, ink or metal, and it should read as the one
      thing to press. */

@@ -49,6 +49,7 @@ const SCENES = {
   menu:  { q: '', act: [] },
   board: { q: '', act: ['FAKE_BOARD'] },
   pop:   { q: '', act: ['FAKE_BOARD', 'OPEN_MENU'] },
+  maps:  { q: '', act: ['FAKE_BOARD', 'OPEN_MAPS'] },
   map:   { q: '', act: ['START'] },
   cover: { q: '', act: ['COVER'] },
   found: { q: '', act: ['START', 'PLAY_A_FEW'] },
@@ -70,6 +71,8 @@ const SRC = {
     kvSet(key, JSON.stringify(rows.map(([e,c,t]) =>
       ({ f: TOTAL, v: TOTAL, e: e, c: c, t: t, d: Date.now() }))));
     showBoards(loadBoard(), null);`,
+  OPEN_MAPS: `
+    el.geoBtn.click();`,
   OPEN_MENU: `
     el.dataBtn.click();
     document.querySelector('#intro .themebtn').classList.add('on');`,

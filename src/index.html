@@ -42,6 +42,7 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
 </header>
 
 <main>
+  <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
   <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
@@ -89,7 +90,6 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
 <canvas class="confetti" id="confetti" hidden></canvas>
 <div class="fanfare" id="fanfare" hidden><span></span></div>
 
-<div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
 
 <div class="overlay ask" id="impCard" hidden>
   <div class="card narrow">
@@ -128,11 +128,16 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
     <div class="sub tagline">The World from Memory</div>
       <div class="pick">
         <div class="eyebrow">Map</div>
-        <select class="geoSel" aria-label="Choose a map">
-          <option value="us">United States — states</option>
-          <option value="fr">France — départements</option>
-          <option value="eu">Europe — countries</option>
-        </select>
+        <div class="geoPick">
+          <button class="geoSel" id="geoBtn" aria-haspopup="true"
+            aria-expanded="false" aria-label="Choose a map"><span
+            class="geoName"></span></button>
+          <div class="pop geoMenu" id="geoMenu" hidden>
+            <button data-geo="us">United States — states</button>
+            <button data-geo="fr">France — départements</button>
+            <button data-geo="eu">Europe — countries</button>
+          </div>
+        </div>
       </div>
       <div class="pick">
         <div class="eyebrow">Mode</div>

@@ -493,11 +493,15 @@ function refreshCopy() {
      Test is on should say what Practice would do. */
   document.querySelectorAll('.modeBtn').forEach(b => { b.title = MODES[b.dataset.mode].note; });
   document.querySelectorAll('.scoreBtn').forEach(b => { b.title = SCORINGS[b.dataset.score].note; });
-  document.querySelectorAll('.geoSel').forEach(s => { s.title = mapNote(); });
+  document.querySelectorAll('.geoSel').forEach(b => { b.title = mapNote(); });
+  document.querySelectorAll('.geoMenu button').forEach(b => {
+    b.title = GEOS[b.dataset.geo].note;
+    b.classList.toggle('on', b.dataset.geo === GEO.id);
+  });
   document.querySelectorAll('.clearLabel').forEach(n => {
     n.textContent = `${GEO.label.split(' — ')[0]} · ${MODE.label} · ${SCORING.label}`;
   });
-  document.querySelectorAll('.geoSel').forEach(s => { s.value = GEO.id; });
+  document.querySelectorAll('.geoName').forEach(n => { n.textContent = GEO.label; });
   /* "Alpes-de-Haute-Provence" is 23 characters against "North Carolina"'s 14,
      and the prompt must never ellipsise — that was the first bug reported on a
      phone. Longer names get a smaller prompt rather than a truncated one. */
@@ -542,8 +546,44 @@ document.querySelectorAll('.modeBtn').forEach(b =>
   b.addEventListener('click', () => { setMode(b.dataset.mode); showTip(MODE.note); }));
 document.querySelectorAll('.scoreBtn').forEach(b =>
   b.addEventListener('click', () => { setScoring(b.dataset.score); showTip(SCORING.note); }));
-document.querySelectorAll('.geoSel').forEach(s =>
-  s.addEventListener('change', () => { setGeo(s.value); showTip(mapNote()); }));
+/* The map is chosen from a menu of the game's own making rather than from a
+   <select>. A native one hands the whole list to the platform: on Android that
+   is a full-screen sheet in the system's colours and the system's type, which
+   is the one place the game stops looking like itself — and there is no styling
+   it back, because the options are drawn by the OS.
+
+   The same slip of paper the dots menu opens, so there is one idea of what a
+   menu is here and one set of rules for how it behaves. */
+function showGeoMenu(on) {
+  if (!el.geoMenu) return;
+  el.geoMenu.hidden = !on;
+  el.geoBtn.classList.toggle('on', on);
+  el.geoBtn.setAttribute('aria-expanded', String(!!on));
+}
+
+if (el.geoBtn) {
+  el.geoBtn.addEventListener('click', () => showGeoMenu(el.geoMenu.hidden));
+  document.querySelectorAll('.geoMenu button').forEach(b =>
+    b.addEventListener('click', () => {
+      showGeoMenu(false);
+      setGeo(b.dataset.geo);
+      showTip(mapNote());
+    }));
+  /* Anywhere else dismisses it, and does only that — the same rule the dots
+     menu follows, and for the same reason: the nearest thing to tap when
+     putting this away is Start, and a run beginning because you were closing a
+     menu is worse than an extra tap. */
+  document.addEventListener('click', e => {
+    if (el.geoMenu.hidden) return;
+    if (el.geoBtn.contains(e.target) || el.geoMenu.contains(e.target)) return;
+    showGeoMenu(false);
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !el.geoMenu.hidden) showGeoMenu(false);
+  });
+}
 
 const play = () => { hideTip(); beginRun(); };
 el.again.addEventListener('click', play);

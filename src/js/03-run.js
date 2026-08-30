@@ -43,7 +43,7 @@ const el = {};
  'countdown', 'countNum', 'tip', 'intro', 'introBoard', 'overlay', 'ovTitle', 'ovSub',
  'boardList', 'confirm', 'again', 'reviewBtn', 'menuBtn', 'backBtn', 'startBtn',
  'clearNo', 'clearYes',
- 'dataBtn', 'dataMenu', 'shareBtn', 'exportBtn', 'importBtn', 'importFile', 'impCard', 'impPick', 'impText',
+ 'geoBtn', 'geoMenu', 'dataBtn', 'dataMenu', 'shareBtn', 'exportBtn', 'importBtn', 'importFile', 'impCard', 'impPick', 'impText',
  'impNote', 'impCancel', 'impGo',
 ].forEach(id => { el[id] = $(id); });
 

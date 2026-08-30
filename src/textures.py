@@ -235,20 +235,15 @@ WINDOW = {
     'angle': 48,
     'ink': '84,62,32',
     'lit': '255,250,232',
-    # Two panes and the frame between them, at the scale a window a few feet
-    # from a desk throws: a pane over the top two thirds of the sheet, the
-    # glazing bar across it, the second pane behind that, and a sliver of the
-    # frame's far edge in the bottom left corner.
+    # One pane, and the frame at each end of it. The glazing bar that used to
+    # cross the sheet is gone: a hard line through the middle of the card is a
+    # thing the eye keeps going back to, and the window is meant to be the room
+    # the game is sitting in rather than something happening on top of it.
     #
-    # A bar is (start, end, how dark it paints). How much light it *blocks* is
-    # not in that number and must not be read out of it: a frame is opaque, so
-    # every bar stops all of the direct light, and one painting lighter than
-    # another only means the light it was interrupting was weaker there. Taking
-    # the paint alpha for an occlusion fraction is what left a button standing
-    # in the second bar still throwing a shadow — the bar paints at .17 against
-    # a deepest of .20, so it was credited with blocking 85% of a light it was
-    # in fact blocking all of.
-    'bars': [(0.240, 0.305, .17), (0.945, 1.000, .20)],
+    # So: a sliver of the frame in the far corner, light over the top two thirds
+    # and a little more, then the frame's other edge taking the last quarter.
+    # A bar is (start, end, how dark it paints).
+    'bars': [(0.000, 0.280, .18), (0.945, 1.000, .20)],
     # Half a percent of the axis: as hard as a gradient gets. A frame a few feet
     # from the paper has a penumbra of a millimetre, and blurring it is the one
     # thing that makes this read as haze rather than as sunlight.

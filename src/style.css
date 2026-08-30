@@ -906,7 +906,12 @@ __MARKS_LIGHT__
      over the card meant guessing where the title ended, and in the two-column
      menu it landed on top of the board's own controls. */
   /* Positioned so the menu below can hang off the buttons in the corner. */
-  .cardhead{position:relative;display:flex;align-items:center;
+  /* Above the picks below it, and so above the map picker's own menu. Raising
+     the picker so its list could open over Mode and Scoring also raised it over
+     the card's header, which put the dots menu behind it — one menu covering
+     another, from a change made for the other menu. Both are positioned, so the
+     one nearer the top of the card has to say it is nearer the front. */
+  .cardhead{position:relative;z-index:8;display:flex;align-items:center;
     justify-content:space-between;gap:14px;margin:0 0 6px}
   .cardhead h2{margin:0}
   .headbtns{display:flex;gap:8px;flex:none}

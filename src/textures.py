@@ -220,57 +220,86 @@ if __name__ == '__main__':
 
 
 # ---- the window ----------------------------------------------------------
-# Where the sunlight is, described once and emitted twice: as the gradient the
-# stylesheet paints, and as a table 15-light.js reads to ask "how much direct
-# sun reaches this button".
+# Where the sunlight is, described once and emitted three ways: the light the
+# panes let through, the shadow the frame casts, and a table 15-light.js reads
+# to ask how much sun reaches a given button.
 #
-# Both need the same answer or the scene contradicts itself — a shadow softened
-# because it is standing in a bar has to be standing in the bar the eye can see.
-# Keeping two copies in step by hand is exactly the kind of thing that goes
-# wrong quietly, so there are not two copies.
-#
-# The gradient runs along ANGLE, in CSS degrees. Each bar is (start, end) as a
-# fraction of that axis, plus how much of the direct light it takes away. The
-# rest of the axis is open sky.
+# They have to agree or the scene contradicts itself — a shadow softened for
+# standing in a bar has to be standing in a bar the eye can see. Keeping copies
+# in step by hand is exactly what goes wrong quietly, so there are no copies.
 WINDOW = {
     'angle': 48,
     'ink': '84,62,32',
-    'bars': [(0.00, 0.070, .21), (0.416, 0.455, .15), (0.886, 1.00, .13)],
-    # A hard edge, half a percent of the axis wide: a frame a few feet from the
-    # paper has a penumbra of about a millimetre, and blurring it is the one
-    # thing that makes the whole effect read as haze rather than as sunlight.
+    'lit': '255,250,232',
+    # Two panes and the frame between them, at the scale a window a few feet
+    # from a desk actually throws: a sliver of the frame across the top left
+    # corner, a pane over most of the sheet, the glazing bar about two thirds of
+    # the way down, and the second pane behind it. A bar is (start, end) along
+    # the axis and how much of the direct light it takes away.
+    'bars': [(0.00, 0.055, .20), (0.695, 0.760, .17)],
+    # Half a percent of the axis: as hard as a gradient gets. A frame a few feet
+    # from the paper has a penumbra of a millimetre, and blurring it is the one
+    # thing that makes this read as haze rather than as sunlight.
     'edge': 0.006,
-    # And the light gives out on the way across the room. Along its own
-    # direction of travel, so it equalises rather than stopping at a line, and
-    # never quite to nothing — a room in daylight has no black corner.
-    'fade': {'angle': 128, 'from': 0.0, 'to': 0.68, 'floor': 0.18},
+    # The direction the light travels, in CSS degrees. One number, and it aims
+    # both the shadows every object throws and the fade below — they are the
+    # same fact about where the sun is and must not be able to disagree.
+    'sun': 124,
+    # And the light gives out across the room: a window lights the near part of
+    # a desk well and the far part less. Along the direction of travel, because
+    # the sun is far enough away that its rays are parallel — there is no point
+    # source here to fall off radially from, which is the lamp's business and
+    # not the window's. 'to' is a fraction of the axis, and it stops short of
+    # nothing, because a room in daylight has no black corner.
+    'fade': {'to': .74, 'floor': .22},
+    # How much brighter a pane is than the paper under it. Drawing only the bars
+    # said the sheet is uniformly bright and occasionally dirty, which is the
+    # wrong way round: the window's business is the light, and the frame is what
+    # interrupts it.
+    'pane': .17,
 }
 
 
+def _gradient(runs, colour):
+    """runs is a list of (start, end, alpha) along the axis."""
+    e, clear, out = WINDOW['edge'], f"rgba({colour},0)", []
+    at = lambda f: f'{max(0, min(1, f)) * 100:.4g}%'
+    for a, b, alpha in runs:
+        ink = f'rgba({colour},{alpha})'
+        out += [f'{ink} 0%'] if a <= 0 else [f'{clear} {at(a)}', f'{ink} {at(a + e)}']
+        out += [f'{ink} 100%'] if b >= 1 else [f'{ink} {at(b)}', f'{clear} {at(b + e)}']
+    return f"linear-gradient({WINDOW['angle']}deg,\n      " + ',\n      '.join(out) + ')'
+
+
+def _panes():
+    """The gaps between the bars: everywhere the light actually gets through."""
+    out, edge = [], 0.0
+    for a, b, _ in WINDOW['bars']:
+        if a > edge:
+            out.append((edge, a, WINDOW['pane']))
+        edge = b
+    if edge < 1:
+        out.append((edge, 1.0, WINDOW['pane']))
+    return out
+
+
 def rays_css():
-    """The bars, as the gradient the stylesheet paints."""
-    w, stops = WINDOW, []
-    clear = f"rgba({WINDOW['ink']},0)"
-    at = lambda f: f'{f * 100:.4g}%'
-    for i, (a, b, dark) in enumerate(w['bars']):
-        ink = f"rgba({w['ink']},{dark})"
-        if a > 0:
-            stops += [f'{clear} {at(a)}', f'{ink} {at(a + w["edge"])}']
-        else:
-            stops += [f'{ink} 0%']
-        if b < 1:
-            stops += [f'{ink} {at(b)}', f'{clear} {at(b + w["edge"])}']
-        else:
-            stops += [f'{ink} 100%']
-    return f"linear-gradient({w['angle']}deg,\n      " + ',\n      '.join(stops) + ')'
+    """The light the panes let through, and over it the frame's own shadow."""
+    return (_gradient(_panes(), WINDOW['lit']) + ',\n      '
+            + _gradient(WINDOW['bars'], WINDOW['ink']))
 
 
 def raysfade_css():
+    """How far into the room the window's light gets.
+
+    Linear, along the direction the light travels. Parallel rays do not fall off
+    from a point; what dims them is distance into the room, and that runs the
+    one way for every ray.
+    """
     f = WINDOW['fade']
-    return (f"linear-gradient({f['angle']}deg,"
-            f" rgba(0,0,0,1) {f['from'] * 100:.4g}%,"
-            f" rgba(0,0,0,.85) 22%, rgba(0,0,0,.35) 48%,"
-            f" rgba(0,0,0,0) {f['to'] * 100:.4g}%)")
+    return (f"linear-gradient({WINDOW['sun']}deg,"
+            f" rgba(0,0,0,1) 0%, rgba(0,0,0,.6) {f['to'] * 45:.4g}%,"
+            f" rgba(0,0,0,{f['floor']}) {f['to'] * 100:.4g}%)")
 
 
 def window_js():
@@ -278,4 +307,5 @@ def window_js():
     bars = ','.join(f'[{a},{b},{d}]' for a, b, d in WINDOW['bars'])
     f = WINDOW['fade']
     return (f"{{angle:{WINDOW['angle']},bars:[{bars}],edge:{WINDOW['edge']},"
-            f"fade:{{angle:{f['angle']},to:{f['to']},floor:{f['floor']}}}}}")
+            f"deepest:{max(d for _, _, d in WINDOW['bars'])},sun:{WINDOW['sun']},"
+            f"fade:{{to:{f['to']},floor:{f['floor']}}}}}")

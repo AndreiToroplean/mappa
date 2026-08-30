@@ -145,24 +145,40 @@ const WINDOW = __WINDOW__;
    the bars onto a buffer and combining them with a max, which is what a
    renderer would do, the throw is simply scaled by the light there is to
    block. Same answer, no buffer, and it costs one dot product. */
+/* Where a point sits along a gradient's own axis, 0 to 1, using the convention
+   CSS uses: zero degrees points up and the angle turns clockwise. */
+function along(deg, x, y, w, h) {
+  const a = (deg - 90) * Math.PI / 180;
+  const ux = Math.cos(a), uy = Math.sin(a);
+  const axis = Math.abs(w * ux) + Math.abs(h * uy);
+  return 0.5 + ((x - w / 2) * ux + (y - h / 2) * uy) / (axis || 1);
+}
+
 function sunAt(x, y, w, h) {
-  const t = (deg, px, py) => {
-    const a = (deg - 90) * Math.PI / 180;
-    const ux = Math.cos(a), uy = Math.sin(a);
-    const len = Math.abs(w * ux) + Math.abs(h * uy);
-    return 0.5 + ((px - w / 2) * ux + (py - h / 2) * uy) / (len || 1);
-  };
-  // the bars, with their edges as sharp as the gradient's
+  /* Two questions, multiplied. Is the frame in the way here, and how far into
+     the room has the light got by the time it arrives?
+
+     The second is linear, not radial. The sun is far enough away that its rays
+     are parallel — there is no point on the screen for them to spread from, and
+     nothing to measure a distance to. What dims them is depth into the room,
+     which runs the one way for every ray, along the same direction the shadows
+     are thrown. Falling off from a point is the lamp's business, and the lamp
+     does it in the other branch of relight(), because a lamp really is a point.
+
+     Either way the idea is the same: a shadow is only as dark as the light it
+     takes away, so a button at the far end of the desk throws a fainter one
+     than the same button under the window — not because it is any less of an
+     obstacle, but because there is less to obstruct. */
   let open = 1;
-  const p = t(WINDOW.angle, x, y);
-  for (const [a, b, dark] of WINDOW.bars) {
+  const p = along(WINDOW.angle, x, y, w, h);
+  for (const [from, to, dark] of WINDOW.bars) {
     const e = WINDOW.edge;
-    const inside = Math.min(smooth(p, a - e, a + e), 1 - smooth(p, b - e, b + e));
-    open -= dark * Math.max(0, inside) / 0.21;   // 0.21 is the deepest bar
+    const inside = Math.min(smooth(p, from - e, from + e),
+                            1 - smooth(p, to - e, to + e));
+    open -= (dark / WINDOW.deepest) * Math.max(0, inside);
   }
-  // and the reach of the light across the room, which never quite gives out
-  const f = WINDOW.fade;
-  const reach = 1 - (1 - f.floor) * smooth(t(f.angle, x, y), 0, f.to);
+  const depth = along(WINDOW.sun, x, y, w, h);
+  const reach = 1 - (1 - WINDOW.fade.floor) * smooth(depth, 0, WINDOW.fade.to);
   return Math.max(0, Math.min(1, open)) * reach;
 }
 
@@ -241,7 +257,8 @@ function relight() {
          disappears, because the bar has already taken the light it would have
          been blocking. The floor is not zero — a room in daylight has no black
          corner, and something always gets through. */
-      direct = 0.08 + 0.92 * sunAt(r.left + r.width / 2, r.top + r.height / 2, w, h);
+      direct = 0.06 + 0.94 * sunAt(r.left + r.width / 2, r.top + r.height / 2,
+                                   w, h);
     } else {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const vx = cx - lx, vy = cy - ly;
@@ -254,7 +271,9 @@ function relight() {
       /* The same idea under a lamp, with the falloff standing in for the bars:
          a shadow thrown across the dim end of the desk has less light to take
          away, so there is less of it to see. */
-      direct = 1 - 0.45 * out;
+      /* The same second question under a lamp, and the falloff is the answer:
+         a shadow at the dim end of the desk has less light to take away. */
+      direct = 1 - 0.62 * out;
       // How far out of the light it is, for the ones that also darken with it.
       node.style.setProperty('--away', out.toFixed(3));
     }
@@ -314,7 +333,15 @@ new MutationObserver(relight).observe(document.documentElement,
    after a fifth of a second it is better to show it in the fallback face and
    relight when the real one turns up. */
 function reveal() {
-  relight();
+  /* The class goes on whatever happens. Everything is hidden until it does, so
+     a fault anywhere in the measuring would leave the game invisible rather
+     than merely unlit — which is exactly what one stale argument in here did.
+     Unlit and playable beats correct and blank. */
+  try {
+    relight();
+  } catch (e) {
+    reportCrash(e);
+  }
   document.documentElement.classList.add('lit');
 }
 

@@ -128,25 +128,50 @@ def star(colour):
 
 
 def rose(colour, faint):
-    """A compass rose: four long cardinal points, four short ordinals, a ring.
+    """A pocket compass: a cased rose, not a bare star.
 
-    Drawn rather than typed, for the same reason the star is — no font has to
-    have it, and it is identical in both themes and at any size.
+    The star alone read as a sparkle. What makes an instrument look like an
+    instrument is the case around it, so this has a bezel with a hairline ruled
+    inside it, and a suspension knob at the top and its mirror at the bottom —
+    mirrored because the same drawing is used on both sides of Start and an
+    asymmetric one would point two different ways.
+
+    Drawn rather than borrowed. There are freely licensed compass roses about,
+    but every one of them is a file to attribute, a licence to carry, and a
+    shape somebody else chose the weight of; this is nine primitives and it
+    inherits the brass it is drawn in.
+
+    Square, 48 by 48, with the case at r=17 and the knobs standing in the
+    margin that leaves — so the whole thing still fits a square background-size
+    and stays centred whatever it is scaled to.
     """
-    return ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' "
-        "width='40' height='40'>"
+    return svg(48, 48,
+        # the two knobs, top and bottom, each a stem and a ring
         f"<g fill='{colour}'>"
-        "<path d='M20 1 22.2 17.8 20 20 17.8 17.8Z'/>"
-        "<path d='M20 39 17.8 22.2 20 20 22.2 22.2Z'/>"
-        "<path d='M1 20 17.8 17.8 20 20 17.8 22.2Z'/>"
-        "<path d='M39 20 22.2 22.2 20 20 22.2 17.8Z'/></g>"
+        "<rect x='22.4' y='2.6' width='3.2' height='5' rx='1.1'/>"
+        "<rect x='22.4' y='40.4' width='3.2' height='5' rx='1.1'/>"
+        "<circle cx='24' cy='2.6' r='2.2'/>"
+        "<circle cx='24' cy='45.4' r='2.2'/></g>"
+        # the case, and a hairline ruled inside it
+        f"<circle cx='24' cy='24' r='17' fill='none' stroke='{colour}'"
+        " stroke-width='2'/>"
+        f"<circle cx='24' cy='24' r='13.4' fill='none' stroke='{faint}'"
+        " stroke-width='1'/>"
+        # the four cardinal points, long
+        f"<g fill='{colour}'>"
+        "<path d='M24 8.4 26 22 24 24 22 22Z'/>"
+        "<path d='M24 39.6 22 26 24 24 26 26Z'/>"
+        "<path d='M8.4 24 22 22 24 24 22 26Z'/>"
+        "<path d='M39.6 24 26 26 24 24 26 22Z'/></g>"
+        # and the four ordinals, short
         f"<g fill='{faint}'>"
-        "<path d='M31.6 8.4 23 17 20 20 22.1 14.9Z'/>"
-        "<path d='M8.4 31.6 17 23 20 20 17.9 25.1Z'/>"
-        "<path d='M31.6 31.6 23 23 20 20 25.1 22.1Z'/>"
-        "<path d='M8.4 8.4 17 17 20 20 14.9 17.9Z'/></g>"
-        f"<circle cx='20' cy='20' r='3.2' fill='none' stroke='{colour}'"
-        " stroke-width='1.3'/></svg>")
+        "<path d='M33 15 25.7 22.3 24 24 25.7 19.7Z'/>"
+        "<path d='M15 33 22.3 25.7 24 24 22.3 28.3Z'/>"
+        "<path d='M33 33 25.7 25.7 24 24 28.3 25.7Z'/>"
+        "<path d='M15 15 22.3 22.3 24 24 19.7 22.3Z'/></g>"
+        # the pivot
+        f"<circle cx='24' cy='24' r='2' fill='none' stroke='{colour}'"
+        " stroke-width='1.2'/>")
 
 
 # The textures that are the same in any light. Paper is paper whether a lamp or

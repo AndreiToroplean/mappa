@@ -260,7 +260,13 @@ __MARKS_DARK__
     --edge:#63502F;
     --halo:#E8DCC0;
 
-    --text:#382C1A; --muted:#7A6647;
+    /* Darker than the contrast against bare paper suggests it needs to be.
+       The room layer sits over everything, glint included, so a little white is
+       composited on top of every letter on the map's chrome before anyone reads
+       it — thirty percent of it at the brightest point. The ink has to be
+       chosen for what it looks like under that, not for what it measures
+       against the paper underneath. */
+    --text:#1F170C; --muted:#55442A;
     --labelfade:1;
     --onaccent:#FCF7EA;
 
@@ -1175,10 +1181,10 @@ __MARKS_LIGHT__
      with that: one element cannot be both a star and a throw, and what came out
      was a star with a lump of shadow stuck to it. */
   .card.menu > button::after{content:"";position:absolute;
-    inset:0;top:0;right:0;bottom:0;left:0;pointer-events:none;opacity:.82;
+    inset:0;top:0;right:0;bottom:0;left:0;pointer-events:none;opacity:.85;
     background:
-      var(--rose) 17px center/22px 22px no-repeat,
-      var(--rose) calc(100% - 17px) center/22px 22px no-repeat}
+      var(--rose) 16px center/26px 26px no-repeat,
+      var(--rose) calc(100% - 16px) center/26px 26px no-repeat}
 
   /* What a choice means, said once and then gone. The alternative was a line of
      copy under every row, which cost four lines of card height permanently to

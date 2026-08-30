@@ -116,12 +116,12 @@ const SMEAR = [
    so an uneven pair would make the theme snap while everything around it
    faded. check.py holds the two to the same length. */
 const SUN_SMEAR = [
-  [0.00, 0.00, 0.44],
-  [0.28, 0.02, 0.35],
-  [0.52, 0.05, 0.25],
-  [0.72, 0.08, 0.16],
-  [0.88, 0.11, 0.09],
-  [1.00, 0.15, 0.04],
+  [0.00, 0.00, 0.55],
+  [0.28, 0.02, 0.44],
+  [0.52, 0.05, 0.31],
+  [0.72, 0.08, 0.20],
+  [0.88, 0.11, 0.11],
+  [1.00, 0.15, 0.05],
 ];
 
 /* Sunlight: one direction for everything, and one length. 34 degrees below the
@@ -226,3 +226,14 @@ new MutationObserver(relight).observe(document.documentElement,
    shadows were measured keeps a shadow cut for the old one. */
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(relight);
 relight();
+
+/* The room is measured; the stylesheet may start animating changes to it. Until
+   this class is here every one of those properties is arriving for the first
+   time, and fading them in is not a theme changing — it is the game assembling
+   itself in front of the player, which reads as a slow load.
+
+   After a frame rather than immediately. A transition does not fire on the
+   first style an element is given, so adding the class here would usually be
+   harmless — but the boot script picks the theme before this runs, and waiting
+   one frame means there is no ordering left to reason about. */
+requestAnimationFrame(() => document.documentElement.classList.add('lit'));

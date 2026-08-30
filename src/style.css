@@ -290,7 +290,7 @@ __FONTS__
     /* Daylight, which arrives from the other side. Everything else here is the
        night values opened up: the same paper with more light on it. */
     --lightfall: 8% 0%;  --shade: 154deg;
-    --paper:#F2EAD6; --ink:#2A2114; --inkmuted:#6A5738;
+    --paper:#F4ECDA; --ink:#1F1810; --inkmuted:#5C4A2E;
     --paperline:rgba(74,58,32,.30); --paperfaint:rgba(74,58,32,.13);
     --paperhover:rgba(74,58,32,.06);
     --gold:#8A6D2E; --goldsoft:rgba(138,109,46,.40);
@@ -309,8 +309,8 @@ __FONTS__
        The rays are four bands of unequal width, which is what stops them reading
        as a pattern: a window has glazing bars, not a screen. */
     --falloff:radial-gradient(ellipse 145% 125% at var(--lightfall),
-      rgba(255,252,238,.30) 0%, rgba(255,252,238,0) 46%,
-      rgba(74,58,32,.12) 100%);
+      rgba(255,252,238,.08) 0%, rgba(255,252,238,0) 40%,
+      rgba(74,58,32,.16) 100%);
     /* The window, cast as shadow rather than as light. This was bright bands
        laid over the scene, which reads as haze on the lens; what a window
        actually does is leave most of the desk lit and drop the shadow of its
@@ -329,11 +329,9 @@ __FONTS__
        come straight through the glass. */
     --rays:
       linear-gradient(48deg,
-        rgba(88,66,36,0) 8%,    rgba(88,66,36,.20) 10%,
-        rgba(88,66,36,.20) 34%, rgba(88,66,36,0) 36.5%,
-        rgba(88,66,36,0) 74%,   rgba(88,66,36,.13) 76.5%,
-        rgba(88,66,36,.13) 97%, rgba(88,66,36,0) 99%),
-      linear-gradient(128deg, rgba(255,252,240,.28), rgba(255,252,240,0) 62%);
+        rgba(88,66,36,0) 2%,    rgba(88,66,36,.17) 5%,
+        rgba(88,66,36,.17) 46%, rgba(88,66,36,0) 50%,
+        rgba(88,66,36,0) 96%,   rgba(88,66,36,.11) 99%);
     --moonpool:rgba(255,250,225,.16);
     --parchment: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27420%27%20height=%27420%27%3E%3Cfilter%20id=%27m%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.016%27%20numOctaves=%275%27%20seed=%277%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3CfeComponentTransfer%3E%3CfeFuncA%20type=%27linear%27%20slope=%27.6%27%20intercept=%27-.06%27/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Cfilter%20id=%27f%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.85%20.05%27%20numOctaves=%272%27%20seed=%273%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27saturate%27%20values=%270%27/%3E%3C/filter%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23m%29%27%20opacity=%27.30%27/%3E%3Crect%20width=%27420%27%20height=%27420%27%20filter=%27url%28%23f%29%27%20opacity=%27.07%27/%3E%3C/svg%3E);
     --foxing: url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%27600%27%20height=%27600%27%3E%3Cfilter%20id=%27s%27%3E%3CfeTurbulence%20type=%27fractalNoise%27%20baseFrequency=%27.006%27%20numOctaves=%273%27%20seed=%2719%27%20stitchTiles=%27stitch%27/%3E%3CfeColorMatrix%20type=%27matrix%27%20values=%270%200%200%200%20.40%20%200%200%200%200%20.27%20%200%200%200%200%20.12%20%200%200%200%20-1.5%20.70%27/%3E%3C/filter%3E%3Crect%20width=%27600%27%20height=%27600%27%20filter=%27url%28%23s%29%27%20opacity=%27.42%27/%3E%3C/svg%3E);
@@ -357,15 +355,22 @@ __FONTS__
 
      box-shadow can only tween between two lists of equal length, which is why
      both smears in 15-light.js have six stops. */
-  body, body::after, .card, .pop, .tip span, button, .geoSel, .headbtn,
-  main, main::before, main::after{
+  /* Only once the room has been measured. On the very first paint every one of
+     these is arriving for the first time, and a transition there is not a theme
+     changing — it is the game fading itself in from nothing, which looks like a
+     slow load. 15-light.js adds `lit` to <html> after the first measurement, so
+     the fade only ever covers a change. */
+  html.lit body, html.lit body::after, html.lit .card, html.lit .pop,
+  html.lit .tip span, html.lit button, html.lit .geoSel, html.lit .headbtn,
+  html.lit main, html.lit main::before, html.lit main::after{
     transition:background-color .32s ease, color .32s ease,
       border-color .32s ease, box-shadow .32s ease, background-image .32s ease}
   /* Someone who has asked for less movement gets the switch instantly, which is
      the honest reading of the request: the fade is decoration, not information. */
   @media (prefers-reduced-motion: reduce){
-    body, body::after, .card, .pop, .tip span, button, .geoSel, .headbtn,
-    main, main::before, main::after{transition:none}
+    html.lit body, html.lit body::after, html.lit .card, html.lit .pop,
+    html.lit .tip span, html.lit button, html.lit .geoSel, html.lit .headbtn,
+    html.lit main, html.lit main::before, html.lit main::after{transition:none}
   }
 
   *{box-sizing:border-box;
@@ -566,11 +571,11 @@ __FONTS__
   .pausebtn{display:none}
   body.playing .pausebtn{display:flex;align-items:center;justify-content:center;
     width:38px;height:38px;flex:none;margin:0 0 0 14px;order:9;padding:0;
-    font-size:12px;letter-spacing:.1em;border-radius:10px;background:transparent;
+    font-size:12px;letter-spacing:.1em;border-radius:2px;background:transparent;
     color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
   .cluebtn{display:none}
   body.practice .cluebtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
-    padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;
+    padding:7px 13px;font-size:12px;border-radius:2px;background:transparent;
     color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);font-weight:600}
   body.practice .cluebtn:disabled{color:var(--muted);
     box-shadow:inset 0 0 0 1px var(--line);background:transparent}
@@ -580,7 +585,7 @@ __FONTS__
      than amber — this one navigates, it does not help. */
   .backbtn{display:none}
   body.reviewing .backbtn{display:block;width:auto;flex:none;margin:0 0 0 auto;
-    padding:7px 13px;font-size:12px;border-radius:8px;background:transparent;
+    padding:7px 13px;font-size:12px;border-radius:2px;background:transparent;
     color:var(--text);box-shadow:inset 0 0 0 1px var(--line);font-weight:600}
   body.reviewing .cluebtn{display:none}
   path.nudge{stroke:var(--amber);stroke-linecap:round;stroke-linejoin:round;
@@ -643,7 +648,7 @@ __FONTS__
      Four background layers, back to front: the paper's own colour, the fibre
      and mottle, the foxing, the falloff across the sheet, and the lamp. The
      lamp is last so it lies over everything, which is what a lamp does. */
-  .card{position:relative;
+  .card{position:relative;isolation:isolate;
     --rise:1.7;
     --text:var(--ink); --muted:var(--inkmuted);
     --line:var(--paperline); --hairline:var(--paperfaint);
@@ -659,7 +664,7 @@ __FONTS__
       radial-gradient(ellipse 108% 104% at 50% 50%,
         rgba(58,42,20,0) 62%, rgba(58,42,20,.20) 100%),
       var(--foxing), var(--parchment);
-    border:1px solid var(--gold);border-radius:5px;
+    border:1px solid var(--gold);border-radius:0;
     padding:30px 28px;width:100%;max-width:400px;
     /* Sitting on a surface, not floating over one: a tight contact shadow and
        a long soft one, and a brass hairline inside the edge the way a plate is
@@ -739,7 +744,7 @@ __FONTS__
     padding-left:8px;margin-left:-8px}
   .row.you .rank,.row.you .time{color:var(--amber)}
   .rules{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 20px}
-  .geoSel{width:100%;margin:0;padding:11px 12px;border-radius:6px;
+  .geoSel{width:100%;margin:0;padding:11px 12px;border-radius:2px;
     background:var(--sunk);color:var(--sunkink);border:1px solid var(--gold);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.22),
       var(--cast);
@@ -754,6 +759,29 @@ __FONTS__
      dropdown that had just done its job. The buttons keep theirs, where a click
      is not treated the same way. */
   .geoSel:focus-visible{outline:none}
+  /* ---- where a shadow is allowed to land --------------------------------
+     A box-shadow paints with the element that casts it, and elements paint in
+     document order — so in a row of buttons the second one's shadow fell across
+     the first. Two buttons side by side on the same sheet are at the same
+     height; neither can be standing on the other, and one darkening its
+     neighbour is the clearest possible way of saying it is.
+
+     So the throw moves off the button and onto a pseudo-element behind it, at a
+     negative z-index inside a row that isolates. Negative z-index paints after
+     the row's own background and before any of its children, which puts every
+     shadow in the row underneath every button in it: they all land on the
+     parchment, which is the only thing down there to land on.
+
+     The button keeps its inset bevel, which is light on its own surface rather
+     than a shadow on anything else, and belongs to the button. */
+  .modes, .btnrow, .headbtns, .bhead{isolation:isolate}
+  .modes button, .btnrow button, .headbtns button, .bhead .clearBtn{
+    position:relative}
+  .modes button::before, .btnrow button::before, .headbtns button::before,
+  .bhead .clearBtn::before, .card > button.ghost::before{content:"";position:absolute;
+    inset:0;top:0;right:0;bottom:0;left:0;z-index:-1;
+    border-radius:inherit;box-shadow:var(--cast)}
+
   .modes{display:flex;gap:8px;margin:0}
 
   /* One labelled choice: what it is called, the buttons, and a line saying what
@@ -792,10 +820,9 @@ __FONTS__
   .headbtns{display:flex;gap:8px;flex:none}
   .headbtn{flex:none;width:34px;height:34px;margin:0;
     padding:0;display:flex;align-items:center;justify-content:center;
-    border-radius:4px;background:var(--sunk);color:var(--sunkink);
+    border-radius:2px;background:var(--sunk);color:var(--sunkink);
     border:1px solid var(--gold);
-    box-shadow:inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.2),
-      var(--cast)}
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.2)}
   /* Every state of these is brass on near black. They took --text and --amber,
      which a card rebinds to ink and to a dark brass meant for reading *on
      paper* — so pressing one made its icon vanish into its own button. What a
@@ -822,12 +849,12 @@ __FONTS__
     position:absolute;top:calc(100% + 8px);right:0;z-index:5;
     min-width:170px;padding:5px;
     background-color:var(--risen);background-image:var(--parchment);
-    border:1px solid var(--gold);border-radius:5px;
+    border:1px solid var(--gold);border-radius:2px;
     box-shadow:var(--cast)}
   .pop[hidden]{display:none}
   .pop button{margin:0;width:100%;text-align:left;background:transparent;
     color:var(--ink);font-size:14px;font-weight:400;padding:9px 11px;
-    border:0;box-shadow:none;border-radius:3px}
+    border:0;box-shadow:none;border-radius:2px}
   .fsbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   /* Pressed into the sheet: near black with brass lettering, a dark inner
@@ -837,7 +864,7 @@ __FONTS__
      same fibre the paper has, and a brass edge with a second line ruled inside
      it. Flat colour read as a rectangle rather than as an object. */
   .modes button{margin:0;flex:1;padding:12px 6px;font-size:14px;font-weight:400;
-    border-radius:3px;color:var(--sunkink);
+    border-radius:2px;color:var(--sunkink);
     font-family:var(--serif);position:relative;letter-spacing:.01em;
     background-color:var(--sunk);
     background-image:
@@ -846,7 +873,8 @@ __FONTS__
       var(--parchment);
     border:1px solid var(--gold);
     box-shadow:inset 0 2px 5px rgba(0,0,0,.55),
-      0 1px 0 rgba(255,246,220,.22), inset 0 0 0 1px rgba(0,0,0,.28), inset 0 0 0 2px var(--goldsoft), var(--cast)}
+      0 1px 0 rgba(255,246,220,.22), inset 0 0 0 1px rgba(0,0,0,.28),
+      inset 0 0 0 2px var(--goldsoft)}
   /* And raised off it: cream, sitting proud, with the light on its top edge
      and its shadow cast down and away from the lamp. */
   .modes button.on{color:var(--risenink);font-weight:500;
@@ -857,8 +885,7 @@ __FONTS__
       var(--parchment);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.75),
       inset 0 -1px 0 rgba(74,58,32,.18),
-      inset 0 0 0 1px rgba(255,255,255,.45), inset 0 0 0 2px var(--goldsoft),
-      var(--cast)}
+      inset 0 0 0 1px rgba(255,255,255,.45), inset 0 0 0 2px var(--goldsoft)}
   /* Practice has no lives to spend, so the same column counts what it does
      have. Keeping the column rather than hiding it holds the header layout
      steady between modes. */
@@ -875,7 +902,7 @@ __FONTS__
   .bhead h3{margin:0}
   .iconbtn{margin:0;width:auto;flex:none;background:transparent;
     border:1px solid var(--line);color:var(--muted);padding:5px 7px;
-    border-radius:7px;line-height:0;cursor:pointer}
+    border-radius:2px;line-height:0;cursor:pointer}
   .iconbtn svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;
     stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .btnrow{display:flex;gap:10px;margin-top:22px}
@@ -887,9 +914,15 @@ __FONTS__
      they stand at half height and cast half as far. They also had no cast
      shadow at all, which is why the pause card had one under Resume and
      nothing under the two buttons beside it. */
-  button.ghost, .clearBtn{--rise:.5}
+  /* A custom property inherits, so a card declaring its own height handed that
+     height to every button inside it and each one cast a shadow the size of the
+     sheet it was sitting on. Anything that stands on its own has to say so.
+     Stated here, on the base rule for a button, so a new one is right by
+     default and only the exceptions below have to think about it. */
+  button, .geoSel{--rise:1; --lift:0}
+  button.ghost, .clearBtn, .headbtn{--rise:.5}
   button.ghost{background:transparent;color:var(--text);border:1px solid var(--line);
-    box-shadow:inset 0 1px 0 rgba(255,246,220,.10), var(--cast)}
+    box-shadow:inset 0 1px 0 rgba(255,246,220,.10)}
   /* The only literal left in the file. Red is dark on both grounds, so the
      text on it is white in both. */
   button.danger{background:var(--red);color:#fff}
@@ -900,7 +933,7 @@ __FONTS__
      selected into or pasted into, the one thing it exists for. */
   #impText{width:100%;margin-top:10px;padding:8px 10px;resize:vertical;
     background:var(--well);color:var(--text);border:1px solid var(--line);
-    border-radius:8px;font:400 12px/1.45 var(--serif);
+    border-radius:2px;font:400 12px/1.45 var(--serif);
     -webkit-user-select:text;user-select:text;
     -webkit-touch-callout:default}
   #impText:focus{outline:none;border-color:var(--amber)}
@@ -979,7 +1012,7 @@ __FONTS__
   .lens .cross::after{bottom:-8px}
   .lens .cap{margin-top:9px;max-width:184px;text-align:center;
     font-family:var(--display);font-size:12px;letter-spacing:.05em;color:var(--onaccent);
-    background:var(--amber);border-radius:7px;padding:5px 8px;font-weight:600;
+    background:var(--amber);border-radius:2px;padding:5px 8px;font-weight:600;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lens .cap.none{background:var(--panel);border:1px solid var(--line);
     color:var(--muted);font-weight:400}
@@ -1108,7 +1141,7 @@ __FONTS__
     max-width:min(var(--tipwide, 420px), 100%);text-align:center;
     font-size:12.5px;line-height:1.45;color:var(--text);
     background-color:var(--panel);background-image:var(--grain);
-    border:1px solid var(--line);border-radius:10px;padding:9px 14px;
+    border:1px solid var(--line);border-radius:2px;padding:9px 14px;
     box-shadow:var(--cast);
     animation:tipin 3800ms ease-out forwards}
   @keyframes tipin{
@@ -1187,7 +1220,7 @@ __FONTS__
         rgba(0,0,0,.20) 100%),
       var(--parchment);
     border:1px solid var(--gold);
-    padding:13px;border-radius:4px;font-size:17px;font-weight:400;cursor:pointer;
+    padding:13px;border-radius:2px;font-size:17px;font-weight:400;cursor:pointer;
     font-family:var(--serif);letter-spacing:.02em;
     box-shadow:inset 0 1px 0 rgba(255,246,220,.20),
       inset 0 0 0 1px rgba(255,246,220,.10), inset 0 0 0 2px rgba(0,0,0,.22),

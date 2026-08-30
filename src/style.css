@@ -444,9 +444,14 @@ __MARKS_LIGHT__
     background-image:var(--falloff)}
   body{display:flex;flex-direction:column;background-image:var(--grain)}
 
+  /* Padded on the three sides that are not the map. Text was starting at the
+     very edge of the screen — on a phone that is against the bezel, which reads
+     as the words having been cut off rather than laid out. The border onto the
+     map keeps its own line and no padding, because that edge is where the chart
+     begins and the two should meet. */
   header{
     display:flex;align-items:center;gap:18px;flex-wrap:nowrap;
-    height:76px;flex:none;padding:0 22px;
+    height:90px;flex:none;padding:12px 24px 12px;
     border-bottom:1px solid var(--line);
     background-color:var(--panel);background-image:var(--grain);
   }
@@ -695,9 +700,9 @@ __MARKS_LIGHT__
 
   footer{
     font-family:var(--display);font-size:12px;letter-spacing:.06em;color:var(--muted);
-    padding:0 22px;border-top:1px solid var(--line);
+    padding:12px 24px;border-top:1px solid var(--line);
     background-color:var(--panel);background-image:var(--grain);
-    height:48px;flex:none;display:flex;align-items:center;overflow:hidden;
+    height:62px;flex:none;display:flex;align-items:center;overflow:hidden;
   ;gap:12px}
   #ticker{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
     overflow:hidden;line-height:1.35}
@@ -1431,7 +1436,7 @@ __MARKS_LIGHT__
        was truncating the longer names. Height is still fixed, so the map can't
        resize mid-run. */
     header{flex-direction:column;align-items:stretch;justify-content:center;
-      gap:9px;padding:0 14px;height:94px}
+      gap:9px;padding:12px 18px;height:112px}
     .prompt{flex:none}
     .stats{justify-content:space-between;gap:12px}
     .stat{flex:none;text-align:left}
@@ -1449,7 +1454,7 @@ __MARKS_LIGHT__
     #progress{min-width:58px}
     #clock{min-width:78px}
     #missCount{min-width:30px}
-    footer{font-size:11px;padding:0 14px;height:52px}
+    footer{font-size:11px;padding:11px 18px;height:70px}
     .countdown span{font-size:78px}
     .fanfare span{font-size:40px}
     .flash span{font-size:34px}

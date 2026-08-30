@@ -63,6 +63,19 @@ surface, with the variants overriding the colour rather than each stating a
 whole background from scratch. Six near-identical background stacks is the
 smell; it is a small refactor and only waiting for a quiet moment.
 
+## render.py keeps its own copy of the header and footer heights
+
+It draws the board's chrome from its own numbers so it can work without a
+browser, which is the whole reason it is useful. But two of those numbers are
+the header and footer heights, and the stylesheet has them too — so padding the
+bars meant editing both, twice in one session, and forgetting the second would
+have left render.py quietly rasterising a layout the game no longer has.
+
+Quietly is the problem. Nothing fails; the pictures just stop being of the
+game, which is exactly what that tool exists to prevent. Either the heights
+come out of the stylesheet at run time, or check.py reads both and compares
+them. The second is a few lines and would have caught it.
+
 ## A card rebinds its descendants' colours
 
 `.card` sets `--text`, `--muted`, `--line` and `--amber` to ink-on-paper values,

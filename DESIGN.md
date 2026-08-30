@@ -157,3 +157,10 @@ double-encoding to `%2523`, and an unquoted XML attribute killing the file).
 does every scene. `--light`, `--geo=`, `--w=`, `--h=` are the flags. This is the
 only tool that can see fonts, filters, shadows or blend modes — `render.py`
 answers where the layout put things and knows none of the stylesheet.
+
+## REFACTOR.md
+
+A running list of places where the code's shape is fighting the work. Read it at
+the start of a refactoring round; add to it whenever something costs real time
+during any other kind of round, which is the only moment anybody ever notices.
+Delete an entry in the commit that fixes it.

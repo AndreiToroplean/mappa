@@ -4,13 +4,15 @@
    the first feedback you get is a lost life. Holding opens a zoomed disc
    offset from the finger. Drag to move the crosshair, and the state under it
    lights up and is named — so what a release will select is always visible
-   before the release happens. Lift over open water to cancel.             */
-const HOLD_MS  = 250;   // press this long, without sliding, to open the disc
+   before the release happens. Lift over open water to cancel.
+
+   A hold opens the disc whether or not the finger has moved: what a drift does
+   is decide where it opens, not whether. See the pointermove handler.      */
+const HOLD_MS  = 250;   // press this long to open the disc, sliding or not
 const ZOOM     = 4;     // magnification inside the disc
 const DISC_R   = 92;    // disc radius in CSS px — must match .lens .disc
 const GUARD_MS = 180;   // trailing window discarded: the twitch on lift-off
 const DWELL_MS = 120;   // rest this long on a state for it to read as intent
-const SLOP     = 10;    // px of drift still counted as holding still
 const FINGER   = 40;    // px of clearance between the block and the fingertip
 
 const lensBox = $('lens'), lensMap = $('lensMap'), lensCap = $('lensCap');
@@ -230,12 +232,19 @@ svg.addEventListener('pointerdown', e => {
 
 svg.addEventListener('pointermove', e => {
   if (!lensOn) {
-    // slid off the press point before the disc opened — that was a drag, not a hold
-    if (holdTimer &&
-        Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > SLOP) {
-      clearTimeout(holdTimer);
-      holdTimer = null;
-    }
+    /* Sliding no longer cancels the hold. It used to: drift past ten pixels before
+       the disc opened and the timer was cleared for good, so a press that
+       wandered a few pixels — which is most presses, on a phone, held by a
+       thumb — never opened the disc at all and the finger came off having
+       committed a blind tap instead. Nothing on the map competes for a drag,
+       so there was no gesture the cancel was protecting.
+
+       What the drift does instead is move where the disc will open: the point
+       under the finger now, not where it first landed. The clock still runs
+       from the press, so a hold is still a hold and a flick is still too quick
+       to be one. */
+    downX = e.clientX;
+    downY = e.clientY;
     return;
   }
   lastPt = { x: e.clientX, y: e.clientY };     // one hit test per frame, no more

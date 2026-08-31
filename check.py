@@ -1626,6 +1626,46 @@ for theme, src in (('night', block(':root{')),
     print(f'  {theme}: {len(PAIRS)} inks legible on their halos, '
           f'{len(FILLS)} fills distinct from bare land')
 
+# A hover colour has to be legible on the ground the control actually stands on,
+# which is not the ground its container reads like. This has now gone wrong three
+# times the same way: a control on a card takes --text for its hover, --text
+# inside a card is the paper's ink, and the control is standing on near-black
+# brass-lettered metal rather than on paper. Every occurrence was invisible until
+# a pointer landed on it, and a touchscreen never lands — so none of them showed
+# up in play, only in somebody's peripheral vision on a laptop.
+#
+# Named rather than read out of the rule: the expectation is what colour these
+# ought to be, so recovering it from the declaration would be checking the
+# stylesheet against itself. Both halves are asserted — that the rule still names
+# the colour, and that the colour still reads on that ground in both palettes.
+HOVER_INK = [
+    ('.modes button:hover', 'an unselected mode button', '--brasslit', '--sunk'),
+    ('.modes button.on:hover', 'the selected mode button', '--ink', '--risen'),
+    ('.headbtn:hover', 'a header icon', '--brasslit', '--sunk'),
+]
+for selector, label, ink, ground in HOVER_INK:
+    rule = re.search(re.escape(selector) + r'\s*\{([^}]*)\}', css_src)
+    if not rule:
+        print(f'  FAIL no rule for {selector}, so {label} has no hover colour')
+        fails += 1
+    elif f'color:var({ink})' not in rule.group(1).replace(' ', ''):
+        print(f'  FAIL {selector} no longer hovers to {ink}')
+        fails += 1
+for theme, src in (('night', block(':root{')),
+                   ('day', block(':root[data-theme="light"]{'))):
+    vals = dict(re.findall(r'(--[a-z0-9]+)\s*:\s*(#[0-9A-Fa-f]{6})', src))
+    for selector, label, ink, ground in HOVER_INK:
+        if ink not in vals or ground not in vals:
+            print(f'  FAIL {theme} sets neither {ink} nor {ground} as a colour')
+            fails += 1
+            continue
+        c = contrast(vals[ink], vals[ground])
+        if c < 4.5:
+            print(f'  FAIL {theme}: {label} hovers at {c:.2f}:1 '
+                  f'({ink} on {ground})')
+            fails += 1
+    print(f'  {theme}: {len(HOVER_INK)} hover inks legible on their own ground')
+
 print('the link')
 params = re.search(r'const LINK_PARAMS = \{(.*?)\};', start_js, re.S).group(1)
 params = dict(re.findall(r'(\w+):\s*(PREF_\w+)', params))

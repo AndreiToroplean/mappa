@@ -509,10 +509,18 @@ __MARKS_LIGHT__
      the crests rather than sitting over them, so the chop is brilliant inside
      the pool and invisible outside it — which is exactly what the eye reads as
      a light source on water, and it costs one blend mode. */
+  /* The swell is asked for once at the size of the sea rather than tiled: its
+     features are bigger than any tile that could carry them, so a repeat read
+     as a grid of blobs. See --swell in src/textures.py. The crests above it
+     stay tiled, and should — they are small, discrete marks, which is the case
+     a tile is for, and stretching them would make a wave's shape depend on the
+     window's. */
   main{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;
     min-height:0;position:relative;overflow:hidden;
     background-color:var(--sea);
-    background-image:var(--vignette), var(--swell)}
+    background-image:var(--vignette), var(--swell);
+    background-repeat:no-repeat;
+    background-size:100% 100%}
   /* The lit water, masked to the moon's pool. Its own layer because the mask
      has to multiply the crests and nothing else. */
   main::before{content:"";position:absolute;inset:0;top:0;right:0;bottom:0;left:0;
@@ -1578,8 +1586,18 @@ __MARKS_LIGHT__
     body.reviewing .backbtn:hover{filter:none;background:var(--hover)}
     .headbtn:hover{filter:none;color:var(--brasslit)}
     .pop button:hover{filter:none;background:var(--paperhover)}
-    .modes button:hover{filter:none;color:var(--text)}
-    .modes button.on:hover{color:var(--onaccent)}
+    /* What a control stands on decides its hover colour, not what its
+       container reads like — the same rule the header icons already follow,
+       and the same bug a third time. These took --text and --onaccent. Inside
+       a card --text is the paper's ink, and an unselected mode button is not
+       paper: it is the near-black sunk one with brass lettering, so pointing
+       at it wrote dark ink on a dark ground at 1.05:1. --onaccent was right on
+       the risen button by luck at night and near-white on cream by day, at
+       1.03:1, which is the same failure with the themes swapped.
+       So each hovers to the lit version of its own ink: brass goes brighter,
+       ink goes to full strength. Both stay above 11:1 in both themes. */
+    .modes button:hover{filter:none;color:var(--brasslit)}
+    .modes button.on:hover{color:var(--ink)}
     .iconbtn:hover{filter:none;color:var(--text);border-color:var(--muted)}
     button.ghost:hover{filter:none;background:var(--hover)}
     button:hover{filter:brightness(1.08)}

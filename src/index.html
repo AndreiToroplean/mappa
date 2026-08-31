@@ -42,7 +42,6 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
 </header>
 
 <main>
-  <div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
   <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
 </main>
 
@@ -110,6 +109,11 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
     <input type="file" id="importFile" hidden>
   </div>
 </div>
+
+<!-- Three, two, one, over the chart. Outside main because it is centred on the
+     window rather than on the map area, and it covers nothing: by the time it
+     is up, the menu and its dimming are already gone. -->
+<div class="countdown" id="countdown" hidden><span id="countNum">3</span></div>
 
 <div class="overlay" id="intro">
   <div class="card menu">

@@ -28,8 +28,12 @@ __FONTS__
     --line:#3A2F20;      /* hairline rules, and the outline of quiet buttons */
     --hairline:rgba(242,233,216,.06);  /* fainter still: between board rows */
     --hover:rgba(242,233,216,.07);     /* a ghost button under the pointer */
-    --scrim:rgba(14,11,7,.93);         /* what an overlay puts the page behind */
-    --veil:rgba(58,42,20,.30);         /* the shading on the countdown's cover sheet */
+    /* What an overlay puts the page behind. Deliberately not opaque: the chart
+       stays visible under the menu and under the pause card, dimmed rather
+       than hidden. Hiding it was a way of stopping anyone studying it before
+       the clock ran, and that is not worth the game looking like two unrelated
+       screens — a paused run should still show you the run. */
+    --scrim:rgba(14,11,7,.93);
     /* No longer spent: every shadow in the game is cast by 15-light.js now.
        Kept because a palette is a vocabulary and this is still the answer to
        'what colour is a shadow here', which --castrgb is built from. */
@@ -255,7 +259,6 @@ __MARKS_DARK__
     --hairline:rgba(58,46,28,.11);
     --hover:rgba(58,46,28,.07);
     --scrim:rgba(222,209,183,.94);
-    --veil:rgba(74,58,32,.20);         /* the shading on the cover sheet */
     --shadow:rgba(92,72,42,.18);
     --shadowdeep:rgba(92,72,42,.30);
     --haze:rgba(250,244,231,.92);
@@ -1374,55 +1377,32 @@ __MARKS_LIGHT__
   .target.won{color:var(--foundline)}
   .val.won{color:var(--foundline)}
 
-  /* The chart is under its cover sheet until the run starts.
+  /* Three, two, one, over the chart itself.
 
-     This used to be a flat grey veil over the map — a UI scrim, the one thing
-     on screen that belonged to no room and had no light on it. It is a sheet of
-     the same paper as everything else now, laid over the chart and lit by the
-     same lamp, and at zero it is drawn off towards the light rather than faded
-     out. Which is also the honest reading of a countdown: the map is not dim,
-     it is covered, and covering it is what stops anyone studying the board
-     before the clock runs.
+     There was a sheet of parchment here: the chart was dimmed under the menu,
+     then covered by paper, then uncovered as the paper was drawn off towards
+     the light. Three surfaces to read in two seconds, and the middle one
+     arrived from nowhere. Now there is one thing to look at from the moment
+     Start is pressed — the map, with a number counting down on it. The menu
+     goes, its dimming goes with it, and nothing is covered at all.
 
-     The paper is opaque, so nothing shows through and there is nothing to
-     squint at. --veil is what its shading is made of. */
-  /* Inside main, so it covers the chart and only the chart. It used to be
-     fixed over the whole window, which took the header with it — and the header
-     is the one part of the board that has something to say during a countdown:
-     the mode you are about to play, the lives you have, the clock about to
-     start. Covering it hid the game's own furniture along with the map.
-
-     overflow:hidden on main is what lets the sheet be drawn off behind the
-     header rather than sliding across it. */
-  .countdown{position:absolute;inset:0;top:0;right:0;bottom:0;left:0;
+     No ground of its own, so nothing has to match anything: this is a number
+     in the middle of the window and that is all it is. */
+  .countdown{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;
     display:flex;align-items:center;justify-content:center;
-    pointer-events:none;z-index:6;overflow:hidden}
-  .countdown::before{content:"";position:absolute;inset:-2px;top:-2px;right:-2px;
-    bottom:-2px;left:-2px;
-    background-color:var(--paper);
-    background-image:
-      radial-gradient(ellipse 120% 95% at var(--lightfall),
-        rgba(255,246,220,.26), rgba(255,246,220,0) 58%),
-      linear-gradient(var(--shade), rgba(255,248,225,.10) 0%,
-        rgba(255,248,225,0) 30%, var(--veil) 100%),
-      var(--foxing), var(--parchment);
-    box-shadow:inset 0 0 0 1px var(--goldsoft)}
-  /* Drawn off the way a sheet is pulled: towards the light, and out of frame. */
-  .countdown.lifting::before{animation:uncover 620ms cubic-bezier(.5,0,.2,1) forwards}
-  /* Drawn up and out of the frame, the way a sheet is pulled off a chart
-     towards whoever is standing over it. Straight up rather than off a corner,
-     because main clips it and the header is directly above: it retracts behind
-     the board's own furniture instead of sliding over the map's edge. A little
-     rotation so it reads as paper being pulled rather than a panel sliding. */
-  @keyframes uncover{
-    to{transform:translate(6%, -112%) rotate(-3.5deg)}}
-  .countdown.lifting span{animation:tickout 260ms ease-in forwards}
+    pointer-events:none;z-index:6}
+  .countdown.clearing span{animation:tickout 260ms ease-in forwards}
   @keyframes tickout{to{opacity:0;transform:scale(1.35)}}
   .countdown[hidden]{display:none}
-  /* Ink on the cover sheet, not amber. Amber is what the game uses when it has
-     given the player something, and it is also barely there on parchment. */
+  /* Standing on the chart now rather than on a sheet, so it carries its own
+     ground with it: --haze is the value that exists for exactly this, lifting
+     text off the map behind it. Without it the number has to be legible over
+     tan land and over deep water at the same time, which no single colour is.
+     Not amber: amber is what the game uses when it has given the player
+     something. */
   .countdown span{position:relative;font-family:var(--figures);font-size:112px;
-    font-weight:600;color:var(--ink);
+    font-weight:600;color:var(--text);
+    text-shadow:0 0 10px var(--haze), 0 0 34px var(--haze), 0 2px 3px var(--haze);
     font-variant-numeric:lining-nums tabular-nums;animation:tickin .68s ease-out}
   @keyframes tickin{0%{transform:scale(1.5);opacity:0}30%{transform:scale(1);opacity:1}
     100%{transform:scale(.94);opacity:.88}}

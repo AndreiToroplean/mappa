@@ -128,19 +128,19 @@ function resetRun() {
    and calling that "All fifty" would be a lie the scoreboard then repeats. */
 const tally = () => (found === TOTAL ? GEO.all : `${found} of ${TOTAL}`);
 
-/* Three, two, one, and then the cover sheet is drawn off the chart.
+/* Three, two, one, over the chart itself.
 
-   The run starts when the sheet starts moving rather than when it has finished
-   moving. The clock and the first prompt belong to the moment the map becomes
-   readable, and holding them back for the length of an animation would be the
-   game taking six tenths of a second off the player for the sake of a flourish.
-   The sheet is not in hit testing, so nothing can be tapped through it early. */
-const UNCOVER_MS = 620;
+   The run starts as the last number fades rather than after it has gone. The
+   clock and the first prompt belong to the moment the map is live, and holding
+   them back for the length of an animation would be the game taking a quarter
+   of a second off the player for the sake of a flourish. The count is not in
+   hit testing, so nothing can be tapped through it early. */
+const TICKOUT_MS = 260;
 
 function countdown(done) {
   const box = el.countdown, num = el.countNum;
   let n = 3;
-  box.classList.remove('lifting');
+  box.classList.remove('clearing');
   box.hidden = false;
   const show = () => {
     num.textContent = n;
@@ -149,17 +149,20 @@ function countdown(done) {
     num.style.animation = '';
     if (n-- > 1) return setTimeout(show, 700);
     setTimeout(() => {
-      box.classList.add('lifting');
+      box.classList.add('clearing');
       done();
       setTimeout(() => {
         box.hidden = true;
-        box.classList.remove('lifting');
-      }, UNCOVER_MS);
+        box.classList.remove('clearing');
+      }, TICKOUT_MS);
     }, 700);
   };
   show();
 }
 
+/* resetRun() is what takes the menu away, and it takes the dimming with it —
+   so pressing Start leaves the chart lit, with a number on it, and there is
+   nothing between that and playing. */
 function beginRun() {
   resetRun();
   countdown(() => {

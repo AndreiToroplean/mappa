@@ -22,6 +22,7 @@ So there is one encoder here, it takes raw colours and quotes its own
 attributes, and it refuses to emit anything that shows either symptom. A build
 that would have produced a broken texture now stops instead.
 """
+import math
 import re
 import urllib.parse
 
@@ -157,23 +158,53 @@ def star(colour):
 
 
 def rose(colour, faint):
-    """A pocket compass: a cased rose, not a bare star.
+    """A pocket compass: a cased rose with a needle swung across it.
 
     The star alone read as a sparkle. What makes an instrument look like an
     instrument is the case around it, so this has a bezel with a hairline ruled
-    inside it, and a suspension knob at the top and its mirror at the bottom —
-    mirrored because the same drawing is used on both sides of Start and an
-    asymmetric one would point two different ways.
+    inside it, and a suspension knob at the top and its mirror at the bottom.
 
     Drawn rather than borrowed. There are freely licensed compass roses about,
     but every one of them is a file to attribute, a licence to carry, and a
     shape somebody else chose the weight of; this is nine primitives and it
     inherits the brass it is drawn in.
 
+    Two things carry the reading, and they have to stay distinguishable. The
+    printed dial is the four cardinal points, and they are thin: they were fat
+    diamonds, and at the size this is actually drawn — 26px on the Start button
+    — four fat diamonds are a blob with a ring round it. The needle is the
+    moving part, laid over the dial on the diagonal, and it is the widest thing
+    here because it is the thing you are meant to see.
+
+    The four ordinal points are gone. They sat on the diagonals, which is where
+    the needle now is, and the needle over them read as one thick arm rather
+    than as an instrument with a needle on it. Losing them is also what lets
+    everything else be thin: the diagonal is the needle's, the axes are the
+    dial's, and nothing is competing.
+
+    The needle points down and to the left, and its far half is faint — a real
+    needle is painted on one end only, and which end is which is the whole
+    information a needle carries. Both roses on the Start button are this same
+    drawing, so both point the same way; they used to be a drawing with nothing
+    to point, which is why symmetry mattered then and does not now.
+
     Square, 48 by 48, with the case at r=17 and the knobs standing in the
     margin that leaves — so the whole thing still fits a square background-size
     and stays centred whatever it is scaled to.
     """
+    # The needle, as the lit half and the faint half of one lozenge about the
+    # pivot. Built from an angle rather than typed as coordinates so the
+    # direction is one number to change: 135 degrees is down and to the left,
+    # measured the way SVG measures, with y increasing downwards.
+    deg, reach, half = 135, 16.0, 2.4
+    u = (math.cos(math.radians(deg)), math.sin(math.radians(deg)))
+    p = (-u[1], u[0])
+    at = lambda k, w: (f'{24 + k * u[0] + w * p[0]:.1f} '
+                       f'{24 + k * u[1] + w * p[1]:.1f}')
+    needle = (f"<path fill='{faint}' d='M{at(-reach, 0)} "
+              f"{at(0, half)} {at(0, -half)}Z'/>"
+              f"<path fill='{colour}' d='M{at(reach, 0)} "
+              f"{at(0, half)} {at(0, -half)}Z'/>")
     return svg(48, 48,
         # the two knobs, top and bottom, each a stem and a ring
         f"<g fill='{colour}'>"
@@ -186,20 +217,16 @@ def rose(colour, faint):
         " stroke-width='2'/>"
         f"<circle cx='24' cy='24' r='13.4' fill='none' stroke='{faint}'"
         " stroke-width='1'/>"
-        # the four cardinal points, long
+        # the printed dial: four cardinal points, thin
         f"<g fill='{colour}'>"
-        "<path d='M24 8.4 26 22 24 24 22 22Z'/>"
-        "<path d='M24 39.6 22 26 24 24 26 26Z'/>"
-        "<path d='M8.4 24 22 22 24 24 22 26Z'/>"
-        "<path d='M39.6 24 26 26 24 24 26 22Z'/></g>"
-        # and the four ordinals, short
-        f"<g fill='{faint}'>"
-        "<path d='M33 15 25.7 22.3 24 24 25.7 19.7Z'/>"
-        "<path d='M15 33 22.3 25.7 24 24 22.3 28.3Z'/>"
-        "<path d='M33 33 25.7 25.7 24 24 28.3 25.7Z'/>"
-        "<path d='M15 15 22.3 22.3 24 24 19.7 22.3Z'/></g>"
-        # the pivot
-        f"<circle cx='24' cy='24' r='2' fill='none' stroke='{colour}'"
+        "<path d='M24 8.4 25 22 24 24 23 22Z'/>"
+        "<path d='M24 39.6 23 26 24 24 25 26Z'/>"
+        "<path d='M8.4 24 22 23 24 24 22 25Z'/>"
+        "<path d='M39.6 24 26 25 24 24 26 23Z'/></g>"
+        # and the needle over it
+        + needle
+        # the pivot, drawn last so the needle is mounted on it
+        + f"<circle cx='24' cy='24' r='2' fill='none' stroke='{colour}'"
         " stroke-width='1.2'/>")
 
 

@@ -210,16 +210,52 @@ def geometry_harness(regions, cases, dist_cases, anchor_cases, cap, dots=(),
         """
 const BY_NAME = {};
 for (const s of REGIONS) BY_NAME[s.name] = s;
+/* Parsed once, with a bounding box each.
+
+   polyIn is the harness's stand-in for shapes[name].isPointInFill, which in a
+   browser is native and free. It used to split and Number() the whole of a
+   region's path on every call — and stateUnder asks it once per region, so a
+   single simulated tap re-parsed every coordinate on the map. On France that is
+   101 regions of path data per tap, several thousand taps per run: it was 15 of
+   the 17 seconds this file spent on fr, all of it re-reading strings that had
+   not changed.
+
+   Same arithmetic on the same numbers, done to numbers that are already
+   numbers. The box is an exact rejection, not an approximation — a point
+   outside a region's bounds is outside every ring inside those bounds — so the
+   crossing test still decides every case it used to decide. */
+const POLY = {};
+for (const s of REGIONS) {
+  const rings = [];
+  let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+  for (const part of s.d.split('M')) {
+    if (!part) continue;
+    const pairs = part.replace(/Z$/, '').split('L');
+    const a = new Float64Array(pairs.length * 2);
+    for (let i = 0; i < pairs.length; i++) {
+      const c = pairs[i].split(',');
+      const px = +c[0], py = +c[1];
+      a[i * 2] = px; a[i * 2 + 1] = py;
+      if (px < minx) minx = px;
+      if (px > maxx) maxx = px;
+      if (py < miny) miny = py;
+      if (py > maxy) maxy = py;
+    }
+    rings.push(a);
+  }
+  POLY[s.name] = { rings, minx, miny, maxx, maxy };
+}
 function polyIn(name, x, y){
-  const s = BY_NAME[name];
-  if (!s) return false;
+  const p = POLY[name];
+  if (!p) return false;
+  if (x < p.minx || x > p.maxx || y < p.miny || y > p.maxy) return false;
   let c = false;
-  for (const part of s.d.split('M')){
-    if(!part) continue;
-    const r = part.replace(/Z$/,'').split('L').map(q => q.split(',').map(Number));
-    for (let i = 0; i < r.length; i++){
-      const [ax,ay] = r[i], [bx,by] = r[(i+1) % r.length];
-      if ((ay > y) !== (by > y) && x < (bx-ax)*(y-ay)/(by-ay)+ax) c = !c;
+  for (const r of p.rings){
+    const n = r.length / 2;
+    for (let i = 0; i < n; i++){
+      const j = (i + 1) % n;
+      const ax = r[i * 2], ay = r[i * 2 + 1], bx = r[j * 2], by = r[j * 2 + 1];
+      if ((ay > y) !== (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax) c = !c;
     }
   }
   return c;

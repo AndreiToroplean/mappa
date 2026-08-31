@@ -1390,7 +1390,8 @@ else:
 
 # Every face the build inlines has to exist, or make.py dies with a traceback
 # naming a path and nothing about why.
-faces = ['cinzel-400', 'garamond-400', 'garamond-600', 'garamond-400i', 'pinyon-400']
+faces = ['cinzel-400', 'cinzel-600', 'garamond-400', 'garamond-600',
+         'garamond-400i', 'pinyon-400']
 missing = [f for f in faces if not (ROOT / 'data' / 'fonts' / f'{f}.woff2').exists()]
 lic = list((ROOT / 'data' / 'fonts').glob('LICENSE-*'))
 if missing:

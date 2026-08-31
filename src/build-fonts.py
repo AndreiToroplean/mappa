@@ -97,8 +97,14 @@ FAMILIES = [
     # Display capitals, cut from the Trajan tradition. Used for the wordmark and
     # the small letterspaced labels, which is all it is good for: Cinzel's
     # lowercase are small capitals, so it can only ever set headings.
+    # Two cuts. The small letterspaced labels — MODE, SCORING, BEST RUNS, FIND
+    # THIS DEPARTEMENT — are set in the heavier one: at 11px with .2em of
+    # tracking, Cinzel at 400 is thin enough that a label reads as a rule with
+    # words on it rather than as a heading. A real cut rather than font-weight
+    # on a single face, which would have the browser smear the 400 and is
+    # exactly the sort of thing that looks fine until it is next to real type.
     ('Mappa Cinzel', 'Cinzel[wght].ttf',
-     [(400, 'cinzel-400')], HEADINGS),
+     [(400, 'cinzel-400'), (600, 'cinzel-600')], HEADINGS),
     # The book face: everything that is read rather than glanced at.
     ('Mappa Garamond', 'EBGaramond[wght].ttf',
      [(400, 'garamond-400'), (600, 'garamond-600')], RANGES),

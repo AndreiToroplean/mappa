@@ -105,11 +105,40 @@ def polylabel(rings, precision=0.4):
 
 
 def path_data(rings, places=1):
-    """One SVG path string for a set of rings."""
+    """One SVG path string for a set of rings, at the precision it is read at.
+
+    Rounding is where a ring can stop being a shape. France and Europe are
+    written at whole units, and an islet smaller than a unit across arrives here
+    as a real ring and leaves as the same point five times over — Aisne carried
+    (525,185) five times, which is not land, has no area, and draws nothing. It
+    is checked after rounding rather than before because rounding is the step
+    that destroys it: the ring is a shape right up until it is written down.
+
+    Dropped rather than kept and rounded up to something visible. It is already
+    invisible — a closed path with no area paints no fill and, with a butt cap,
+    no stroke either — so this removes bytes and nothing else. Widening it into
+    a speck would be inventing a coastline the source does not have.
+
+    A ring is left explicitly closed, with its first point written again at the
+    end, which is not decoration: parseRings in 02-map.js strips the Z and does
+    not close anything, and the edge walk in 04-geometry.js runs to i+3 < len
+    with no wraparound. Dropping that last point would silently take one edge
+    off every ring in the game, and the edge it would take is the one the
+    outline is measured against for distance scoring.
+    """
     fmt = '{:.' + str(places) + 'f}'
-    return ''.join(
-        'M' + 'L'.join(fmt.format(x) + ',' + fmt.format(y) for x, y in r) + 'Z'
-        for r in rings)
+    out = []
+    for r in rings:
+        pts = [(round(x, places), round(y, places)) for x, y in r]
+        # A point repeated carries no shape, however many times it is repeated.
+        kept = [p for i, p in enumerate(pts) if i == 0 or p != pts[i - 1]]
+        if kept and kept[0] != kept[-1]:
+            kept.append(kept[0])
+        if len(kept) < 4 or area(kept) == 0:
+            continue
+        out.append('M' + 'L'.join(fmt.format(x) + ',' + fmt.format(y)
+                                  for x, y in kept) + 'Z')
+    return ''.join(out)
 
 
 def region(name, polys, panel=0, min_area=1.2, tol=0.45, places=1, dot=0.0):

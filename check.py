@@ -501,6 +501,53 @@ MARKS = {
     'eu': ['Andorra', 'Liechtenstein', 'Malta', 'Monaco', 'San Marino',
            'Vatican City'],
 }
+print('rings')
+# Two things every emitted ring has to be, both of which rounding can take away
+# and neither of which shows up as a broken picture.
+#
+# A ring must enclose area. An islet smaller than a written unit across rounds
+# to the same point repeated, which is not land: no fill, and with a butt cap no
+# stroke either. France carried nine of them, Aisne's being (525,185) five times.
+# They drew nothing, so nothing said so.
+#
+# And a ring must be explicitly closed, first point written again at the end.
+# parseRings in 02-map.js strips the Z and closes nothing, and the edge walk in
+# 04-geometry.js runs to i+3 < len with no wraparound — so an unclosed ring
+# quietly loses one edge, and it loses it from the outline that distance scoring
+# measures against. A hole in a hit test is not visible on a map.
+bad_rings = 0
+for geo in GEOS:
+    d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
+    flat = collapsed = unclosed = total = 0
+    for r in d['regions']:
+        if not r.get('d'):
+            continue
+        for part in r['d'].split('M'):
+            if not part:
+                continue
+            pts = [tuple(map(float, q.split(',')))
+                   for q in part.rstrip('Z').split('L')]
+            total += 1
+            if len(pts) < 4:
+                collapsed += 1
+            elif abs(sum(pts[i][0] * pts[i + 1][1] - pts[i + 1][0] * pts[i][1]
+                         for i in range(len(pts) - 1))) / 2 == 0:
+                flat += 1
+            if pts[0] != pts[-1]:
+                unclosed += 1
+    if collapsed or flat:
+        print(f'  FAIL {geo}: {collapsed} rings too short to be a shape, '
+              f'{flat} enclosing no area')
+        bad_rings += 1
+    if unclosed:
+        print(f'  FAIL {geo}: {unclosed} rings not closed, so each loses an '
+              f'edge from the geometry that scores a miss')
+        bad_rings += 1
+    if not (collapsed or flat or unclosed):
+        print(f'  {geo}: all {total} rings closed and enclosing area')
+if bad_rings:
+    fails += bad_rings
+
 print('marks')
 bad_marks = 0
 for geo in GEOS:

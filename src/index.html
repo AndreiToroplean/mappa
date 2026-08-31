@@ -80,11 +80,16 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
   </div>
 </div>
 
-<div class="flash" id="flash" hidden><span></span></div>
-<!-- The region being asked for, thrown into the middle for as long as it takes
-     to read. The header still carries it permanently; this is the copy you can
-     see without looking away from the map. -->
-<div class="cue" id="cue" hidden><b class="eyebrow"></b><span></span></div>
+<!-- What the middle of the map has to say, as one thing. Either line may be
+     absent: a wrong tap with nothing new to find yet, a new region with no
+     mistake behind it, or both at once, which is what a wrong tap in distance
+     scoring produces. One element, one animation, one lifetime — the spacing
+     between the lines is then a property of the pair rather than something two
+     independent boxes have to be talked into agreeing about. -->
+<div class="splash" id="splash" hidden>
+  <div class="line wrong" hidden><span></span></div>
+  <div class="line find" hidden><b class="eyebrow">Find</b><span></span></div>
+</div>
 
 <div class="tip" id="tip" hidden><span></span></div>
 

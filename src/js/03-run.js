@@ -102,7 +102,7 @@ function resetRun() {
   document.body.classList.toggle('practice', MODE.id === 'practice');
   REGION_NAMES.forEach(name => setStatus(name, 'open'));
   drawCounter();
-  clearFlash();
+  clearSplash();
   clearNudge();
   resetClues(true);
   document.body.classList.remove('won');
@@ -209,10 +209,13 @@ function tick() {
   if (running) raf = requestAnimationFrame(tick);
 }
 
-function next() {
+/* `wrong` is passed by the caller that has just had one, so the mistake and the
+   region that replaces it arrive together as one announcement rather than as two
+   that race. Nothing else has anything to report, and passes nothing. */
+function next(wrong) {
   current = queue.pop();
   el.target.innerHTML = current + '<span class="caret"></span>';
-  cueTarget(current);     // and in the middle, where the eye already is
+  splash({ wrong: wrong || null, find: current });
   resetClues(false);      // the ladder starts again for each region
 }
 
@@ -223,7 +226,7 @@ function guess(name, at) {
   clearMissMarks();      // whatever the last miss drew has had its moment
 
   if (name === current) {
-    clearFlash();     // a red name left over from a miss would read as wrong
+    clearSplash();    // a red name left over from a miss would read as wrong
     clearNudge();
     resetClues(false);
     // Right is simply nothing off, so distance paints it on the same scale as
@@ -238,12 +241,10 @@ function guess(name, at) {
     next();
   } else if (SCORING.retry) {
     setStatus(name, 'missed');
-    flashMiss(name);
-    /* The region wanted has not changed — this mode asks again until it is
-       found — so the cue goes back up rather than being left faded. It is also
-       the answer to "what was I looking for", which is exactly what a player
-       who has just guessed wrong is asking. */
-    cueTarget(current);
+    /* Both lines: what was tapped, and — because this mode asks again until the
+       region is found — the same region still wanted. "What was I looking for"
+       is exactly what someone who has just guessed wrong is asking. */
+    splash({ wrong: name, find: current });
     if (MODE.clues) missed(name);   // opens the arrow rung; drawn only on request
     errors += 1;
     drawCounter();
@@ -291,7 +292,6 @@ function missByDistance(name, at) {
   const charged = Math.round(owed);
   const cost_ = km === null ? `A different landmass (\u2212${charged} pts)`
                             : `Off by ${fmtKm(km)} (\u2212${charged} pts)`;
-  flashMiss(name);
   paintScore(target, charged);      // consumed: it will not be asked again
   /* Amber first, then the colour it cost. Late in a run most of the map is
      already coloured and the region that just resolved is easy to lose among
@@ -310,7 +310,7 @@ function missByDistance(name, at) {
 
   if (busted()) return finish(false, name);
   if (queue.length === 0) return finish(true, target);
-  next();
+  next(name);            // the miss and the next region, in one breath
 }
 
 /* Rounded the way a person would say it: no false precision at 3,000km, no

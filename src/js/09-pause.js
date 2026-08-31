@@ -25,7 +25,7 @@ function pauseRun() {
   if (counting) clearTimeout(countTimer);
   pausedAt = Date.now();
   cancelAnimationFrame(raf);
-  clearFlash();
+  clearSplash();
   document.body.classList.add('paused');
   el.paused.hidden = false;
 }
@@ -39,6 +39,10 @@ function resumeRun() {
      and no count worth finishing. Start it. */
   if (countFinish) return countFinish();
   t0 += Date.now() - pausedAt;      // give back exactly the time that was owed
+  /* Coming back from a pause, the region being asked for is the one thing you
+     have certainly lost track of — it was named before the interruption and
+     the middle of the map has been empty since. Say it again. */
+  splash({ find: current });
   tick();
 }
 

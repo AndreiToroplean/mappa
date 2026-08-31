@@ -36,7 +36,7 @@ function factsHTML(name) {
 function inspect(name) {
   if (!reviewing || !name) return;
   clearMissMarks();          // the last tap's outline has had its moment
-  flashName(name, true);
+  splash({ wrong: name, help: true });
   markPick(name);
   ticker.innerHTML = factsHTML(name);
 }
@@ -45,7 +45,7 @@ function enterReview() {
   reviewing = true;
   document.body.classList.add('reviewing');
   overlay.hidden = true;
-  clearFlash();
+  clearSplash();
   ticker.innerHTML = `Tap a ${GEO.noun} to name it, or press and hold to browse.`;
 }
 
@@ -58,7 +58,7 @@ function leaveReview() {
   reviewing = false;
   document.body.classList.remove('reviewing');
   clearMissMarks();
-  clearFlash();
+  clearSplash();
   overlay.hidden = false;
 }
 

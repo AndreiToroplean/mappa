@@ -132,82 +132,65 @@ function celebrate(title) {
 }
 
 
-/* ---- naming the mistake -------------------------------------------------
-   A wrong guess used to be reported only in the ticker, at 11px along the
-   bottom edge. Nobody reads that mid-run, and someone brute-forcing their way
-   through an unfamiliar map reads it least of all — which wastes the one moment
-   they are most likely to remember something, having just been surprised.
+/* ---- what the middle of the map says ------------------------------------
+   Two things want the middle, and they want it at the same moment.
 
-   So the name of whatever they hit goes up big, in red, over the middle of the
-   map. It is decoration: pointer-events:none, and it never delays a turn. */
-const flashBox = $('flash');
-let flashTimer = null;
+   One is a wrong tap. That used to be reported only in the ticker, at 11px
+   along the bottom edge, which nobody reads mid-run — and someone brute-forcing
+   an unfamiliar map reads it least of all, which wastes the one moment they are
+   most likely to remember something, having just been surprised.
 
-/* Two things put a name up now: a miss, in red, and a review tap, in amber —
-   naming a region once the run is over is help rather than a verdict, and amber
-   is the colour of help everywhere else in the game. Same animation either way;
-   only the colour differs, because only the reason does. */
-function flashName(name, help) {
-  if (!flashBox) return;
-  const span = flashBox.firstElementChild;
-  clearTimeout(flashTimer);
-  flashBox.classList.toggle('help', !!help);
-  // restart the animation from the top, in case this is a second miss in a row
-  flashBox.hidden = true;
-  span.style.animation = 'none';
-  void span.offsetWidth;
-  span.style.animation = '';
-  /* Only ever the name, in every mode. The cost went here for a while and it
-     made the same event report itself twice in two places at once; the ticker
-     has room to say it properly and this does not. */
-  span.textContent = name;
-  flashBox.hidden = false;
-  flashTimer = setTimeout(() => { flashBox.hidden = true; }, MISS_MS);
+   The other is the region being asked for. That lives in the top left corner of
+   the header, which is nowhere near where anyone is looking: playing fast the
+   eye is on the map, and a name in a corner is a name you have to stop and go
+   and read.
+
+   So there is one splash and it takes both, either, or neither. In distance
+   scoring a wrong tap names what was hit and moves on in the same breath, and
+   that is one event — it should be one thing arriving on screen, animated once,
+   with the gap between the two lines set here rather than negotiated between
+   two boxes that each think they own the centre.
+
+   They stay separable because they do not look alike: the mistake is deep red
+   ink with a pale halo, the same pair the wrongly tapped region wears on the map
+   itself, and the region to find is the page's own colour and says what it is.
+   A name alone in the middle could be either. Same face and size for both,
+   though — they are two lines of one announcement, not two announcements. */
+const splashBox = $('splash');
+const splashWrong = splashBox && splashBox.querySelector('.wrong');
+const splashFind = splashBox && splashBox.querySelector('.find');
+let splashTimer = null;
+const SPLASH_MS = 1600;
+
+/* `wrong` is what was tapped and should not have been; `find` is what to look
+   for now; `help` recolours the first from a verdict into an offer, which is
+   what naming a region means once the run is over. Everything is optional, and
+   passing nothing is how the middle is left alone. */
+function splash({ wrong = null, find = null, help = false } = {}) {
+  if (!splashBox) return;
+  clearTimeout(splashTimer);
+  splashBox.classList.toggle('help', !!help);
+  splashWrong.hidden = !wrong;
+  splashFind.hidden = !find;
+  if (wrong) splashWrong.firstElementChild.textContent = wrong;
+  if (find) splashFind.lastElementChild.textContent = find;
+  if (!wrong && !find) return clearSplash();
+  /* Restart from the top, in case this is a second miss in a row or a region
+     named twice. On the box rather than on the lines: one animation for the
+     pair is the whole point, and it is also why the old pair blinked — they ran
+     to different lengths, so the second one dimmed and sat there at half
+     strength while the first was still going. */
+  splashBox.hidden = true;
+  splashBox.style.animation = 'none';
+  void splashBox.offsetWidth;
+  splashBox.style.animation = '';
+  splashBox.hidden = false;
+  splashTimer = setTimeout(() => { splashBox.hidden = true; }, SPLASH_MS);
 }
 
-const flashMiss = name => flashName(name, false);
-
-/* ---- naming what to find -------------------------------------------------
-   The region being asked for is named in the top left corner of the header,
-   which is nowhere near where anyone is looking: playing fast, the eye is on
-   the map, and a name in a corner is a name you have to stop and go and read.
-
-   So it is also thrown into the middle, the way a miss is, and fades. Long
-   enough to read without looking away, gone before it is in the way of the
-   shape you are about to tap.
-
-   It shares the middle with the miss and has to stay distinguishable from it.
-   Three things separate them: the miss is deep red ink and this is the page's
-   own colour, the miss sits above the centre line and this sits on it, and this
-   one says what it is — FIND — in the same small letterspaced label the header
-   uses. A name on its own in the middle of the screen could be either. */
-const cueBox = $('cue');
-let cueTimer = null;
-const CUE_MS = 1400;
-
-function cueTarget(name, noun) {
-  if (!cueBox) return;
-  const span = cueBox.lastElementChild;
-  clearTimeout(cueTimer);
-  cueBox.firstElementChild.textContent = 'Find';
-  cueBox.hidden = true;
-  span.style.animation = 'none';
-  void span.offsetWidth;
-  span.style.animation = '';
-  span.textContent = name;
-  cueBox.hidden = false;
-  cueTimer = setTimeout(() => { cueBox.hidden = true; }, CUE_MS);
-}
-
-function clearCue() {
-  clearTimeout(cueTimer);
-  if (cueBox) cueBox.hidden = true;
-}
-
-function clearFlash() {
-  clearTimeout(flashTimer);
-  if (flashBox) flashBox.hidden = true;
-  clearCue();
+function clearSplash() {
+  clearTimeout(splashTimer);
+  if (splashBox) splashBox.hidden = true;
 }
 
 

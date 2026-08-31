@@ -474,11 +474,10 @@ __MARKS_LIGHT__
   #progress{min-width:72px}
   #clock{min-width:94px}
   /* Every small letterspaced label in the game: the header's prompt, and MODE
-     and SCORING on the menu. 600 rather than 400 — see the Cinzel cuts in
-     src/build-fonts.py for why the weight is a face and not a smear. */
+     and SCORING on the menu. No weight asked for — the display face ships as
+     one cut and that cut is the heavy one. See FAMILIES in src/build-fonts.py. */
   .eyebrow{
     font-family:var(--display);font-size:11px;letter-spacing:.20em;
-    font-weight:600;
     text-transform:uppercase;color:var(--muted);margin-bottom:4px;
   }
   .caret{display:inline-block;width:9px;height:26px;background:var(--amber);
@@ -619,7 +618,7 @@ __MARKS_LIGHT__
      grouping outline all use it, so it never has to be learned twice. */
   path.group{fill:none;stroke:var(--amber);stroke-width:2.4;stroke-linejoin:round;
     opacity:.95;pointer-events:none}
-  text.grouplabel{font-family:var(--display);font-size:12px;font-weight:600;
+  text.grouplabel{font-family:var(--display);font-size:12px;
     fill:var(--amber);text-anchor:middle;pointer-events:none;
     paint-order:stroke;stroke:var(--halo);stroke-width:3.5px}
   .hint{color:var(--amber);font-weight:600}
@@ -816,7 +815,6 @@ __MARKS_LIGHT__
       linear-gradient(90deg, rgba(138,109,46,0), var(--goldsoft) 22%,
         var(--goldsoft) 78%, rgba(138,109,46,0)) center/100% 1px no-repeat}
   .board h3{font-family:var(--display);font-size:11px;letter-spacing:.20em;
-    font-weight:600;
     text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:400}
   .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
     font-family:var(--figures);font-size:15px;padding:7px 0;

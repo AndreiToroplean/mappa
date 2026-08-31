@@ -73,8 +73,11 @@ def faces():
     """
     cuts = [
         # file, family, weight, style
-        ('cinzel-400',    'Mappa Cinzel',   400, 'normal'),
-        ('cinzel-600',    'Mappa Cinzel',   600, 'normal'),
+        # One Cinzel, declared across the range rather than at the weight it
+        # was cut at. There is nothing else for a request to match, and a face
+        # declared at 600 alone would have the browser synthesise anything that
+        # asked for less — which is a smear of an already-heavy face.
+        ('cinzel-600',    'Mappa Cinzel',   '400 700', 'normal'),
         ('garamond-400',  'Mappa Garamond', 400, 'normal'),
         ('garamond-600',  'Mappa Garamond', 600, 'normal'),
         ('garamond-400i', 'Mappa Garamond', 400, 'italic'),

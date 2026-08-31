@@ -416,16 +416,56 @@ LAYOUT = map_src[map_src.index('const SHORT ='):map_src.index('/* ---- composing
 DIAM = map_src[map_src.index('function hull('):map_src.index('function measurePanels')]
 
 
+# Every layout this run has already asked for. chooseLayout is a pure function
+# of the aspect and the panels, so the same question has the same answer, and
+# asking it again costs a node process — which is 34ms of launching node and
+# under a millisecond of work. Thirty of those was a second of the harness's
+# runtime spent on nothing at all.
+#
+# Keyed on the arguments rather than memoised with lru_cache because `panels` is
+# a list of dicts and unhashable; the JSON is the key that already exists.
+_layouts = {}
+
+
 def layout_for(panels, aspect):
     """Run the game's own layout code. Not reimplemented here on purpose: a
     second copy would be a second thing to keep in step."""
+    key = json.dumps([aspect, panels], sort_keys=True)
+    if key in _layouts:
+        return _layouts[key]
     s = (LAYOUT + '\nconsole.log(JSON.stringify(chooseLayout('
          + repr(aspect) + ', ' + json.dumps(panels) + ')));')
     pathlib.Path('/tmp/fifty-layout.js').write_text(s)
     r = subprocess.run(['node', '/tmp/fifty-layout.js'], capture_output=True, text=True)
     if r.returncode:
         raise SystemExit(r.stderr)
-    return json.loads(r.stdout)
+    _layouts[key] = json.loads(r.stdout)
+    return _layouts[key]
+
+
+def warm_layouts(requests):
+    """Answer many layout questions in one node process, into the cache above.
+
+    layout_for is called once per geography per aspect, and each call was its
+    own node: 34ms of launching an interpreter for under a millisecond of
+    arithmetic, twenty-seven times. chooseLayout is pure, so they can all be
+    asked at once and the answers put where the individual calls will find
+    them. Nothing else changes — the call sites still ask one at a time.
+    """
+    todo = [(a, p) for a, p in requests
+            if json.dumps([a, p], sort_keys=True) not in _layouts]
+    if not todo:
+        return
+    s = (LAYOUT + '\nconst OUT = '
+         + json.dumps([{'aspect': a, 'panels': p} for a, p in todo])
+         + '.map(q => chooseLayout(q.aspect, q.panels));'
+         + '\nconsole.log(JSON.stringify(OUT));')
+    pathlib.Path('/tmp/fifty-layouts.js').write_text(s)
+    r = subprocess.run(['node', '/tmp/fifty-layouts.js'], capture_output=True, text=True)
+    if r.returncode:
+        raise SystemExit(r.stderr)
+    for (a, p), got in zip(todo, json.loads(r.stdout)):
+        _layouts[json.dumps([a, p], sort_keys=True)] = got
 
 
 def composed(d, aspect):
@@ -467,9 +507,15 @@ def composed(d, aspect):
 # is invisible in numbers unless something checks for it.
 print('layout invariants')
 bad = 0
+ASPECTS = (0.35, 0.5, 0.603, 0.8, 1.0, 1.3, 1.878, 3.1, 5.0)
+# Every layout the rest of the file will ask for, asked once, in one node.
+# 0.603 is the portrait phone the resolver cases are composed for further down,
+# so it is in the batch too and that call is already answered when it arrives.
+warm_layouts([(a, json.loads((ROOT / 'data' / f'{g}.json').read_text())['panels'])
+              for g in GEOS for a in set(ASPECTS) | {0.603}])
 for geo in GEOS:
     d = json.loads((ROOT / 'data' / f'{geo}.json').read_text())
-    for aspect in (0.35, 0.5, 0.603, 0.8, 1.0, 1.3, 1.878, 3.1, 5.0):
+    for aspect in ASPECTS:
         L, regs = composed(d, aspect)
         xs = []; ys = []
         for r in regs:

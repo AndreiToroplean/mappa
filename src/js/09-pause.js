@@ -1,17 +1,28 @@
 
 /* ---- pausing --------------------------------------------------------------
-   The clock stops and the map is hidden. Hiding it is the whole point: a
-   stopped clock over a visible map is just unlimited thinking time, which would
-   quietly make every leaderboard entry meaningless.
+   The clock stops. The map stays up: the pause card is the same construction as
+   the menu — a card on a dimming layer with the whole board underneath it — and
+   a paused run that shows you no run is a different screen rather than the same
+   one held still.
 
    The clock is derived from t0 rather than accumulated, so resuming only has to
-   push t0 forward by however long the pause lasted. */
+   push t0 forward by however long the pause lasted.
+
+   A count can be paused too, which is worth saying because it is the one case
+   where resuming does not resume. Wanting to stop before the first prompt is a
+   real thing to want — you pressed Start and then the phone rang — but being
+   counted at a second time is not what anyone is asking for, so the rest of the
+   count is dropped and the run simply begins. */
 let paused = false;
 let pausedAt = 0;
 
 function pauseRun() {
-  if (!running || paused) return;
+  const counting = document.body.classList.contains('counting');
+  if ((!running && !counting) || paused) return;
   paused = true;
+  /* Hold the count where it is. countFinish stays set, which is also how
+     resumeRun() knows this was a pause during a count rather than during play. */
+  if (counting) clearTimeout(countTimer);
   pausedAt = Date.now();
   cancelAnimationFrame(raf);
   clearFlash();
@@ -21,10 +32,13 @@ function pauseRun() {
 
 function resumeRun() {
   if (!paused) return;
-  t0 += Date.now() - pausedAt;      // give back exactly the time that was owed
   paused = false;
   document.body.classList.remove('paused');
   el.paused.hidden = true;
+  /* Paused before the run had started: there is no clock to give time back to
+     and no count worth finishing. Start it. */
+  if (countFinish) return countFinish();
+  t0 += Date.now() - pausedAt;      // give back exactly the time that was owed
   tick();
 }
 
@@ -38,6 +52,9 @@ function leavePause() {
 
 function quitToMenu() {
   leavePause();
+  /* A count in flight would otherwise fire into the menu and start a run
+     nobody asked for. */
+  cancelCount();
   running = false;
   cancelAnimationFrame(raf);
   document.body.classList.remove('playing');

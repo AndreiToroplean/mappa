@@ -137,35 +137,65 @@ const tally = () => (found === TOTAL ? GEO.all : `${found} of ${TOTAL}`);
    hit testing, so nothing can be tapped through it early. */
 const TICKOUT_MS = 260;
 
+/* The pending step of a count, and the way to cut it short. A count is a chain
+   of timeouts rather than one animation, so pausing has to hold the chain and
+   resuming has to be able to abandon it: the run is starting either way, and
+   nobody who pressed pause during a countdown wants to be counted at again. */
+let countTimer = null;
+let countFinish = null;
+
 function countdown(done) {
   const box = el.countdown, num = el.countNum;
   let n = 3;
   box.classList.remove('clearing');
   box.hidden = false;
+  /* Whatever is left of the count, dropped, and the run started. Called at
+     zero in the ordinary way and by resumeRun() when a count was paused. */
+  countFinish = () => {
+    clearTimeout(countTimer);
+    countTimer = null;
+    countFinish = null;
+    box.classList.add('clearing');
+    done();
+    setTimeout(() => {
+      box.hidden = true;
+      box.classList.remove('clearing');
+    }, TICKOUT_MS);
+  };
   const show = () => {
     num.textContent = n;
     num.style.animation = 'none';
     void num.offsetWidth;
     num.style.animation = '';
-    if (n-- > 1) return setTimeout(show, 700);
-    setTimeout(() => {
-      box.classList.add('clearing');
-      done();
-      setTimeout(() => {
-        box.hidden = true;
-        box.classList.remove('clearing');
-      }, TICKOUT_MS);
-    }, 700);
+    countTimer = setTimeout(n-- > 1 ? show : countFinish, 700);
   };
   show();
 }
 
+/* Abandon a count without starting anything: the way out, as against
+   countFinish(), which is the way through. */
+function cancelCount() {
+  clearTimeout(countTimer);
+  countTimer = null;
+  countFinish = null;
+  document.body.classList.remove('counting');
+  el.countdown.hidden = true;
+  el.countdown.classList.remove('clearing');
+}
+
 /* resetRun() is what takes the menu away, and it takes the dimming with it —
    so pressing Start leaves the chart lit, with a number on it, and there is
-   nothing between that and playing. */
+   nothing between that and playing.
+
+   body.counting is on for the length of the count, and its only job is to put
+   the pause button in the header from the first frame. It used to arrive with
+   body.playing, which moved every figure in the header sideways at exactly the
+   moment the player was looking at them. */
 function beginRun() {
   resetRun();
+  document.body.classList.add('counting');
   countdown(() => {
+    document.body.classList.remove('counting');
     running = true;
     document.body.classList.add('playing');
     t0 = Date.now();

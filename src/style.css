@@ -1233,10 +1233,47 @@ __MARKS_LIGHT__
      reads mid-run — least of all while tapping through several wrong guesses.
      Below the overlay's z-index so the end-of-run card covers it, and never in
      hit testing, so it cannot swallow the next tap. */
+  /* Above the centre line, not on it: the region being asked for is thrown
+     into the middle too, and the two can be up at once. The padding is what
+     moves it — the box still centres its content, on a box that is shorter at
+     the bottom by twice the offset. */
   .flash{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:9;
     display:flex;align-items:center;justify-content:center;
-    pointer-events:none;padding:0 24px}
+    pointer-events:none;padding:0 24px 140px}
   .flash[hidden]{display:none}
+
+  /* The region to find, in the middle, where the eye already is.
+
+     It shares the middle with the miss above it and has to stay separable from
+     it at a glance: that one is deep red ink and this is the page's own colour,
+     that one sits above the centre line and this on it, and this one says what
+     it is. A name alone in the middle of the screen could be either.
+
+     Set in the book face, not the display one. The header sets it in the book
+     face and this is the same sentence said louder, so it is the same voice.
+     --haze behind it for the same reason the countdown has it: this stands on
+     tan land and on deep water and no single colour is legible on both. */
+  .cue{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:9;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    pointer-events:none;padding:60px 24px 0}
+  .cue[hidden]{display:none}
+  /* Not --muted, which is chosen to be quiet against a panel and disappears
+     entirely against tan land — this label stands on the map, and the map is
+     the brightest thing under it. */
+  .cue .eyebrow{margin-bottom:2px;color:var(--text);opacity:.8;
+    text-shadow:0 0 8px var(--haze), 0 0 20px var(--haze)}
+  .cue span{font-family:var(--serif);font-size:38px;font-weight:600;
+    letter-spacing:-0.01em;color:var(--text);text-align:center;
+    text-shadow:0 0 10px var(--haze), 0 0 30px var(--haze), 0 2px 3px var(--haze);
+    animation:cuein .9s ease-out}
+  /* Arrives, then settles back out of the way. It is an announcement, not a
+     label: the header is the label. */
+  @keyframes cuein{
+    0%{opacity:0;transform:translateY(6px) scale(.97)}
+    12%{opacity:1;transform:translateY(0) scale(1)}
+    70%{opacity:1}
+    100%{opacity:.5}}
+  body.longnames .cue span{font-size:30px}
   /* The name of what was wrongly tapped, thrown into the middle of the map.
      It used to be a bright red lifted off a dark ground by a wide dark glow.
      The ground is paper now, in both themes, so a dark glow behind red reads as
@@ -1462,6 +1499,9 @@ __MARKS_LIGHT__
     .fanfare span{font-size:40px}
     .flash span{font-size:34px}
     body.longnames .flash span{font-size:27px}
+    .flash{padding-bottom:112px}
+    .cue span{font-size:30px}
+    body.longnames .cue span{font-size:25px}
   }
   /* ---- landscape ---------------------------------------------------------
      A phone on its side has the wrong shape for a stacked header, footer and
@@ -1545,6 +1585,9 @@ __MARKS_LIGHT__
     body.longnames .target{font-size:18px}
     .flash span{font-size:29px}
     body.longnames .flash span{font-size:24px}
+    .flash{padding-bottom:96px}
+    .cue span{font-size:26px}
+    body.longnames .cue span{font-size:22px}
     .caret{height:19px}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

@@ -167,9 +167,47 @@ function flashName(name, help) {
 
 const flashMiss = name => flashName(name, false);
 
+/* ---- naming what to find -------------------------------------------------
+   The region being asked for is named in the top left corner of the header,
+   which is nowhere near where anyone is looking: playing fast, the eye is on
+   the map, and a name in a corner is a name you have to stop and go and read.
+
+   So it is also thrown into the middle, the way a miss is, and fades. Long
+   enough to read without looking away, gone before it is in the way of the
+   shape you are about to tap.
+
+   It shares the middle with the miss and has to stay distinguishable from it.
+   Three things separate them: the miss is deep red ink and this is the page's
+   own colour, the miss sits above the centre line and this sits on it, and this
+   one says what it is — FIND — in the same small letterspaced label the header
+   uses. A name on its own in the middle of the screen could be either. */
+const cueBox = $('cue');
+let cueTimer = null;
+const CUE_MS = 1400;
+
+function cueTarget(name, noun) {
+  if (!cueBox) return;
+  const span = cueBox.lastElementChild;
+  clearTimeout(cueTimer);
+  cueBox.firstElementChild.textContent = 'Find';
+  cueBox.hidden = true;
+  span.style.animation = 'none';
+  void span.offsetWidth;
+  span.style.animation = '';
+  span.textContent = name;
+  cueBox.hidden = false;
+  cueTimer = setTimeout(() => { cueBox.hidden = true; }, CUE_MS);
+}
+
+function clearCue() {
+  clearTimeout(cueTimer);
+  if (cueBox) cueBox.hidden = true;
+}
+
 function clearFlash() {
   clearTimeout(flashTimer);
   if (flashBox) flashBox.hidden = true;
+  clearCue();
 }
 
 

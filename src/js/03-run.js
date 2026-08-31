@@ -212,6 +212,7 @@ function tick() {
 function next() {
   current = queue.pop();
   el.target.innerHTML = current + '<span class="caret"></span>';
+  cueTarget(current);     // and in the middle, where the eye already is
   resetClues(false);      // the ladder starts again for each region
 }
 
@@ -238,6 +239,11 @@ function guess(name, at) {
   } else if (SCORING.retry) {
     setStatus(name, 'missed');
     flashMiss(name);
+    /* The region wanted has not changed — this mode asks again until it is
+       found — so the cue goes back up rather than being left faded. It is also
+       the answer to "what was I looking for", which is exactly what a player
+       who has just guessed wrong is asking. */
+    cueTarget(current);
     if (MODE.clues) missed(name);   // opens the arrow rung; drawn only on request
     errors += 1;
     drawCounter();

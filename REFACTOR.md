@@ -83,16 +83,25 @@ and those inherit to everything inside it. That is genuinely elegant for the
 common case: adding an element to a card needs no new colour rule at all.
 
 It is wrong for the things inside a card that are *not* paper. It has caused
-the same bug twice, in different places, and both times the symptom was
+the same bug three times, in different places, and every time the symptom was
 invisible content rather than wrong-looking content:
 
 - The overflow menu took `--panel`, the dark surface, while inheriting the
   card's ink — near-black text on a near-black ground, so the menu looked empty.
 - The header icons stand on near black and their pressed and hover states read
   the card's ink, so pressing one made the icon vanish into its own button.
+- The mode buttons hovered to `--text` and the selected one to `--onaccent`.
+  Unselected is the sunk near-black button, so that was 1.05:1; and
+  `--onaccent` happens to be near-black at night and near-white by day, so the
+  selected one was fine in one theme and 1.03:1 in the other. Both invisible
+  until a pointer lands on them, and a touchscreen never lands.
 
-Twice is the argument. The likely shape is to stop rebinding and name the two
-grounds instead — something like `--on-paper` and `--on-dark`, chosen by what a
+`check.py` now holds the three button hover inks to 4.5:1 against the ground the
+control actually stands on, in both palettes, which stops this recurring
+silently but does not fix the shape that causes it.
+
+Three times is the argument. The likely shape is to stop rebinding and name the
+two grounds instead — something like `--on-paper` and `--on-dark`, chosen by what a
 control is standing on rather than by what its container reads like, which is
 the rule the fixes ended up stating in comments anyway. The cost is that it
 touches a lot of rules, and the reason it has not been done is that it wants a

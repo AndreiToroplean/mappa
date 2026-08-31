@@ -51,6 +51,11 @@ the code was believed:
 - Also caught this way: a panel test that was in a comment and not in the code,
   a private copy of `addEntry` that had drifted from the real one, and a panel
   box measured before its marks were substituted.
+- **Keep it under about five seconds.** It was forty-three. None of that was the
+  checking: the hit-test stub re-parsed every region's path string on every call,
+  and `chooseLayout` was run in its own node process twenty-seven times. If it
+  creeps again, look for a subprocess inside a loop and for work repeated per
+  call that could be done once — not for cases worth deleting.
 
 Two build-time habits in the same spirit. Before adding a field to the emitted
 data, check whether the number is already implied by the geometry — it usually
@@ -65,6 +70,25 @@ metrics, and a preview that differs from the game is worse than none.
 - **The link's four parameter names**, which are a published surface.
 - Both `data/us.json` and `data/fr.json` reproduce byte for byte from their
   build scripts. Verify that still holds before changing anything shared.
+
+## Rules that were learned the hard way
+
+- **What a control stands on decides its colours, not what its container reads
+  like.** Three separate controls have taken a card's ink for a hover state and
+  vanished into the near-black metal they were sitting on. `check.py` guards the
+  three button hovers now; `REFACTOR.md` has the shape of the real fix.
+- **The display face ships as one cut and no rule names a weight for it.**
+  Cinzel is a single 600 instance declared across `400..700`. Asking for a
+  weight gets a synthesised smear of something already heavy.
+- **The middle of the map belongs to one element.** `#splash` takes the wrongly
+  tapped name, the region to find, or both. As two boxes they had two lifetimes
+  and two animations, which read as a blink, and the gap between them was
+  nobody's decision.
+- **The menu and the pause card are one construction:** a card on a dimming
+  layer, with the whole live board underneath — map, header, footer. Hiding the
+  map behind either of them was tried and reversed. A paused run that shows no
+  run reads as a different screen rather than the same one held still, and that
+  is worth more than denying someone free thinking time.
 
 ## Dead ends
 

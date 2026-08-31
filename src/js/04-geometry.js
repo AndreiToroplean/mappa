@@ -43,10 +43,23 @@ const SNAP_UNITS = 40;   // reach in map units — see DESIGN.md for why not px
    about fingers and glass. The same slip has to be forgiven on a phone and on a
    desktop, where the very same region is drawn twice as wide.
 
-   Six is about a millimetre and a half. For scale, on a portrait phone the
-   median region of every geography is around 27px across, and the snap that
-   already runs from open water reaches roughly 22px. */
-const GRACE_PX = 6;
+   Two, which is about half a millimetre. It was six — about a millimetre and a
+   half — and that turned out to be too generous to be invisible: a tap that
+   plainly landed on the neighbour came back correct, and being given a region
+   you did not hit is worse than missing one you did. At two the only taps
+   forgiven are the ones that landed on the border itself, which is drawn a
+   pixel wide and belongs to both regions as far as anyone looking at it can
+   tell.
+
+   Zero turns the whole thing off — `grace` falsy is checked for in forgiven()
+   — and the feature is kept rather than deleted for exactly that reason. Note
+   that check.py holds this to 1..12 as a policy band, so going to zero means
+   restating that policy too.
+
+   For scale, on a portrait phone the median region of every geography is
+   around 27px across, and the snap that already runs from open water reaches
+   roughly 22px. */
+const GRACE_PX = 2;
 
 /* GRACE_PX in composed units. Written by compose(), which is the only thing
    that knows how the view box was fitted to the window — the same arrangement

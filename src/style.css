@@ -620,11 +620,13 @@ __MARKS_LIGHT__
     paint-order:stroke;stroke:var(--halo);stroke-width:3.5px}
   .hint{color:var(--amber);font-weight:600}
   /* Only in the mode that offers them. */
-  /* Hiding the map is the point of the pause: a stopped clock with a visible
-     map is just free thinking time. */
-  /* The map, and only the map. As `body.paused svg` this also hid the full
-     screen icon inside the pause card itself, which is an svg too. */
-  body.paused #map{visibility:hidden}
+  /* The pause card used to hide the map — `body.paused #map` set to hidden —
+     on the grounds that a stopped clock with a visible map is free thinking
+     time. It is, and it is not worth it: pausing then looked like a different
+     screen rather than the same run held still. The menu and the pause card
+     are now the same construction, a card on a dimming layer with the whole
+     board underneath it, map and header and footer, and the only difference
+     between them is what the card says. */
   /* Top right of the header: the corner a thumb reaches without regripping. */
   .pausebtn{display:none}
   /* The two controls that live on the board rather than on a card. They stand

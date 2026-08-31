@@ -50,11 +50,19 @@ def svg(w, h, body, extra=''):
             f"{extra}>{body}</svg>")
 
 
-def turbulence(fid, freq, octaves, seed, matrix='', transfer=''):
-    """One patch of fractal noise. stitchTiles is what makes it tile."""
+def turbulence(fid, freq, octaves, seed, matrix='', transfer='', stitch=True):
+    """One patch of fractal noise. stitchTiles is what makes it tile.
+
+    Stitching is not free: to make the noise meet itself at the tile edge the
+    renderer has to round baseFrequency to a period that divides the tile, so
+    what is drawn is near the frequency asked for rather than at it. Anything
+    that is laid down once instead of tiled should say so and get the frequency
+    it asked for.
+    """
     return (f"<filter id='{fid}'>"
             f"<feTurbulence type='fractalNoise' baseFrequency='{freq}'"
-            f" numOctaves='{octaves}' seed='{seed}' stitchTiles='stitch'/>"
+            f" numOctaves='{octaves}' seed='{seed}'"
+            f" stitchTiles='{'stitch' if stitch else 'noStitch'}'/>"
             f"{matrix or chr(60) + 'feColorMatrix type=' + chr(39) + 'saturate'
                           + chr(39) + ' values=' + chr(39) + '0' + chr(39) + '/>'}"
             f"{transfer}</filter>")
@@ -83,10 +91,31 @@ FOXING = svg(600, 600,
     + "<rect width='600' height='600' filter='url(#s)' opacity='.42'/>")
 
 # ---- water ---------------------------------------------------------------
-# The long roll of the sea, stretched along one axis the way a swell is.
+# The long roll of the sea. The one texture here that is not a tile.
+#
+# It was, and it was the only one the repeat showed on. A tile only disappears
+# if its pattern is small against the tile — the parchment fibre repeats every
+# 420px and is a fibre, so the eye reads surface. The swell is the opposite
+# case: its features are *larger* than the patch that carried them, so every
+# 700px the same blurry blob came round again and what read was a grid of
+# blobs. Stitching hides the seam, which was never the problem; the problem is
+# that a swell has no period a screen is wide enough to hide.
+#
+# So it is laid down once over the whole sea instead: a viewBox, which is what
+# lets the drawing scale at all, and preserveAspectRatio='none', which is what
+# lets it scale to a shape that is not square. The CSS asks for it at 100% by
+# 100%, no-repeat, so the browser renders one sheet the size of the map area
+# and re-renders it when that area changes size. Nothing to tile, nothing to
+# stitch, and no period at all.
+#
+# One frequency rather than two, now that the aspect is the element's. The
+# noise was stretched along x by hand to make the roll lie flat; stretching a
+# square sheet onto a sea that is wider than it is tall does that on its own,
+# and does it by however wide the sea actually is.
 SWELL = svg(700, 700,
-    turbulence('w', '.0032 .0075', 4, 11, transfer=_fade('.75', '-.30'))
-    + "<rect width='700' height='700' filter='url(#w)' opacity='.42'/>")
+    turbulence('w', '.0055', 4, 11, transfer=_fade('.75', '-.30'), stitch=False)
+    + "<rect width='700' height='700' filter='url(#w)' opacity='.42'/>",
+    extra=" viewBox='0 0 700 700' preserveAspectRatio='none'")
 
 
 def crests(w, h, paths, colour, opacity, width):

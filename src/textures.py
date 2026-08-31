@@ -182,11 +182,17 @@ def rose(colour, faint):
     everything else be thin: the diagonal is the needle's, the axes are the
     dial's, and nothing is competing.
 
-    The needle points down and to the left, and its far half is faint — a real
+    The needle points up and to the right, and its far half is faint — a real
     needle is painted on one end only, and which end is which is the whole
-    information a needle carries. Both roses on the Start button are this same
-    drawing, so both point the same way; they used to be a drawing with nothing
-    to point, which is why symmetry mattered then and does not now.
+    information a needle carries. Up rather than down because that is where the
+    lamp is on this desk, so the lit half of the needle and the light agree.
+    Thirty degrees off vertical rather than forty-five: at forty-five it reads
+    as a diagonal, which is a direction the drawing has no other use for, and at
+    thirty it reads as north with a bearing on it.
+
+    Both roses on the Start button are this same drawing, so both point the same
+    way; they used to be a drawing with nothing to point, which is why symmetry
+    mattered then and does not now.
 
     Square, 48 by 48, with the case at r=17 and the knobs standing in the
     margin that leaves — so the whole thing still fits a square background-size
@@ -194,9 +200,10 @@ def rose(colour, faint):
     """
     # The needle, as the lit half and the faint half of one lozenge about the
     # pivot. Built from an angle rather than typed as coordinates so the
-    # direction is one number to change: 135 degrees is down and to the left,
-    # measured the way SVG measures, with y increasing downwards.
-    deg, reach, half = 135, 16.0, 2.4
+    # direction is one number to change. Measured the way SVG measures, with y
+    # increasing downwards, so straight up is -90 and -60 is thirty degrees off
+    # it towards the right.
+    deg, reach, half = -60, 16.0, 2.4
     u = (math.cos(math.radians(deg)), math.sin(math.radians(deg)))
     p = (-u[1], u[0])
     at = lambda k, w: (f'{24 + k * u[0] + w * p[0]:.1f} '

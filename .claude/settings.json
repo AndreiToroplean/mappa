@@ -1,0 +1,13 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "env": {
+    "GIT_AUTHOR_NAME": "Andrei Toroplean",
+    "GIT_AUTHOR_EMAIL": "andrei.toroplean@gmail.com",
+    "GIT_COMMITTER_NAME": "Andrei Toroplean",
+    "GIT_COMMITTER_EMAIL": "andrei.toroplean@gmail.com"
+  }
+}

@@ -1648,6 +1648,17 @@
   }
 </style>
 <meta name="theme-color" content="#1E1810">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20512%20512%27%3E%3Cdefs%3E%3CradialGradient%20id=%27g%27%20cx=%2750%25%27%20cy=%2742%25%27%20r=%2770%25%27%3E%3Cstop%20offset=%270%27%20stop-color=%27%232E2416%27/%3E%3Cstop%20offset=%271%27%20stop-color=%27%231E1810%27/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect%20width=%27512%27%20height=%27512%27%20fill=%27url%28%23g%29%27/%3E%3Cg%20transform=%27translate%2871.68%2071.68%29%20scale%287.6800%29%27%3E%3Cg%20fill=%27%23FBEDC6%27%3E%3Crect%20x=%2722.4%27%20y=%272.6%27%20width=%273.2%27%20height=%275%27%20rx=%271.1%27/%3E%3Crect%20x=%2722.4%27%20y=%2740.4%27%20width=%273.2%27%20height=%275%27%20rx=%271.1%27/%3E%3Ccircle%20cx=%2724%27%20cy=%272.6%27%20r=%272.2%27/%3E%3Ccircle%20cx=%2724%27%20cy=%2745.4%27%20r=%272.2%27/%3E%3C/g%3E%3Ccircle%20cx=%2724%27%20cy=%2724%27%20r=%2717%27%20fill=%27none%27%20stroke=%27%23FBEDC6%27%20stroke-width=%272%27/%3E%3Ccircle%20cx=%2724%27%20cy=%2724%27%20r=%2713.4%27%20fill=%27none%27%20stroke=%27rgba%28251%2C237%2C198%2C.5%29%27%20stroke-width=%271%27/%3E%3Cg%20fill=%27%23FBEDC6%27%3E%3Cpath%20d=%27M24%208.4%2025%2022%2024%2024%2023%2022Z%27/%3E%3Cpath%20d=%27M24%2039.6%2023%2026%2024%2024%2025%2026Z%27/%3E%3Cpath%20d=%27M8.4%2024%2022%2023%2024%2024%2022%2025Z%27/%3E%3Cpath%20d=%27M39.6%2024%2026%2025%2024%2024%2026%2023Z%27/%3E%3C/g%3E%3Cpath%20fill=%27rgba%28251%2C237%2C198%2C.5%29%27%20d=%27M16.0%2037.9%2026.1%2025.2%2021.9%2022.8Z%27/%3E%3Cpath%20fill=%27%23FBEDC6%27%20d=%27M32.0%2010.1%2026.1%2025.2%2021.9%2022.8Z%27/%3E%3Ccircle%20cx=%2724%27%20cy=%2724%27%20r=%272%27%20fill=%27none%27%20stroke=%27%23FBEDC6%27%20stroke-width=%271.2%27/%3E%3C/g%3E%3C/svg%3E">
+<!-- Installing to the home screen. The files these name sit beside the page
+     when it is published (dist/web); opened as a lone file they are simply
+     missing, which costs nothing. iOS reads its icon and title from these
+     rather than the manifest. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mappa">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <!-- Read before the body renders, so a light-theme player never sees a frame of
      the dark one. The link wins over the stored value here for the same reason
      it does in 14-start.js, which is where it gets saved: this only paints.
@@ -1777,7 +1788,7 @@ if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</
         <button id="shareBtn">Copy Link</button>
         <button id="exportBtn">Export Data</button>
         <button id="importBtn">Import Data</button>
-        <div class="ver">bd2806e</div>
+        <div class="ver">v3.0.0-1-g202b4fa</div>
       </div></div>
     <div class="sub tagline">The World from Memory</div>
       <div class="pick">
@@ -4886,9 +4897,15 @@ addEventListener('keydown', e => {
 
    Android Chrome supports this. iOS Safari does not on iPhone, so the button
    hides itself rather than sitting there doing nothing. For a permanent fix on
-   either, "Add to Home screen" runs the page without browser chrome at all. */
+   either, "Add to Home screen" runs the page without browser chrome at all.
+
+   Opened from the home screen, the manifest has already asked for full screen,
+   so there is nothing left for the button to do and it goes. That is the
+   display mode, not the Fullscreen API: an installed app is not "in" the
+   latter, and would otherwise show a button promising what it already has. */
 const root = document.documentElement;
-const canFull = !!(root.requestFullscreen || root.webkitRequestFullscreen);
+const installedFull = matchMedia('(display-mode: fullscreen)').matches;
+const canFull = !installedFull && !!(root.requestFullscreen || root.webkitRequestFullscreen);
 
 function isFull() {
   return !!(document.fullscreenElement || document.webkitFullscreenElement);

@@ -40,9 +40,11 @@ src/js/06-board.js    storage, preferences, leaderboard, end of run
 src/js/07-celebrate.js  confetti, the miss arrow
 src/js/08-clues.js    the clue ladder
 src/js/09..14         pause, fullscreen, review, theme, export/import, startup
+src/js/15-light.js    where the light is, and the shadows it throws
 src/geo.py            shared build geometry: projection, polylabel, emit
 src/build-{us,fr,eu}.py   one per geography
 src/build-clues.py    capitals and groupings for all three
+src/build-icons.py    home-screen icons into data/icons, from textures.icon()
 src/make.py           assembles dist/mappa.html
 check.py              the regression harness
 render.py             rasterises a geography as the game shows it
@@ -137,6 +139,21 @@ Two rules follow from a mark being drawn *over* the map rather than in it: it
 keeps its own layer whatever its status, and `stateUnder` asks the marks first,
 since a point inside San Marino is inside Italy too. The panel box has to cover
 the marks as well, or one near the edge spills out of the frame.
+
+## Installing
+
+The published site is more than the one file. `make.py` also writes `dist/web`,
+which is exactly what one channel publishes: the page as `index.html`, a
+manifest and three icons. With those, a phone can add the game to its home
+screen, and it opens full screen with no browser around it. `mappa.html` on its
+own is unchanged and still plays from a file; the two links it gains to the
+install files just fail quietly there. The tab icon is the same drawing, inlined.
+
+There is deliberately no service worker. The home-screen icon is a shortcut to
+the live site, so an installed copy is always the current release and needs a
+connection to open. Keeping an offline copy was built and taken out again: it
+was more machinery than the game needs. Stable and beta install as two apps,
+named apart.
 
 ## Axes and storage
 

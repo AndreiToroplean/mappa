@@ -7,9 +7,15 @@
 
    Android Chrome supports this. iOS Safari does not on iPhone, so the button
    hides itself rather than sitting there doing nothing. For a permanent fix on
-   either, "Add to Home screen" runs the page without browser chrome at all. */
+   either, "Add to Home screen" runs the page without browser chrome at all.
+
+   Opened from the home screen, the manifest has already asked for full screen,
+   so there is nothing left for the button to do and it goes. That is the
+   display mode, not the Fullscreen API: an installed app is not "in" the
+   latter, and would otherwise show a button promising what it already has. */
 const root = document.documentElement;
-const canFull = !!(root.requestFullscreen || root.webkitRequestFullscreen);
+const installedFull = matchMedia('(display-mode: fullscreen)').matches;
+const canFull = !installedFull && !!(root.requestFullscreen || root.webkitRequestFullscreen);
 
 function isFull() {
   return !!(document.fullscreenElement || document.webkitFullscreenElement);

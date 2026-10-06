@@ -237,6 +237,29 @@ def rose(colour, faint):
         " stroke-width='1.2'/>")
 
 
+def icon():
+    """The app's icon: the rose from the Start button, on the dark panel colour.
+
+    One drawing for the home screen (rasterised by src/build-icons.py) and for
+    the browser tab (inlined as SVG by make.py). The ground runs to the edges
+    because Android crops an icon to a shape of its own choosing and iOS
+    rounds the corners itself; the rose stays inside the middle 80% that
+    Android promises to keep.
+    """
+    ground, lift = '#1E1810', '#2E2416'     # --panel, and a lift on it
+    body = rose('#FBEDC6', 'rgba(251,237,198,.5)')
+    body = body[body.index('>') + 1:body.rindex('</svg>')]
+    k = 512 * 0.72 / 48                     # the rose is 48 units square
+    off = (512 - 48 * k) / 2
+    return ("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'>"
+            "<defs><radialGradient id='g' cx='50%' cy='42%' r='70%'>"
+            f"<stop offset='0' stop-color='{lift}'/>"
+            f"<stop offset='1' stop-color='{ground}'/></radialGradient></defs>"
+            "<rect width='512' height='512' fill='url(#g)'/>"
+            f"<g transform='translate({off:.2f} {off:.2f}) scale({k:.4f})'>{body}</g>"
+            "</svg>")
+
+
 # The textures that are the same in any light. Paper is paper whether a lamp or
 # a window is on it, so these are declared once rather than once per theme —
 # which is also two fewer places for them to drift apart.

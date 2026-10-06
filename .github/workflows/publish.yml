@@ -42,7 +42,11 @@ jobs:
       - name: Regression harness
         run: python3 check.py
 
+      # The channel only names the installed app, so beta and stable can sit on
+      # one home screen and be told apart. Same rule as the publish step below.
       - name: Build
+        env:
+          MAPPA_CHANNEL: ${{ github.ref_type == 'tag' && 'stable' || 'beta' }}
         run: python3 src/make.py
 
       - name: Check the artifact is self-contained
@@ -50,8 +54,10 @@ jobs:
           set -eu
           # The whole point of the file is that it works offline. A stray src=
           # or href= to somewhere else would only show up as a broken page.
+          # The two exceptions are the install files published beside it, which
+          # are optional: a lone mappa.html plays without them.
           if grep -Eo '(src|href)="[^"]*"' dist/mappa.html \
-             | grep -Ev '="(#|data:)' ; then
+             | grep -Ev '="(#|data:|manifest\.webmanifest"|apple-touch-icon\.png")' ; then
             echo "::error::dist/mappa.html references something external"
             exit 1
           fi
@@ -64,7 +70,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: mappa
-          path: dist/mappa.html
+          path: |
+            dist/mappa.html
+            dist/web
 
       # Pushed to a gh-pages branch by hand rather than with actions/deploy-pages,
       # because that action's artifact replaces the entire site: publishing beta
@@ -87,8 +95,10 @@ jobs:
             git -C site checkout -q -b gh-pages
           }
 
+          # dist/web is the page as index.html plus what installing it needs:
+          # the manifest and the icons.
           mkdir -p "site/$DIR"
-          cp dist/mappa.html "site/$DIR/index.html"
+          cp dist/web/* "site/$DIR/"
           touch site/.nojekyll        # serve the files as they are
 
           cd site

@@ -7,6 +7,17 @@
 <style>
 __CSS__</style>
 <meta name="theme-color" content="#1E1810">
+<link rel="icon" type="image/svg+xml" href="__FAVICON__">
+<!-- Installing to the home screen. The files these name sit beside the page
+     when it is published (dist/web); opened as a lone file they are simply
+     missing, which costs nothing. iOS reads its icon and title from these
+     rather than the manifest. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mappa">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <!-- Read before the body renders, so a light-theme player never sees a frame of
      the dark one. The link wins over the stored value here for the same reason
      it does in 14-start.js, which is where it gets saved: this only paints.

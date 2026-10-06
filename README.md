@@ -10,6 +10,8 @@ A link can carry the setup, so you can hand someone the exact game rather than t
 
 **[Play](https://andreitoroplean.github.io/mappa/)** · [Play beta](https://andreitoroplean.github.io/mappa/beta/)
 
+On a phone it can be installed: **Add to Home screen** in Safari's share menu, or **Install app** in Chrome's menu. It then opens full screen from its own icon, and is always the current version, since the icon opens the live site.
+
 ## How it was made
 
 Entirely vibe coded, with Claude Opus 5. I have not read the code.

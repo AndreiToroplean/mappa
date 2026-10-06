@@ -5,7 +5,7 @@ The output stays a single HTML file with no external references, which is the
 whole point of the project. The split exists for editing, not for shipping:
 the CSS, the JS modules and the region data are inlined here, in order.
 """
-import base64, json, os, pathlib, subprocess
+import base64, json, os, pathlib, subprocess, urllib.parse
 
 import textures
 
@@ -49,7 +49,7 @@ def version():
 
 
 html = (SRC / 'index.html').read_text()
-for token in ('__CSS__', '__JS__', '__VERSION__'):
+for token in ('__CSS__', '__JS__', '__VERSION__', '__FAVICON__'):
     assert token in html, f'missing placeholder {token}'
 for g in GEOS:
     assert f'__{g.upper()}__' in js, f'missing placeholder __{g.upper()}__'
@@ -97,6 +97,10 @@ def faces():
 
 
 html = html.replace('__VERSION__', ver)
+# The tab icon, inlined so the lone file has one too. Percent-encoded whole,
+# which leaves nothing that could end the attribute it sits in.
+html = html.replace('__FAVICON__', 'data:image/svg+xml,'
+                    + urllib.parse.quote(textures.icon(), safe='/:=?'))
 css = (SRC / 'style.css').read_text()
 for token in ('__FONTS__', '__TEXTURES__', '__MARKS_DARK__', '__MARKS_LIGHT__',
               '__RAYS__', '__RAYSFADE__'):
@@ -125,3 +129,47 @@ out.parent.mkdir(exist_ok=True)
 out.write_text(html)
 print(f'wrote {out} ({len(html):,} bytes, {len(GEOS)} geographies, '
       f'{len(modules)} modules, version {ver})')
+
+
+# ---- the installable site ------------------------------------------------
+# mappa.html stays whole and plays from a file on its own. Installing it on a
+# phone's home screen is a different thing that needs a few files beside it,
+# because a browser will only take a manifest as a URL of its own. The
+# manifest says what the icon and the name are and that it opens full screen.
+# dist/web is exactly what is published to one channel, page renamed to
+# index.html.
+#
+# Deliberately no service worker. The icon is a shortcut to the live site, so
+# an installed copy is always the current release; the price is that it needs a
+# connection to open, which was judged not worth a worker to avoid.
+#
+# MAPPA_CHANNEL is set by the publish workflow. Beta gets its own name so that
+# both can sit on one home screen and be told apart.
+beta = os.environ.get('MAPPA_CHANNEL') == 'beta'
+manifest = {
+    'name': 'Mappa Beta' if beta else 'Mappa — The World from Memory',
+    'short_name': 'Mappa β' if beta else 'Mappa',
+    'description': "You're named a place, you tap it on the map.",
+    # Relative, so the same files work at the root and under /beta/, and each
+    # channel installs as its own app: an app's identity defaults to start_url.
+    'start_url': './',
+    'scope': './',
+    # Fullscreen hides the status bar as well as the browser on Android. iOS
+    # does not do fullscreen and falls back to standalone, which still has no
+    # browser bar — the same as the game's own full screen button, permanently.
+    'display': 'fullscreen',
+    'background_color': '#151007',     # --base, so the splash is the page
+    'theme_color': '#1E1810',          # --panel, as the page's theme-color
+    'icons': [
+        {'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
+        {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
+        {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'},
+    ],
+}
+web = ROOT / 'dist' / 'web'
+web.mkdir(exist_ok=True)
+(web / 'index.html').write_text(html)
+(web / 'manifest.webmanifest').write_text(json.dumps(manifest, ensure_ascii=False, indent=1))
+for icon in ('icon-192.png', 'icon-512.png', 'apple-touch-icon.png'):
+    (web / icon).write_bytes((ROOT / 'data' / 'icons' / icon).read_bytes())
+print(f'wrote {web}/ ({"beta" if beta else "stable"} manifest, 3 icons)')
